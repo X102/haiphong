@@ -496,6 +496,9 @@ R = R + R21 + R22 + R23 + R24 + R25
 from gen_i18n_v26 import R26, HTML26, GT26, HELP26
 _co = {r[0] for r in R}
 R = R + [r for r in R26 if r[0] not in _co]                # bản 2.6: không ghi đè bản dịch cũ của cùng một câu
+from gen_i18n_v27 import R27, GT27, HELP27
+_co = {r[0] for r in R}
+R = R + [r for r in R27 if r[0] not in _co]                # bản 2.7
 for L_ in LAYER21: LAYER[L_].update(LAYER21[L_])
 for L_ in LAYER24: LAYER[L_].update(LAYER24[L_])
 for L_ in RE24: RE[L_] = RE[L_] + RE24[L_]
@@ -512,6 +515,10 @@ for L_ in HTML26: HTML[L_].update(HTML26[L_])
 for L_, (cu, moi) in GT26.items():                       # bản 2.6: giới thiệu nêu hai chức năng mới
     assert HTML[L_]["gtBody"].count(cu) == 1; HTML[L_]["gtBody"] = HTML[L_]["gtBody"].replace(cu, moi)
 for L_, (moc, them, _a, _b) in HELP26.items():            # bản 2.6: phát hiện thay đổi, trợ lý AI
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+for L_, (cu, moi) in GT27.items():                       # bản 2.7
+    assert HTML[L_]["gtBody"].count(cu) == 1; HTML[L_]["gtBody"] = HTML[L_]["gtBody"].replace(cu, moi)
+for L_, (moc, them, _a, _b) in HELP27.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:

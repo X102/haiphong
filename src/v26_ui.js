@@ -30,6 +30,7 @@ async function cdMo(on) {
 }
 function cdHien() {
   const pv = cd$("cdPV").value; cd$("cdXaW").hidden = pv !== "xa"; cd$("cdVungW").hidden = pv !== "vung";
+  if (cd$("cdPA")) { const bd = cd$("cdPL").value === "bando"; cd$("cdPA").hidden = !bd; cd$("cdPA").previousElementSibling.hidden = !bd; }
   cd$("cdTV").textContent = (+cd$("cdT").value).toFixed(2);
   cd$("cdT").disabled = cd$("cdNguong").value !== "tay";
 }
@@ -165,14 +166,14 @@ async function cdChay() {
     // ⑤ loại thay đổi
     const pl = cd$("cdPL").value, cA = new Uint8Array(N), cB = new Uint8Array(N); let lop = CD_SOBO.slice(1).map(x => T(x)), lopMau = CD_SOBO_MAU.slice(1), plTT = "";
     if (pl === "sobo") { for (let i = 0; i < N; i++) if (valid[i]) { cA[i] = CORE.lopSoBo(IA.NDVI[i], IA.MNDWI[i]); cB[i] = CORE.lopSoBo(IB.NDVI[i], IB.MNDWI[i]); } }
-    else if (pl === "bando") {
-      const L0 = MAN.layers.find(l => l.kieu === "lop" && l.nam.includes(A) && l.nam.includes(B));
-      if (!L0) throw new Error(T("bộ dữ liệu không có bản đồ lớp nào có cả năm {a} và {b}", {a: A, b: B}));
-      const doc = async y => { const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)); return vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url); };
-      const ra = await doc(A), rb = await doc(B), ma = Object.keys(L0.bang_mau || L0.ten_lop || {}).map(Number).sort((a, b) => a - b);
-      lop = ma.map(k => T((L0.ten_lop || TEN3)[k] || String(k))); lopMau = ma.map(k => (L0.bang_mau || {})[k] || "#999");
-      for (let i = 0; i < N; i++) if (valid[i]) { cA[i] = ra ? ma.indexOf(ra.data[i]) + 1 : 0; cB[i] = rb ? ma.indexOf(rb.data[i]) + 1 : 0; }
-      plTT = lname(L0);
+    else if (pl === "bando") {                   // bản 2.7: mọi phương án (bộ dữ liệu, toàn cầu, bản đồ tạo, nhập)
+      const ds = typeof paDS === "function" ? paDS() : [], co = pa => !pa.nam || (pa.nam.includes(A) && pa.nam.includes(B));
+      const sel = cd$("cdPA") ? cd$("cdPA").value : "", pa = ds.find(q => q.id === sel && co(q)) || ds.find(co);
+      if (!pa) throw new Error(T("bộ dữ liệu không có bản đồ lớp nào có cả năm {a} và {b}", {a: A, b: B}));
+      const ra = await paDoc(pa, g, A), rb = await paDoc(pa, g, B), ma = Object.keys(pa.lop).map(Number).sort((a, b) => a - b);
+      lop = ma.map(k => paLopTen(pa, k)); lopMau = ma.map(k => pa.lop[k].mau || "#999");
+      for (let i = 0; i < N; i++) if (valid[i]) { cA[i] = ra ? ma.indexOf(ra[i]) + 1 : 0; cB[i] = rb ? ma.indexOf(rb[i]) + 1 : 0; }
+      plTT = paTen(pa);
     } else {                                    // theo điểm mẫu: nguyên mẫu k-means của từng lớp ở từng năm, trên đặc trưng chuẩn hoá chung
       const Fn = s2Bang().map((b, q) => [SA[q], SB[q]]).concat(["NDVI", "MNDWI", "NDBI", "BSI"].map(k => [IA[k], IB[k]])), nf = Fn.length;
       const mu = Fn.map(([a, b]) => { let s = 0, n = 0; for (let i = 0; i < N; i += buoc) if (valid[i]) { s += a[i] + b[i]; n += 2; } return s / Math.max(n, 1); });
@@ -335,7 +336,7 @@ giaTriTai = async function (ll) { const r = await _giaTriTai26(ll), d = cdTaiDie
 $("bCD").onclick = () => cdMo();
 cd$("cdDong").onclick = () => { cdMo(false); if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; } };
 cd$("cdThu").onclick = () => { const b = cd$("cdBody"); b.hidden = !b.hidden; cd$("cdThu").textContent = b.hidden ? "+" : "–"; };
-["cdPV", "cdNguong", "cdT"].forEach(id => { cd$(id).addEventListener(id === "cdT" ? "input" : "change", cdHien); });
+["cdPV", "cdNguong", "cdT", "cdPL"].forEach(id => { cd$(id).addEventListener(id === "cdT" ? "input" : "change", cdHien); });
 cd$("cdChay").onclick = cdChay; cd$("cdXem").onchange = cdVe;
 document.querySelectorAll("#cdP [data-ctab]").forEach(b => { b.onclick = () => cdTab(b.dataset.ctab); });
 cd$("cdCSV").onclick = cdCSV; cd$("cdGeo").onclick = cdGeo; cd$("cdRai").onclick = cdRai;

@@ -135,6 +135,42 @@ nd["dem_utm"]([f"{FX}/dem4326.tif"], f"{R}/dem/dem_cop30.tif", lb)
 man["dem"] = dict(duong_dan="dem/dem_cop30.tif", ten="DEM: độ cao, độ dốc, bóng địa hình", nguon="DEM test (Gauss hill)", crs="EPSG:32648",
                   buoc_m=30, he_so=0.1, nodata=-32768, keo_gian=nd["dem_keo_gian"](f"{R}/dem/dem_cop30.tif"))
 REF_DEM = dict(dinh=list(hc), cao=122.0, nen=2.0)
+# bản 2.7: ranh giới Việt Nam giả dựng bằng đúng hàm của ô HF_VN_RANH_GIOI_cell.py (tỉnh "31" = hai xã Tây, Đông; tỉnh "22" ở phía
+# đông, hai xã) và lớp phủ toàn cầu giả kiểu WorldCover dựng bằng hàm của ô HF_LULC_TG_cell.py (40 cây trồng ở dải thực vật,
+# 80 nước, 50 xây dựng; năm 2023 có thêm một ô 60 "đất trống" trùng mảng sáng của ảnh S2 2023); ảnh GeoTIFF UTM để thử nhập bản đồ riêng
+nv = {}; exec(open(os.path.join(GOC, "HF_VN_RANH_GIOI_cell.py"), encoding="utf-8").read().split("# ---------------- CHẠY (Colab)")[0], nv)
+nl = {}; exec(open(os.path.join(GOC, "HF_LULC_TG_cell.py"), encoding="utf-8").read().split("# ---------------- CHẠY (Colab)")[0], nl)
+from shapely.geometry import mapping as _mp
+VN = f"{FX}/vn_nguon/json/geojson"
+def _fc(pr, geom): return {"type": "FeatureCollection", "features": [{"type": "Feature", "id": pr["code"], "properties": pr, "geometry": _mp(geom)}]}
+b_all = xa.total_bounds; dx = b_all[2] - b_all[0]
+tinh = [("31", "Thu A", box(*b_all), [("90001", "Tây", "Xã", xa.geometry[0]), ("90002", "Đông", "Phường", xa.geometry[1])]),
+        ("22", "Thu B", box(b_all[2], b_all[1], b_all[2] + dx, b_all[3]),
+         [("90003", "Bac", "Xa", box(b_all[2], (b_all[1] + b_all[3]) / 2, b_all[2] + dx, b_all[3])), ("90004", "Nam", "Xa", box(b_all[2], b_all[1], b_all[2] + dx, (b_all[1] + b_all[3]) / 2))])]
+for ma, ten, g_, xs_ in tinh:
+    d_ = f"{VN}/{ma}_thu"; os.makedirs(f"{d_}/wards")
+    json.dump(_fc({"code": ma, "name": ten, "fullName": "Tinh " + ten, "nameEn": ten, "areaKm2": 1.0}, g_), open(f"{d_}/{ma}_thu.geojson", "w"))
+    for mx_, tx_, lo_, gx_ in xs_:
+        json.dump(_fc({"code": mx_, "name": tx_, "fullName": f"{lo_} {tx_}", "nameEn": tx_, "areaKm2": 1.0}, gx_), open(f"{d_}/wards/{mx_}.geojson", "w"))
+nv["dung"](VN, R, "fx", verbose=False)
+man = nv["ghi_manifest"](man, "fx")
+os.makedirs(f"{R}/lulc_tg", exist_ok=True)
+wc = np.choose(cls.astype(np.int64), [0, 40, 80, 50]).astype(np.uint8)
+for y in (2023, 2025):
+    a_ = wc.copy()
+    if y == 2023: a_[300:330, 700:760] = 60
+    with rasterio.open(f"{FX}/wc_{y}_utm.tif", "w", driver="GTiff", width=W, height=Hh, count=1, dtype="uint8", crs="EPSG:32648",
+                       transform=from_origin(x0, y0, 10, 10), nodata=0) as o: o.write(a_, 1)
+    nl["lop_cog"]([f"{FX}/wc_{y}_utm.tif"], f"{R}/lulc_tg/wc_{y}.tif", grid, None, tmp_dir=FX)
+man["layers"].append(nl["muc_manifest"]("WC", [2023, 2025]))
+man["chu_giai_chung"] = {str(k): v for k, v in nl["CHUNG"].items()}
+nh_ = cls.copy(); nh_[600:700, :] = 0          # bản đồ riêng để nhập: như lulc_ctx, bỏ một dải 100 hàng
+with rasterio.open(f"{FX}/nhap_utm.tif", "w", driver="GTiff", width=W, height=Hh, count=1, dtype="uint8", crs="EPSG:32648",
+                   transform=from_origin(x0, y0, 10, 10), nodata=0) as o:
+    o.write(nh_, 1); o.write_colormap(1, {1: (46, 157, 58, 255), 2: (31, 95, 191, 255), 3: (215, 25, 28, 255)})
+REF27 = dict(ha_lop={str(v): float((cls == v).sum() / 100) for v in (1, 2, 3)}, ha_nhap={str(v): float((nh_ == v).sum() / 100) for v in (1, 2, 3)},
+             ha_60=30 * 60 / 100)
+json.dump(REF27, open(f"{FX}/ref27.json", "w"))
 json.dump(man, open(f"{R}/manifest.json", "w"), ensure_ascii=False)
 T3 = Transformer.from_crs(32648, 3857, always_xy=True)
 mx, my = T3.transform(xs, ys)

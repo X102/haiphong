@@ -10,7 +10,7 @@ function tileOf(mx, my, z) { const S = 2 * Math.PI * 6378137, n = 2 ** z; return
 (async () => {
   const cfg = {base: "http://127.0.0.1:8765/"};
   const man = await (await fetch(CORE.dataUrl(cfg, "manifest.json"))).json();
-  ok(man.layers.length === 5 && man.pc.k === 3, "manifest qua máy chủ cục bộ (có Range)");
+  ok(man.layers.length >= 5 && man.pc.k === 3, "manifest qua máy chủ cục bộ (có Range)");
   const url = CORE.dataUrl(cfg, "s2tc/s2tc_2025.tif"), urlC = CORE.dataUrl(cfg, "lulc_ctx/lulc_ctx_2025.tif");
   for (let i = 0; i < 3; i++) {
     const P = ref.pts[i], [tx, ty] = tileOf(P.mx, P.my, 17), bb = CORE.tileBbox(17, tx, ty);

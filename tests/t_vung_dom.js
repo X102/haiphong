@@ -3,7 +3,7 @@ const RV = require("/tmp/fx/ref_vung.json");
 (async () => {
   const {w, $, E, sleep, key, until, errs, blobs, docBlob} = moTrang({geoman: true});
   const click = (lon, lat, shift) => E(`map.fire("click", {latlng: L.latLng(${lat}, ${lon}), originalEvent: {shiftKey: ${!!shift}}})`);
-  await until(() => E("MAN") && E("MAN.layers.length") === 5, 8000, "manifest");
+  await until(() => E("MAN") && E("MAN.layers.length") >= 5, 8000, "manifest");
   ok(E("VG.coPM") === true && E("L.PM.optIn") === true && E("!!map.pm"), "Leaflet-Geoman nạp, opt-in, bản đồ có map.pm");
   E("setYear(2025)"); key("o"); await sleep(50);
   ok(!$("vung").hidden && E("vgDT().join()") === "g7,g7b", "phím o mở bảng; mặc định so bằng g7, g7b");

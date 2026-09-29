@@ -6,7 +6,7 @@ const RV = require("/tmp/fx/ref_vung.json");
   const phai = (lon, lat, shift) => E(`map.fire("contextmenu", {latlng: L.latLng(${lat}, ${lon}), originalEvent: {shiftKey: ${!!shift}}})`);
   const nObj = () => E("VG.obj ? VG.obj.n : -1");
   const nutClick = el => el.dispatchEvent(new w.MouseEvent("click", {bubbles: true, clientX: 300, clientY: 200}));
-  await until(() => E("MAN") && E("MAN.layers.length") === 5, 8000, "manifest");
+  await until(() => E("MAN") && E("MAN.layers.length") >= 5, 8000, "manifest");
   E("setYear(2025)"); key("o"); await sleep(50);
   ok(!$("vung").hidden && E("VG.cong") === "hat" && /Shift/.test($("vgGoiY").textContent), "mở bảng: công cụ ① điểm mẫu, có gợi ý");
   $("vgPV").value = "bk"; $("vgBK").value = "6";
