@@ -1,0 +1,33 @@
+# Đăng trang lên GitHub Pages mỗi khi đẩy lên nhánh main. Chỉ đăng index.html và cau_hinh.json,
+# không đăng mã nguồn, bài thử hay ô Colab. Bật một lần: Settings -> Pages -> Source: GitHub Actions.
+name: Trang web
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  dang:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.trienkhai.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gom tệp đăng
+        run: |
+          mkdir _site
+          cp index.html cau_hinh.json _site/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: trienkhai
+        uses: actions/deploy-pages@v4

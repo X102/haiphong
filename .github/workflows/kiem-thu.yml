@@ -1,0 +1,25 @@
+# Chạy các bài thử (jsdom, dữ liệu giả) khi bấm tay trong thẻ Actions. Chưa chạy thử trên máy chủ GitHub:
+# nếu lỗi do môi trường, xem tests/chay_het.sh và phiên bản thư viện ghi dưới đây.
+name: Kiểm thử
+on:
+  workflow_dispatch:
+jobs:
+  kiem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Thư viện
+        run: |
+          pip install numpy pandas scipy shapely pyproj rasterio geopandas pyogrio osmium
+          mkdir -p /tmp/nt && cd /tmp/nt && npm init -y > /dev/null
+          npm install jsdom@24.1.3 leaflet@1.9.4 proj4@2.9.2 geotiff@2.1.3 @geoman-io/leaflet-geoman-free@2.20.2 flatgeobuf@4.5.0 osmtogeojson@3.0.0-beta.5
+      - name: Dựng trang, chạy bài thử
+        run: |
+          python tools/dung_trang.py
+          cd tests && python t_osm_py.py && python mk_fixtures.py && bash chay_het.sh

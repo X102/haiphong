@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Geoportal lớp phủ Hải Phòng: gán nhãn đa năm trên ảnh Wayback, Sentinel-2, PCA chuỗi năm, embedding, CTX và OpenStreetMap">
+<title>Geoportal lớp phủ Hải Phòng</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.2/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatgeobuf@4.5.0/dist/flatgeobuf-geojson.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/osmtogeojson@3.0.0-beta.5/osmtogeojson.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.20.2/dist/leaflet-geoman.css">
+<script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.20.2/dist/leaflet-geoman.min.js"></script>
+<script>try { if (window.L && L.PM) L.PM.setOptIn(true); } catch (e) { /* không có công cụ sửa: vẫn chạy */ }</script>
+<style>
+:root{--bg:#f6f7f9;--pn:#fff;--ln:#d9dde3;--tx:#1d2330;--mu:#667085;--ac:#0b63ce;--ok:#1a7f37;--wa:#b54708;--er:#b42318}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);background:var(--bg)}
+#app{display:flex;height:100vh}
+#side{width:410px;min-width:360px;overflow-y:auto;background:var(--pn);border-right:1px solid var(--ln);padding:8px 10px 40px}
+#map{flex:1;position:relative}
+h1{font-size:15px;margin:2px 0 6px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);margin:12px 0 5px;border-top:1px solid var(--ln);padding-top:8px}
+button,select,input,textarea{font:inherit}
+button{border:1px solid var(--ln);background:#fff;border-radius:6px;padding:3px 7px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin:3px 0}
+.mu{color:var(--mu)}
+.sm{font-size:11px}
+#years button{min-width:44px;padding:3px 4px}
+#years button.lab{box-shadow:inset 0 -3px 0 var(--ok)}
+.cls{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.cls button{display:flex;align-items:center;gap:5px;text-align:left;padding:3px 5px;min-height:26px}
+.cls button .k{font:600 11px ui-monospace,monospace;background:#eef1f5;border-radius:4px;padding:0 4px;min-width:16px;text-align:center}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.25);flex:none}
+.cls .opt{opacity:.8;font-style:italic}
+table.yt{border-collapse:collapse;width:100%;font-size:12px}
+table.yt td,table.yt th{border-bottom:1px solid #eef0f3;padding:2px 3px;text-align:left}
+table.yt tr.cur{background:#eaf2ff}
+table.yt tr{cursor:pointer}
+.chip{display:inline-flex;align-items:center;gap:4px}
+#strip{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+#strip .it{position:relative;cursor:pointer;border:2px solid transparent;border-radius:4px}
+#strip .it.cur{border-color:var(--ac)}
+#strip canvas{width:100%;display:block;image-rendering:pixelated;background:#222;border-radius:3px}
+#strip .lb{position:absolute;left:2px;top:2px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:0 3px;border-radius:3px}
+#strip .lc{position:absolute;right:2px;bottom:2px;width:12px;height:12px;border-radius:3px;border:1px solid #fff}
+#curve svg{width:100%;height:150px;background:#fbfcfd;border:1px solid var(--ln);border-radius:6px}
+.msg{padding:5px 7px;border-radius:6px;margin:4px 0;font-size:12px}
+.msg.wa{background:#fff6ed;color:var(--wa)} .msg.er{background:#fef3f2;color:var(--er)} .msg.ok{background:#ecfdf3;color:var(--ok)}
+#panel{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(255,255,255,.96);border:1px solid var(--ln);border-radius:8px;padding:8px;width:290px;max-height:calc(100% - 20px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#panel label{display:flex;gap:5px;align-items:center}
+#panel .ol{border-top:1px solid #eef0f3;padding:3px 0}
+#panel input[type=range]{width:90px}
+#vung{position:absolute;top:10px;left:56px;z-index:1001;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:400px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
+#vung details{border-top:1px solid #eef0f3;margin-top:4px;padding-top:3px}
+.vg-dau{display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:move;user-select:none;background:#f2f4f7;margin:-8px -8px 4px;padding:6px 8px;border-radius:8px 8px 0 0}
+.vg-cong{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:3px;margin:4px 0}
+.vg-cong button{padding:5px 3px;font-size:12px;line-height:1.2}
+.vg-cong button.on{box-shadow:0 0 0 2px #0b63ce66}
+#vgGoiY{min-height:28px;background:#f8fafc;border-radius:6px;padding:3px 6px;margin:2px 0}
+.vg-tom{margin:4px 0;padding:4px 6px;border-left:3px solid #c2185b;background:#fdf2f8;border-radius:4px}
+.vg-tom:empty{display:none}
+.vg-tab{display:flex;gap:2px;border-bottom:1px solid var(--ln);margin:6px 0 4px}
+.vg-tab button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:4px 6px}
+.vg-tab button.on{border-bottom-color:var(--ac);color:var(--ac);font-weight:600}
+.vg-khung{border:1px solid #fedf89;background:#fffcf5;border-radius:6px;padding:5px 6px;margin:6px 0}
+#vgDSNghi,#vgDSMang{max-height:230px;overflow:auto}
+#vgDSNghi tr:hover,#vgDSMang tr:hover{background:#fef7c3}
+.vg-tip{font-size:11px}
+#vung summary{cursor:pointer;font-weight:600}
+#vgDS .row{border-bottom:1px solid #f2f4f7;padding:2px 0}
+#hud{position:absolute;left:10px;bottom:22px;z-index:1000;background:rgba(0,0,0,.72);color:#fff;border-radius:6px;padding:4px 8px;font-size:12px;pointer-events:none}
+#tilewarn{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:1000}
+dialog{border:1px solid var(--ln);border-radius:10px;max-width:780px;width:92vw}
+dialog table{border-collapse:collapse;font-size:12px}
+dialog td,dialog th{border-bottom:1px solid #eef0f3;padding:3px 5px;vertical-align:top;text-align:left}
+kbd{font:600 11px ui-monospace,monospace;background:#eef1f5;border:1px solid #d0d5dd;border-radius:4px;padding:0 4px}
+textarea{width:100%;min-height:36px;border:1px solid var(--ln);border-radius:6px;padding:4px}
+input[type=text]{border:1px solid var(--ln);border-radius:6px;padding:3px 5px}
+.prog{height:6px;background:#eef0f3;border-radius:3px;overflow:hidden}
+.prog>div{height:100%;background:var(--ok)}
+/* ---- bản 2.0: ngôn ngữ, liên kết ngoài, đường mùa vụ nhiều năm, di động ---- */
+#selLang{margin-left:auto}
+.hdr{display:flex;align-items:center;gap:6px}
+.lk{display:grid;gap:2px;margin:4px 0}
+.lk a{color:#1a56db;text-decoration:none;font-size:12px;padding:2px 0}
+.lk a:hover{text-decoration:underline}
+.lk .co{display:flex;gap:4px;align-items:center}
+.lk .co input{flex:1;min-width:0;font:12px ui-monospace,monospace}
+.lk .gee{font:11px ui-monospace,monospace;color:var(--mu)}
+.lk .dc{font-size:12px;background:#f8fafc;border-radius:6px;padding:4px 6px}
+.leaflet-popup-content{margin:10px 12px;min-width:230px}
+#plinks summary{cursor:pointer;font-weight:600;margin:4px 0}
+#curveCtl select{max-width:170px}
+#curve svg,#curveBig svg{width:100%;height:auto;background:#fbfcfd;border:1px solid var(--ln);border-radius:6px;display:block}
+.cvleg{display:flex;flex-wrap:wrap;gap:3px 8px;margin:3px 0;font-size:11px}
+.cvleg span{cursor:pointer;white-space:nowrap}
+.cvleg span.an{font-weight:700;color:var(--wa)}
+.cvleg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:3px;margin-right:3px}
+.cvnote{font-size:11px;color:var(--mu);margin:2px 0}
+.cvwarn{font-size:11.5px;color:var(--wa);margin:2px 0}
+#dlgCurve{max-width:980px}
+#grip,#fab{display:none}
+@media (max-width: 760px){
+  html,body{height:100%;overflow:hidden}
+  body{font-size:14px}
+  #app{display:block;height:100%}
+  #map{position:fixed;inset:0}
+  #side{position:fixed;left:0;right:0;bottom:0;width:auto;min-width:0;z-index:1200;height:48%;max-height:calc(100% - 52px);
+        border-right:0;border-top:1px solid var(--ln);border-radius:14px 14px 0 0;box-shadow:0 -4px 18px rgba(0,0,0,.18);
+        padding:0 12px calc(24px + env(safe-area-inset-bottom, 0px));transition:height .18s ease}
+  body[data-sheet="min"] #side{height:118px}
+  body[data-sheet="mid"] #side{height:52%}
+  body[data-sheet="max"] #side{height:calc(100% - 52px)}
+  body.keo #side{transition:none}
+  #grip{display:flex;position:sticky;top:0;z-index:2;background:var(--pn);margin:0 -12px 4px;padding:14px 10px 6px;align-items:center;gap:6px;
+        border-bottom:1px solid #eef0f3;touch-action:none;cursor:grab}
+  #grip::before{content:"";position:absolute;top:5px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:#c5cbd3}
+  #gripInfo{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #grip button{min-width:40px;min-height:36px;font-size:16px}
+  button,select,input{min-height:34px}
+  button{padding:5px 9px}
+  .cls{grid-template-columns:1fr 1fr}
+  .cls button{min-height:40px}
+  #years button{min-width:52px;min-height:38px}
+  button kbd,h2 kbd,.kb{display:none}
+  #panel{display:none;left:8px;right:64px;top:8px;width:auto;max-height:46%}
+  body.show-panel #panel{display:block}
+  body.show-panel .leaflet-control-zoom{display:none}
+  #vung{left:6px!important;right:64px;top:6px!important;width:auto;max-height:50%}
+  .vg-cong{grid-template-columns:repeat(auto-fit,minmax(86px,1fr))}
+  .vg-dau{cursor:default}
+  #hud{bottom:auto;top:8px;left:54px;right:54px;font-size:11px;text-align:center}
+  body.show-panel #hud{display:none}
+  #fab{display:flex;flex-direction:column;gap:8px;position:fixed;right:10px;top:10px;z-index:1100}
+  #fab button{width:44px;height:44px;border-radius:50%;font-size:19px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);border:0}
+  #fab button.on{background:var(--ac);color:#fff}
+  .leaflet-top.leaflet-left{top:56px}
+  dialog{width:96vw;max-height:88vh;padding:10px}
+  #strip{grid-template-columns:repeat(3,1fr)}
+}
+/* ---- bản 2.1: bảng ảnh nền thu gọn, cột phải / dải dưới, S2 10 băng, bộ điểm mới, chọn vùng nhiều lớp ---- */
+.pn-dau{display:flex;align-items:center;gap:4px}
+.pn-dau b{cursor:pointer}
+#pnThu{padding:0 6px;line-height:1.3}
+#panel.thu{width:auto;padding:4px 8px}
+#panel.thu #pnBody{display:none}
+.s2v{margin:2px 0 2px 18px}
+.s2v select{max-width:150px}
+.s2v input[type=range]{width:110px}
+.lk a .gh{font-size:10.5px;color:var(--mu)}
+.cvleg span.off{opacity:.45;text-decoration:line-through}
+#lbCurveZ{display:inline-flex;gap:2px;align-items:center}
+#selDock{max-width:150px}
+body.dk-phai #app,body.dk-duoi #app{display:grid;height:100vh}
+body.dk-phai #app{grid-template-columns:minmax(330px,390px) minmax(0,1fr) minmax(340px,30vw);grid-template-rows:100vh}
+body.dk-phai #side,body.dk-duoi #side{width:auto;min-width:0}
+body.dk-phai #map{grid-column:2;grid-row:1}
+body.dk-phai #dock{grid-column:3;grid-row:1;overflow-y:auto;border-left:1px solid var(--ln);background:var(--pn);padding:4px 10px 30px}
+body.dk-duoi #app{grid-template-columns:minmax(330px,390px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(240px,36vh)}
+body.dk-duoi #side{grid-column:1;grid-row:1/3}
+body.dk-duoi #map{grid-column:2;grid-row:1}
+body.dk-duoi #dock{grid-column:2;grid-row:2;overflow:auto;border-top:1px solid var(--ln);background:var(--pn);padding:2px 10px 8px}
+body.dk-duoi #viz{display:grid;grid-template-columns:minmax(300px,40%) minmax(0,1fr);gap:12px;align-items:start}
+body.dk-duoi #strip{grid-template-columns:repeat(5,1fr)}
+body.dk-duoi #viz h2{margin-top:4px}
+.bo-t td:first-child{white-space:nowrap;color:var(--mu);padding-right:8px}
+#boNamChon label{display:inline-flex;gap:2px;align-items:center;margin-right:4px}
+.vg-lh{margin:2px 0}
+#vgLopHat{display:flex;flex-wrap:wrap;gap:3px;margin:3px 0}
+#vgLopHat button{padding:1px 5px;font-size:11px;display:inline-flex;gap:3px;align-items:center}
+#vgLopHat button.on{background:#eaf2ff;color:var(--tx);box-shadow:0 0 0 2px var(--ac)}
+#vgBangLop table{width:100%;border-collapse:collapse;font-size:11.5px;margin:2px 0}
+#vgBangLop td{border-bottom:1px solid #f2f4f7;padding:1px 3px}
+#vgBangLop tr.on{background:#eaf2ff}
+#vgBangLop tr{cursor:pointer}
+@media (max-width: 760px){ #dock{display:none!important} #selDock{display:none} #panel.thu{width:auto} }
+#viz select{max-width:100%}
+#vzStrip .row select{flex:1 1 auto;min-width:0}
+.vz-o{min-width:0}
+/* ---- bản 2.2: OpenStreetMap, báo lỗi ---- */
+.osm-h{display:flex;align-items:center;gap:4px;flex-wrap:wrap;border-top:1px solid #eef0f3;padding-top:4px;margin-top:4px}
+.osm-h select{max-width:170px}
+#osmDS label{display:flex;gap:5px;align-items:center;font-size:12px}
+#osmDS .sw{width:11px;height:11px}
+#osmP{position:absolute;top:10px;left:470px;z-index:1001;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:390px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
+#osmKQ,#osmQD{max-height:230px;overflow:auto}
+#osmKQ table,#osmQD table,#osmChon table,#osmTK table{width:100%;border-collapse:collapse;font-size:11.5px}
+#osmKQ td,#osmQD td,#osmChon td,#osmTK td{border-bottom:1px solid #f2f4f7;padding:1px 3px}
+#osmKQ tr:hover{background:#fef7c3}
+#osmChon input[type=text]{width:100%;padding:1px 3px}
+#osmGoiY button{font-size:11px;padding:0 5px}
+#osmQD select{max-width:160px;width:100%}
+#osmQD td:first-child{word-break:break-all}
+.osm-pop td{padding:0 4px;border-bottom:1px solid #f2f4f7;font-size:11.5px;vertical-align:top}
+.osm-pop .k{color:var(--mu);white-space:nowrap}
+#loiCT{max-height:180px;overflow:auto;font-size:11px;background:#f8fafc;padding:6px;border-radius:6px;white-space:pre-wrap}
+#loiMoTa{min-height:90px}
+@media (max-width: 760px){ #osmP{left:6px!important;right:64px;top:6px!important;width:auto;max-height:50%} #osmQD select{max-width:110px} }
+#vgAm{display:none}
+#vgAm.on{background:var(--er);border-color:var(--er)}
+@media (pointer: coarse){ #vgAm{display:inline-block} }
+/* ---- bản 2.3: điểm tra cứu, ẩn bảng chính, tìm xã, chọn vùng theo khu, so sánh các năm ---- */
+.vz-ng{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:8px 0 0;padding:4px 6px;border-radius:6px;background:#f8fafc;font-size:12px}
+.vz-ng.tra{background:#fdf4ff;box-shadow:inset 3px 0 0 #c026d3}
+.vz-ng:empty{display:none}
+.vz-ng button{padding:1px 6px;font-size:11.5px}
+#bSideAn{padding:1px 7px}
+body.side-an #side{display:none}
+body.side-an.dk-phai #app{grid-template-columns:minmax(0,1fr) minmax(340px,30vw)}
+body.side-an.dk-phai #map{grid-column:1}
+body.side-an.dk-phai #dock{grid-column:2}
+body.side-an.dk-duoi #app{grid-template-columns:minmax(0,1fr)}
+body.side-an.dk-duoi #map,body.side-an.dk-duoi #dock{grid-column:1}
+.ctl23{background:#fff;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.35);padding:3px;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.ctl23 button{min-width:30px;height:30px;padding:0 6px;font-size:15px}
+.ctl23 .tx{position:relative;display:flex;gap:2px;align-items:center}
+.ctl23 input{width:170px;padding:4px 6px;border:1px solid var(--ln);border-radius:5px;font-size:12px}
+.ctl23 ul{position:absolute;left:0;top:32px;z-index:1300;list-style:none;margin:0;padding:2px 0;background:#fff;border:1px solid var(--ln);border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.18);min-width:210px;max-height:260px;overflow:auto}
+.ctl23 li{padding:3px 8px;cursor:pointer;white-space:nowrap}
+.ctl23 li.on,.ctl23 li:hover{background:#eaf2ff}
+.vg-o{display:grid;grid-template-columns:auto 1fr;gap:3px 6px;align-items:center;margin:3px 0}
+.vg-o select{max-width:100%}
+#vgXaW .row input[type=text]{flex:1;min-width:0}
+#vgKhuDS .row,#vgDS .row{border-bottom:1px solid #f2f4f7;padding:2px 0}
+#vgKhuDS .row button,#vgDS .row button{padding:0 5px;font-size:11px}
+.vg-an{opacity:.5}
+#vgNamViz svg{width:100%;height:auto;display:block;background:#fbfcfd;border:1px solid var(--ln);border-radius:6px}
+#vgNamViz .leg{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;margin:3px 0}
+#vgNamViz .leg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:3px;border:1px solid rgba(0,0,0,.2)}
+#vgNamViz .ramp{height:10px;border-radius:3px;margin:2px 0}
+.vg-giai{font-size:11.5px;background:#f8fafc;border-radius:6px;padding:4px 6px;margin:4px 0}
+@media (max-width: 760px){ #bSideAn,#ctlSide{display:none!important} body.side-an #side{display:block} .ctl23 input{width:150px} }
+</style>
+</head>
+<body>
+<div id="app">
+<aside id="side">
+  <div id="grip"><span id="gripInfo"></span><button id="gPrev" type="button" title="điểm trước (p)">‹</button><button id="gNext" type="button" title="điểm sau (n)">›</button></div>
+  <div class="hdr"><h1>Geoportal lớp phủ Hải Phòng <span class="mu sm" id="ver"></span></h1>
+    <select id="selLang" data-noi18n title="Ngôn ngữ / Язык / Language"><option value="vi">Tiếng Việt</option><option value="ru">Русский</option><option value="en">English</option></select>
+    <button id="bSideAn" type="button" title="Ẩn bảng điều khiển này để rộng bản đồ (phím [ ); mở lại bằng nút ☰ trên bản đồ">⟨</button></div>
+  <div class="row">
+    <button id="bLoad" title="Tải tệp điểm CSV/GeoJSON hoặc tệp tiến độ JSON">Tải tệp…</button>
+    <button id="bExport">Xuất…</button>
+    <button id="bSet">Cài đặt</button>
+    <button id="bHelp">Trợ giúp <kbd>h</kbd></button>
+    <button id="bVung" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)">Chọn vùng <kbd>o</kbd></button>
+    <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang">🐞 Báo lỗi</button>
+    <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
+      <option value="trai">▤ trong bảng này</option>
+      <option value="phai">▥ cột bên phải</option>
+      <option value="duoi">▦ dải dưới bản đồ</option>
+    </select>
+  </div>
+  <div id="msgs" data-noi18n></div>
+
+  <h2>Bộ điểm</h2>
+  <div class="row">
+    <select id="selSet" style="flex:1"></select>
+    <button id="bBoMoi" type="button" title="Tạo bộ điểm mới: lưới, ngẫu nhiên, phân tầng theo bản đồ; chọn các năm cần gán">＋ Bộ mới</button>
+    <button id="bBoSua" type="button" title="Các năm cần gán của bộ này, đổi tên, xoá bộ tự tạo">⚙</button>
+    <button id="bMode" title="Bật để nhấp lên bản đồ thêm điểm mới (phím m)">Thêm điểm <kbd>m</kbd></button>
+  </div>
+  <div class="mu sm" id="boNam"></div>
+  <div class="row">
+    <select id="selFilter">
+      <option value="all">mọi điểm</option>
+      <option value="todo">chưa xong</option>
+      <option value="done">đã xong</option>
+      <option value="change">có đổi lớp</option>
+      <option value="flag">cần xem lại</option>
+    </select>
+    <button id="bPrev" title="điểm trước (p)">‹ <kbd>p</kbd></button>
+    <span id="pos" class="mu"></span>
+    <button id="bNext" title="điểm sau (n)"><kbd>n</kbd> ›</button>
+    <input id="goto" type="text" placeholder="đến mã…" style="width:80px">
+  </div>
+  <div class="prog"><div id="progbar" style="width:0"></div></div>
+  <div class="mu sm" id="progtxt"></div>
+
+  <h2>Năm đang gán <span class="mu kb">(<kbd>←</kbd> <kbd>→</kbd>)</span></h2>
+  <div class="row" id="years"></div>
+
+  <h2>Lớp <span class="mu kb">(bấm phím để gán cho năm đang chọn)</span></h2>
+  <div class="cls" id="cls"></div>
+
+  <h2>Điểm</h2>
+  <div id="pinfo" class="sm mu">Chưa chọn điểm.</div>
+  <div class="row">
+    <button id="bCopy" title="Chép nhãn năm trước sang năm này (c)">Chép năm trước <kbd>c</kbd></button>
+    <button id="bFill" title="Điền nhãn năm này cho mọi năm sau chưa có nhãn (v)">Điền về sau <kbd>v</kbd></button>
+    <button id="bFlag" title="Đánh dấu cần xem lại (f)">Cần xem lại <kbd>f</kbd></button>
+    <button id="bDel" title="Xoá điểm thêm tay">Xoá điểm</button>
+  </div>
+  <div class="row sm">Độ tin cậy năm này:
+    <button data-conf="1">thấp</button><button data-conf="2">vừa</button><button data-conf="3">cao</button>
+    <span class="mu kb">(<kbd>Shift</kbd>+1/2/3)</span>
+  </div>
+  <table class="yt" id="ytab"></table>
+  <textarea id="note" placeholder="ghi chú cho điểm này"></textarea>
+  <details id="plinks"><summary>Liên kết ngoài cho điểm này</summary><div id="plinkBody"></div></details>
+
+  <section id="viz">
+  <div id="vzNguon" class="vz-ng" data-noi18n></div>
+  <div class="vz-o" id="vzStrip">
+  <h2>Dải ảnh theo năm quanh điểm (khoảng 900 m)</h2>
+  <div class="row"><select id="selStrip"></select><span class="mu sm" id="stripmsg"></span></div>
+  <div id="strip"></div>
+  </div>
+  <div class="vz-o" id="vzCurve">
+  <h2 id="curveH" data-noi18n>Đường mùa vụ 6 kỳ (tái dựng từ PCA chuỗi năm)</h2>
+  <div class="row" id="curveCtl">
+    <select id="selCurveKind" title="loại đồ thị">
+      <option value="ky">mùa vụ 6 kỳ</option>
+      <option value="nam">giá trị điểm ảnh theo năm</option>
+    </select>
+    <select id="selCurveMode" title="cách xem các năm">
+      <option value="mot">một năm nổi bật</option>
+      <option value="chong">chồng các năm</option>
+      <option value="chuoi">chuỗi liên tục các năm</option>
+    </select>
+    <select id="selCurveFeat" title="chỉ số hoặc băng" data-noi18n><option value="NDVI">NDVI</option><option value="MNDWI">MNDWI</option></select>
+    <select id="selCurveGrp" title="nhóm đặc trưng" data-noi18n></select>
+    <label id="lbCurveZ" title="chuẩn hoá từng đường về điểm z qua các năm để so hình dạng"><input type="checkbox" id="cbCurveZ"> z</label>
+    <button id="bCurveBig" type="button" title="xem lớn">⤢ Phóng to</button>
+  </div>
+  <div id="curve"></div>
+  </div>
+  </section>
+
+  <h2 id="statsH">Thống kê năm đang chọn</h2>
+  <div id="stats" class="sm"></div>
+</aside>
+<main id="map">
+  <div id="osmP" hidden>
+    <div class="vg-dau"><b title="kéo thanh này để dời bảng; nhấp đúp để về chỗ cũ">⠿ OpenStreetMap</b><span class="mu" id="osmTrang"></span>
+      <span style="margin-left:auto"></span><button id="osmThu" type="button" title="thu gọn / mở rộng bảng">–</button><button id="osmDong" type="button" title="đóng">×</button></div>
+    <div id="osmBody">
+      <div class="vg-tab"><button data-otab="loc" class="on">Lọc</button><button data-otab="sua">Sửa <b id="osmSoSua" data-noi18n></b></button><button data-otab="mau">Lấy mẫu</button></div>
+      <div data-opane="loc">
+        <div class="row"><input id="osmLoc" type="text" placeholder="vd landuse=industrial · building · name~Cát · @lop=X3" style="flex:1"><button id="osmApDung" type="button" class="on">Lọc</button></div>
+        <div class="row sm" id="osmGoiY" data-noi18n></div>
+        <div class="row"><label><input type="checkbox" id="osmChiKhop"> chỉ hiện đối tượng khớp</label>
+          <select id="osmPV"><option value="nhin">trong khung nhìn</option><option value="nap">mọi đối tượng đã nạp</option></select></div>
+        <div id="osmTK" data-noi18n></div>
+        <div id="osmKQ" data-noi18n></div>
+        <div class="row"><button id="osmXuatLoc" type="button">Xuất đối tượng khớp (GeoJSON)</button></div>
+      </div>
+      <div data-opane="sua" hidden>
+        <div id="osmChon" data-noi18n></div>
+        <div class="row"><button id="osmVe" type="button">＋ Vẽ đối tượng mới</button><button id="osmXuatSua" type="button">Xuất các sửa đổi (GeoJSON)</button>
+          <button id="osmBoHet" type="button">Bỏ mọi sửa đổi</button></div>
+        <div class="mu sm">Sửa ở đây chỉ lưu trong trình duyệt và tệp xuất. Muốn đóng góp lên OpenStreetMap, mở đối tượng bằng nút "Sửa trên OSM (iD)".</div>
+      </div>
+      <div data-opane="mau" hidden>
+        <div class="mu sm">Rải điểm trong các đa giác OSM đang khớp bộ lọc; lớp gợi ý lấy theo bảng quy đổi bên dưới (đổi được, trang nhớ lựa chọn).</div>
+        <div id="osmQD" data-noi18n></div>
+        <div class="row">mỗi lớp <input id="osmN" type="number" value="30" min="1" style="width:56px"> điểm · cách nhau ≥ <input id="osmDmin" type="number" value="200" min="0" style="width:60px"> m
+          · cách mép ≥ <input id="osmBien" type="number" value="15" min="0" style="width:48px"> m</div>
+        <div class="row">năm gợi ý <select id="osmNam" data-noi18n></select><label><input type="checkbox" id="osmGanSan"> gán sẵn nhãn gợi ý (tin cậy thấp)</label></div>
+        <div class="row"><input id="osmTenBo" type="text" placeholder="tên bộ, vd mẫu OSM Thuỷ Nguyên" style="flex:1"><button id="osmTaoBo" type="button" class="on">Tạo bộ điểm</button></div>
+        <div class="mu sm" id="osmMauTT"></div>
+      </div>
+    </div>
+  </div>
+  <div id="tilewarn" hidden class="msg wa">Wayback không có ảnh ở đây cho bản đang chọn: đổi bản phát hành.</div>
+  <div id="panel">
+    <div class="pn-dau"><b>Ảnh nền</b><span class="mu sm" id="pnTom"></span><span style="flex:1"></span>
+      <button id="pnThu" type="button" title="thu gọn / mở bảng ảnh nền và lớp đối chiếu">▾</button></div>
+    <div id="pnBody">
+    <div class="row">
+      <select id="selBase">
+        <option value="auto">Wayback theo năm đang gán</option>
+        <option value="fixed">Wayback bản cố định</option>
+        <option value="now">Esri ảnh mới nhất</option>
+        <option value="none">không ảnh nền</option>
+      </select>
+    </div>
+    <div class="row"><select id="selRel" style="width:100%"></select></div>
+    <div class="mu sm" id="relnote"></div>
+    <b>Lớp đối chiếu (năm đang gán)</b> <span class="mu sm">nháy: <kbd>b</kbd></span>
+    <div id="ols"></div>
+    <div class="mu sm" id="olmsg"></div>
+    <div class="osm-h"><b>OpenStreetMap</b>
+      <select id="osmNguon" title="nguồn dữ liệu OSM"><option value="hf">tải sẵn trên Hugging Face</option><option value="op">Overpass trực tiếp (khung nhìn)</option></select>
+      <button id="osmMo" type="button" title="lọc, xem thẻ, sửa, lấy mẫu từ OSM">Bảng OSM…</button></div>
+    <div id="osmDS" data-noi18n></div>
+    <div class="mu sm" id="osmTT"></div>
+    <div class="ol"><label><input type="checkbox" id="cVung" checked> ▦ Vùng mẫu đã lưu</label>
+      <label><input type="checkbox" id="cTra"> 🔍 Nhấp bản đồ: xem dải ảnh và đường mùa vụ tại chỗ nhấp</label>
+      <label><input type="checkbox" id="cInfo"> 🖱 Thông tin điểm khi bấm lên bản đồ</label>
+      <div class="mu sm">Chuột phải (giữ lâu trên điện thoại) cũng mở bảng này.</div></div>
+    </div>
+  </div>
+  <div id="fab"><button id="fLayers" type="button" title="Ảnh nền và lớp đối chiếu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m2 12.5 10 5 10-5M2 16.5l10 5 10-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><button id="fInfo" type="button" title="Thông tin điểm khi bấm lên bản đồ">ⓘ</button><button id="fSheet" type="button" title="Thu gọn / mở rộng bảng">☰</button></div>
+  <div id="hud"></div>
+  <div id="vung" hidden>
+    <div class="vg-dau"><b title="kéo thanh này để dời bảng; nhấp đúp để về chỗ cũ">⠿ Chọn vùng</b><span class="mu" id="vgTrang"></span>
+      <span style="margin-left:auto"></span><button id="vgThu" title="thu gọn / mở rộng bảng">–</button><button id="vgDong" title="đóng (o)">×</button></div>
+    <div class="vg-cong">
+      <button data-cong="hat" class="on" title="nhấp: điểm mẫu cùng loại; Shift+nhấp: điểm loại trừ (phím 1)"><kbd>1</kbd> Điểm mẫu</button>
+      <button data-cong="xoa" title="nhấp một mảng để xoá cả mảng (phím 2)"><kbd>2</kbd> Xoá mảng</button>
+      <button data-cong="giu" title="nhấp một mảng đúng để giữ (phím 3)"><kbd>3</kbd> Giữ mảng</button>
+      <button data-cong="sua" title="đổi thành đa giác để sửa đỉnh, cắt, vẽ thêm (phím 4)"><kbd>4</kbd> Sửa ranh giới</button>
+      <button id="vgHoan" title="hoàn tác (Z)">↶ <kbd>Z</kbd></button>
+    </div>
+    <div id="vgGoiY" class="mu"></div>
+    <div id="vgGianW" class="row" hidden>giản lược ranh giới <select id="vgGian"><option value="0">0</option><option value="0.7">0.7</option>
+      <option value="1" selected>1</option><option value="1.5">1.5</option><option value="2">2</option></select> điểm ảnh</div>
+    <div id="vgTom" class="vg-tom"></div>
+    <div id="vgBody">
+      <div class="vg-tab"><button data-tab="tim" class="on">Tìm</button><button data-tab="sach">Làm sạch <b id="vgSoNghi" style="color:#b54708"></b></button>
+        <button data-tab="mang">Mảng</button><button data-tab="luu">Thống kê &amp; lưu</button></div>
+      <div data-pane="tim">
+        <div class="vg-lh"><span class="mu">Lớp của điểm mẫu mới:</span><div id="vgLopHat" data-noi18n></div></div>
+        <div id="vgBangLop" data-noi18n></div>
+        <div class="row"><span id="vgHat"></span><button id="vgXoaHat">Xoá điểm mẫu</button><button id="vgTinh">Chọn lại</button>
+          <button id="vgAm" type="button" title="bật: nhấp đặt điểm khác loại (thay cho Shift+nhấp)">− Loại trừ</button>
+          <button id="vgChot" type="button" title="Lưu vùng của mọi lớp ở khu này, khoá lại (chỗ đã chốt bị trừ khi tìm tiếp), rồi xoá điểm mẫu để làm khu khác">🔒 Chốt khu</button></div>
+        <div class="row">Ngưỡng <button id="vgTauTru" title="siết (−)">−</button><input id="vgTau" type="range" min="0.002" max="0.4" step="0.002" value="0.08" style="flex:1">
+          <button id="vgTauCong" title="nới (+)">+</button> <b id="vgTauV">0.080</b></div>
+        <details open><summary>Đặc trưng so sánh</summary><div id="vgDT"></div>
+          <div class="row">Làm mịn <select id="vgMin"><option value="0">không</option><option value="1" selected>3 × 3</option><option value="2">5 × 5</option></select>
+            <span class="mu">(bắt kiểu "làng xen vườn" thay vì từng mái nhà)</span></div></details>
+        <details open><summary>Phạm vi</summary>
+          <div class="vg-o"><span>Tìm ở</span><select id="vgPV"><option value="lien">vùng liền với điểm mẫu</option><option value="bk">mọi chỗ trong bán kính R quanh điểm mẫu</option>
+            <option value="xa">mọi chỗ trong xã có điểm mẫu</option><option value="xads">mọi chỗ trong các xã chọn ở danh sách</option><option value="nhin">mọi chỗ trong khung nhìn</option></select>
+            <span>Mỗi điểm mẫu</span><select id="vgHL" title="điểm mẫu quyết định ở đâu: tránh để mẫu ở khu này kéo nhầm chỗ ở khu khác">
+              <option value="all">quyết định ở mọi nơi trong phạm vi</option><option value="xa">chỉ quyết định trong xã của nó</option><option value="r">chỉ quyết định trong bán kính R quanh nó</option></select>
+            <span>Trừ chỗ</span><select id="vgTru" title="không chọn lại các điểm ảnh đã thuộc vùng lưu cùng năm">
+              <option value="khac">đã lưu cho lớp khác, và mọi khu đã chốt</option><option value="het">đã thuộc mọi vùng đã lưu</option><option value="khong">không trừ</option></select></div>
+          <div class="row"><span data-vgr>R <input id="vgBK" type="number" value="2" min="0.1" step="0.1" style="width:52px"> km</span>
+            <span data-vgt>tầm <input id="vgTam" type="number" value="3" min="0.2" step="0.5" style="width:52px"> km</span></div>
+          <div class="mu" id="vgPVGiai" data-noi18n></div>
+          <div class="mu" id="vgTruTT" data-noi18n></div>
+          <div id="vgXaW">
+            <div class="row"><input id="vgXaLoc" type="text" placeholder="lọc tên xã, phường…"><button id="vgXaDen" type="button" title="phóng tới các xã đã chọn">→ đến</button><button id="vgXaBo" type="button">bỏ chọn</button></div>
+            <div class="row"><select id="vgXa" multiple size="5" style="width:100%"></select></div>
+            <div class="row">nhóm <select id="vgNhom" style="flex:1;min-width:0" data-noi18n></select><button id="vgNhomLuu" type="button" title="lưu các xã đang chọn thành một nhóm có tên">lưu nhóm</button><button id="vgNhomXoa" type="button">xoá nhóm</button></div>
+            <div class="row"><input id="vgNhomTen" type="text" placeholder="tên nhóm mới, vd Thuỷ Nguyên cũ" style="flex:1"></div>
+            <div class="mu">Ctrl + nhấp lên bản đồ: thêm hoặc bỏ xã ở chỗ nhấp.</div>
+          </div>
+          <div class="row"><span class="mu" id="vgXaTT">chưa có ranh giới xã</span><button id="vgNapXa">Nạp ranh giới xã…</button>
+            <label><input type="checkbox" id="vgXaHien"> hiện</label></div></details>
+      </div>
+      <div data-pane="sach" hidden>
+        <div class="row">bỏ mảng &lt; <input id="vgMinPx" type="number" value="4" min="0" style="width:46px"> đ.ảnh · lấp lỗ ≤ <input id="vgLo" type="number" value="16" min="0" style="width:46px"> · nối khe
+          <select id="vgKhe"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option></select></div>
+        <div class="vg-khung">
+          <b>Tìm mảng sai giống các mảng đã xoá</b>
+          <div class="mu" data-i18n-html="vgKhungMoTa">Xoá vài mảng sai bằng công cụ <kbd>2</kbd> (giữ vài mảng đúng bằng <kbd>3</kbd> càng tốt), rồi bấm Tìm: các mảng giống mảng đã xoá hiện màu cam.</div>
+          <div class="row">so theo <label><input type="checkbox" id="vgNPho" checked> phổ / embedding</label><label><input type="checkbox" id="vgNHinh" checked> hình dạng</label>
+            <label><input type="checkbox" id="vgNLop" checked> lớp bản đồ</label></div>
+          <div class="row">độ giống <input id="vgNguong2" type="range" min="0.5" max="0.95" step="0.01" value="0.6" style="flex:1"> <b id="vgNguong2V">0.60</b></div>
+          <div class="row"><button id="vgTimSai" class="on">Tìm <kbd>S</kbd></button><button id="vgXoaTick">Xoá các mảng đã tick <kbd>Enter</kbd></button>
+            <button id="vgBoNghi">Bỏ đánh dấu</button><label><input type="checkbox" id="vgTuTim" checked> tự tìm lại sau mỗi lần xoá</label></div>
+          <div id="vgDSNghi"></div>
+        </div>
+        <div class="row"><label><input type="checkbox" id="vgHienXoa" checked> hiện phần đã xoá (xám)</label><button id="vgBoXoa">Bỏ mọi lần xoá</button></div>
+      </div>
+      <div data-pane="mang" hidden>
+        <div class="row">xếp theo <select id="vgSapXep"><option value="dt">diện tích</option><option value="nghi">nghi sai</option>
+          <option value="xa">xa điểm mẫu</option><option value="dai">kéo dài</option></select>
+          <span class="mu">rê chuột lên dòng để thấy mảng trên bản đồ</span></div>
+        <div id="vgDSMang"></div>
+      </div>
+      <div data-pane="luu" hidden>
+        <div id="vgTK"></div>
+        <div class="row"><button id="vgCapNhat">Thống kê theo ranh giới</button><span class="mu">(sau khi sửa ở công cụ <kbd>4</kbd>)</span></div>
+        <div class="row">Lớp <select id="vgLop" style="max-width:170px"></select> năm <b id="vgNam"></b></div>
+        <div class="row"><input id="vgTen" type="text" placeholder="ghi chú" style="flex:1"><button id="vgLuu" class="on">Lưu vùng</button>
+          <button id="vgLuuHet" title="lưu vùng của mọi lớp có điểm mẫu, mỗi lớp một vùng (không qua bước sửa ranh giới)">Lưu mọi lớp</button></div>
+        <div class="row">rải <input id="vgNDiem" type="number" value="20" min="1" style="width:46px"> điểm <button id="vgRai">vào vùng</button></div>
+        <details id="vgNamKhoi" open><summary>So sánh các năm</summary>
+          <div class="row"><button id="vgNam9" class="on">So sánh các năm</button>
+            <select id="vgNamVec" title="đặc trưng của điểm mẫu dùng cho các năm khác"><option value="goc">đặc trưng mẫu lấy ở năm đang gán</option><option value="tung">đặc trưng mẫu lấy tại chỗ ở từng năm</option></select></div>
+          <details class="vg-giai"><summary>Cách so sánh hoạt động</summary>
+            <div data-i18n-html="vgNamGiai">Trang lấy đặc trưng tại các điểm mẫu ở <b>năm đang gán</b>, rồi áp <b>cùng ngưỡng, cùng phạm vi, cùng các mảng đã xoá</b> lên ảnh của từng năm: mỗi năm ra một vùng cho mỗi lớp. Hiệu diện tích giữa các năm là biến động <b>theo mô hình</b>, cần xem lại bằng dải ảnh theo năm. Chọn "lấy tại chỗ ở từng năm" khi chắc các điểm mẫu không đổi lớp (ví dụ lõi làng cũ) và ảnh các năm lệch màu nhau.
+            <br>Bản đồ: <b>vùng của năm chọn</b>; <b>được / mất</b> so với năm gốc (xanh dương được, đỏ mất, màu lớp là giữ nguyên); <b>số năm thuộc lớp</b> (đậm là ổn định, nhạt là chập chờn); <b>năm bắt đầu thuộc lớp</b> và giữ đến năm cuối (hợp để xem đô thị lan ra theo năm).</div></details>
+          <div id="vgNamTK"></div>
+          <div id="vgNamViz" hidden>
+            <div class="row">bản đồ <select id="vgNamXem"><option value="nam">vùng của năm chọn</option><option value="bd">được / mất so với năm gốc</option>
+              <option value="ts">số năm thuộc lớp</option><option value="dau">năm bắt đầu thuộc lớp</option></select>
+              lớp <select id="vgNamLop" data-noi18n></select></div>
+            <div class="row">năm <input id="vgNamY" type="range" min="0" max="1" step="1" value="0" style="flex:1"> <b id="vgNamYV" data-noi18n></b>
+              <button id="vgNamChay" type="button" title="chạy lần lượt qua các năm">▶</button><button id="vgNamThoat" type="button" title="về kết quả năm đang gán để sửa tiếp">↩</button>
+              <button id="vgNamCSV" type="button">CSV</button></div>
+            <div id="vgNamBD" data-noi18n></div>
+            <div id="vgNamLeg" data-noi18n></div>
+          </div>
+        </details>
+        <details open><summary>Khu đã chốt (<span id="vgSoKhu">0</span>)</summary>
+          <div class="row"><input id="vgKhuTen" type="text" placeholder="tên khu cho lần chốt tới (trống: tên các xã)" style="flex:1"><button id="vgChot2" type="button">🔒 Chốt khu</button></div>
+          <div id="vgKhuDS" data-noi18n></div></details>
+        <details><summary>Vùng đã lưu (<span id="vgSoVung">0</span>)</summary>
+          <div class="row"><label><input type="checkbox" id="vgVungHien" checked> hiện trên bản đồ</label><label><input type="checkbox" id="vgVungNam"> chỉ năm đang gán</label></div>
+          <div id="vgDS"></div></details>
+      </div>
+    </div>
+  </div>
+</main>
+<aside id="dock" hidden></aside>
+</div>
+
+<dialog id="dlgSet">
+  <h3>Cài đặt</h3>
+  <table>
+    <tr><td>Bộ dữ liệu Hugging Face</td><td><input id="cRepo" type="text" size="42"></td></tr>
+    <tr><td>Nhánh / phiên bản</td><td><input id="cRev" type="text" size="12"></td></tr>
+    <tr><td>Hoặc địa chỉ gốc tự chọn</td><td><input id="cBase" type="text" size="42" placeholder="vd http://localhost:8000/ (để trống = Hugging Face)"></td></tr>
+    <tr><td>Các năm cần gán</td><td><input id="cYears" type="text" size="42"></td></tr>
+    <tr><td>Tự sang năm sau khi gán</td><td><input id="cAuto" type="checkbox"></td></tr>
+    <tr><td>Hệ thống lớp</td><td><button id="bScheme">Tải hệ thống lớp JSON…</button> <button id="bSchemeOut">Lưu hệ thống lớp</button></td></tr>
+  </table>
+  <p class="mu sm" data-i18n-html="setNote">Trang đọc <code>manifest.json</code> của bộ dữ liệu để biết các lớp đối chiếu và bộ điểm. Bộ dữ liệu phải công khai. Nếu trình duyệt chặn đọc khi mở tệp bằng <code>file://</code>, chạy <code>python -m http.server</code> trong thư mục chứa trang rồi mở <code>http://localhost:8000/LAY_MAU_DA_NAM.html</code>.</p>
+  <div class="row"><button id="cOk" class="on">Lưu và nạp lại</button><button id="cCancel">Đóng</button></div>
+</dialog>
+
+<dialog id="dlgExp">
+  <h3>Xuất và lưu</h3>
+  <div class="row">
+    <button id="eLong">CSV dạng dài (điểm × năm)</button>
+    <button id="eWide">CSV dạng rộng (mỗi điểm một dòng)</button>
+    <button id="eGeo">GeoJSON</button>
+    <button id="eJson">Tệp tiến độ JSON (đầy đủ, nhập lại được)</button>
+    <button id="eVung">Vùng mẫu (GeoJSON)</button>
+    <button id="eVungCSV">Thống kê vùng mẫu (CSV)</button>
+  </div>
+  <p class="mu sm" data-i18n-html="expNote">Trang tự lưu vào trình duyệt sau mỗi thao tác, nhưng bộ nhớ trình duyệt có thể bị xoá. <b>Xuất tệp tiến độ JSON thường xuyên.</b> Tải tệp đó lại bằng nút "Tải tệp…" để tiếp tục hoặc gộp tiến độ của nhiều người (nhãn mới hơn thắng).</p>
+  <div class="row"><button id="eClose">Đóng</button></div>
+</dialog>
+
+<dialog id="dlgHelp">
+  <h3>Cách dùng</h3>
+  <div data-i18n-html="helpBody">
+  <ol class="sm">
+    <li>Chọn bộ điểm (900 điểm E0 hoặc điểm ứng viên), hoặc bật <b>Thêm điểm</b> rồi nhấp lên bản đồ. Điểm được đặt đúng tâm điểm ảnh 10 m của lưới Sentinel-2; ô vuông đỏ là điểm ảnh đó, ô vàng là khối 3 × 3.</li>
+    <li>Chọn năm bằng <kbd>←</kbd> <kbd>→</kbd>. Ảnh nền Wayback tự đổi sang bản phát hành gần năm đó (ngày trên bản là ngày phát hành, ảnh có thể chụp sớm hơn). Bật lớp đối chiếu ở khung phải; <kbd>b</kbd> để nháy.</li>
+    <li>Bấm phím lớp để gán cho năm đang chọn; trang tự sang năm sau. <kbd>c</kbd> chép năm trước, <kbd>v</kbd> điền cho các năm sau. Năm không có ảnh rõ thì gán <b>M</b>, có ảnh mà không đọc được thì <b>U</b>. Không đoán.</li>
+    <li>Dải ảnh theo năm và đường NDVI, MNDWI 6 kỳ giúp thấy lúc nào đổi lớp và kiểu mùa vụ (lúa: MNDWI lên ở kỳ 1 và 4, NDVI hai đỉnh; ao: MNDWI cao, tụt khi tháo cạn).</li>
+    <li>Xuất tệp tiến độ JSON thường xuyên.</li>
+    <li><b>Chọn vùng</b> (<kbd>o</kbd>): nhấp vài điểm mẫu (vd mái nhà nông thôn), Shift+nhấp điểm khác loại để loại trừ. Công cụ tìm mọi điểm ảnh giống điểm mẫu theo các lớp đặc trưng đã chọn (embedding g7, PC, ảnh S2), trong phạm vi: vùng liền, bán kính, xã hoặc khung nhìn. Kéo ngưỡng để nới hay siết. Thống kê diện tích, số mảng, theo xã, thành phần theo bản đồ. "Thành ranh giới" đổi vùng thành đa giác để sửa (kéo đỉnh, cắt bớt, xoá, vẽ thêm) rồi "Thống kê theo ranh giới". "Lưu vùng" gán lớp và năm; "So sánh các năm" áp cùng điểm mẫu cho mọi năm; "rải điểm" tạo điểm mẫu có sẵn nhãn trong vùng để kiểm lại.
+      Trong chế độ chọn vùng: <kbd>1</kbd> điểm mẫu, <kbd>2</kbd> xoá cả mảng (nhấp vào mảng), <kbd>3</kbd> giữ mảng đúng, <kbd>4</kbd> sửa ranh giới,
+      <kbd>Z</kbd> hoàn tác, <kbd>S</kbd> tìm các mảng giống mảng đã xoá (màu cam), <kbd>Enter</kbd> xoá các mảng đã tick, <kbd>+</kbd>/<kbd>−</kbd> ngưỡng, <kbd>Esc</kbd> về điểm mẫu.
+      Ở mọi công cụ: chuột phải vào một mảng để xoá nhanh, Shift+chuột phải để giữ. Kéo thanh tiêu đề để dời bảng.</li>
+    <li><b>Đường mùa vụ nhiều năm</b>: chọn "chồng các năm" để thấy mỗi năm một màu; nét đứt xám và dải nhạt là trung vị ± độ lệch của các năm, tức quy luật mùa vụ của điểm; năm lệch rõ được đánh dấu ⚠. "Chuỗi liên tục các năm" nối 6 kỳ của mọi năm thành một dòng thời gian: dải màu dưới trục là nhãn đã gán, nền cam là năm phải nội suy. Bấm tên năm để chọn năm đó; <b>⤢ Phóng to</b> để xem lớn.</li>
+    <li><b>Liên kết ngoài</b>: mục "Liên kết ngoài cho điểm này" mở Google Maps, ảnh vệ tinh, Street View, Google Earth (có lịch sử ảnh), Esri Wayback đúng bản đang xem, Copernicus (Sentinel-2 mùa khô năm đang gán), Bing, Yandex, OpenStreetMap, tra địa chỉ, Wikimapia. Trang có dấu 📍 đặt ghim đúng điểm; trang có dấu ⌖ không nhận ghim, điểm nằm chính giữa màn hình và toạ độ được chép sẵn để dán vào ô tìm kiếm của trang. Bật "Thông tin điểm khi bấm lên bản đồ" hoặc bấm chuột phải để xem các liên kết ở một chỗ bất kỳ.</li>
+    <li><b>Bộ điểm mới</b> (＋ Bộ mới): lưới đều, lưới lệch ngẫu nhiên, ngẫu nhiên có khoảng cách tối thiểu, hoặc ngẫu nhiên phân tầng theo bản đồ lớp (mỗi lớp n điểm, lớp bản đồ ghi vào "tầng" và "gợi ý 3 lớp"); phạm vi là khung nhìn, hình chữ nhật vẽ, các xã, toàn thành phố hoặc một vùng đã lưu. Mỗi bộ có các năm cần gán riêng (kể cả 2026 hay năm khác); nút ⚙ đổi năm của bộ đang chọn, đổi tên hoặc xoá bộ tự tạo. Điểm luôn đặt đúng tâm điểm ảnh 10 m.</li>
+    <li><b>Bố cục</b>: ô chọn ở đầu bảng đưa dải ảnh theo năm và đồ thị sang <b>cột bên phải</b> hoặc <b>dải dưới bản đồ</b>, để thấy cùng lúc với các nút lớp mà không phải cuộn. Nút ▾ ở bảng ảnh nền thu gọn bảng đó.</li>
+    <li><b>S2 10 băng</b> (lớp đầu tiên ở bảng lớp, cần bộ dữ liệu có ảnh <code>s2d</code>): tổ hợp màu bất kỳ, chỉ số NDVI, NDWI, MNDWI, NDBI, BSI, hoặc <b>CTX</b> (trung bình, độ lệch chuẩn trong ô 5 × 5 hay 15 × 15) tính ngay trong trình duyệt từ ảnh 10 băng gốc; CTX chỉ tính khi phóng tới mức 13 trở lên. Kéo giãn cố định, giống nhau mọi năm. Lớp này cũng dùng được cho dải ảnh theo năm.</li>
+    <li><b>Đồ thị theo năm</b> (ô "giá trị điểm ảnh theo năm"): mỗi năm một giá trị của PC1-5, các thành phần embedding, 10 băng S2, 5 chỉ số hoặc 40 đặc trưng CTX tại đúng điểm ảnh; CTX và chỉ số tính như bộ phân loại. Bấm tên đường để ẩn hoặc hiện, "z" để so hình dạng; năm lệch khỏi các năm khác (cần ít nhất 4 năm) có nền đỏ nhạt, dưới trục là nhãn đã gán và các bản đồ lớp. Kiểu "mùa vụ 6 kỳ" nay chọn được cả 10 băng, không chỉ NDVI, MNDWI.</li>
+    <li><b>Chọn vùng nhiều lớp</b>: chọn lớp ở hàng nút màu trước khi nhấp điểm mẫu; đổi lớp rồi nhấp tiếp cho lớp khác. Mỗi điểm ảnh thuộc lớp có điểm mẫu giống nó nhất (nếu dưới ngưỡng), nên vùng các lớp không chồng nhau. Bảng dưới hàng nút cho diện tích từng lớp; nhấp một dòng (hoặc nhấp mảng của lớp đó bằng công cụ xoá, giữ) để làm việc với lớp ấy. "So sánh các năm" cho diện tích mọi lớp theo năm; "Lưu mọi lớp" lưu mỗi lớp một vùng.</li>
+    <li><b>Ảnh nền không còn ô trắng</b>: khi bản Wayback đang xem không có ảnh chi tiết ở mức phóng hiện tại, trang lấy ô ở mức thấp hơn của chính bản đó, cắt đúng phần và phóng to có nội suy (mờ hơn nhưng đúng ảnh của bản); dòng ghi chú dưới ảnh nền cho biết đang phóng từ mức nào.</li>
+    <li><b>OpenStreetMap</b>: ở bảng ảnh nền, bật các chủ đề (sử dụng đất, tự nhiên, mặt nước, sông kênh, đường, nhà, điểm quan tâm). Nguồn "tải sẵn trên Hugging Face" đọc tệp FlatGeobuf theo khung nhìn (tải về mở được bằng QGIS); nguồn "Overpass trực tiếp" hỏi thẳng OSM cho khung nhìn. Màu theo lớp gợi ý. Nhấp một đối tượng để xem thẻ, mở trên OSM hoặc sửa bằng iD. "Bảng OSM…": <b>Lọc</b> bằng biểu thức (vd <code>landuse=industrial</code>, <code>building</code>, <code>water=pond|fishpond</code>, <code>name~Cát</code>, <code>@lop=X3</code>) kèm số lượng, diện tích; <b>Sửa</b> thẻ và hình (chỉ lưu trong trình duyệt, xuất GeoJSON); <b>Lấy mẫu</b>: rải điểm trong các đa giác khớp lọc, lớp gợi ý theo bảng quy đổi sửa được, có thể gán sẵn nhãn tin cậy thấp. Dữ liệu © OpenStreetMap contributors, ODbL.</li>
+    <li><b>Quy hoạch</b>: liên kết ngoài có thêm cổng quy hoạch Hải Phòng, mở ở đúng vị trí điểm.</li>
+    <li><b>Báo lỗi</b> (🐞): mô tả lỗi; trang tự đính kèm thông tin kỹ thuật (phiên bản, dữ liệu, lỗi gần đây, không gồm nhãn đã gán) rồi mở thư gửi người quản lý trang, hoặc chép nội dung để gửi cách khác.</li>
+    <li><b>Tra cứu nhanh</b> (🔍, bật sẵn ở bảng ảnh nền): nhấp bất kỳ chỗ nào trên bản đồ để xem dải ảnh theo năm và đường mùa vụ tại đó mà không cần tạo điểm; dấu tím đánh dấu chỗ đang xem. "＋ thêm thành điểm" biến chỗ đó thành điểm để gán nhãn, "↩" quay về điểm đang gán. Trong chọn vùng, điểm mẫu vừa đặt cũng được tra cứu luôn.</li>
+    <li><b>Rộng bản đồ, tìm xã</b>: nút ⟨ ở đầu bảng (hoặc phím <kbd>[</kbd>) ẩn bảng điều khiển; nút ☰ trên bản đồ mở lại. Nút 🔎 trên bản đồ tìm xã, phường theo tên (gõ không dấu cũng được) rồi bay tới và tô sáng ranh giới.</li>
+    <li><b>Chọn vùng theo khu</b>: "Tìm ở" tách rõ "xã có điểm mẫu" (đặt một điểm ở xã nào là tìm khắp xã đó) và "các xã chọn ở danh sách" (lọc theo tên, Ctrl + nhấp bản đồ để thêm, bỏ xã, lưu thành nhóm có tên). "Mỗi điểm mẫu" chỉ quyết định trong xã của nó hoặc trong bán kính R, để mẫu ở khu này không kéo nhầm chỗ ở khu khác (ruộng và nhà dễ lẫn giữa các vùng). "Trừ chỗ" bỏ các điểm ảnh đã thuộc vùng lưu cùng năm. Làm xong một khu thì bấm <b>🔒 Chốt khu</b>: vùng của mọi lớp được lưu và khoá (bị trừ với mọi lớp khi tìm tiếp), điểm mẫu được dọn để làm khu khác; "mở lại" đưa khu về để sửa. Vùng đã lưu ẩn, hiện được theo năm, theo khu, hoặc tắt hẳn ở bảng ảnh nền.</li>
+    <li><b>So sánh các năm</b>: đặc trưng tại điểm mẫu lấy ở năm đang gán (hoặc tại chỗ ở từng năm), áp cùng ngưỡng, cùng phạm vi, cùng các mảng đã xoá cho ảnh mọi năm. Kết quả: bảng và biểu đồ diện tích từng lớp theo năm; bản đồ vùng từng năm, được / mất so với năm gốc, số năm thuộc lớp, năm bắt đầu thuộc lớp; ▶ chạy qua các năm; xuất CSV. Đây là biến động theo mô hình, cần xem lại bằng dải ảnh theo năm.</li>
+    <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
+    <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mở thẳng bằng <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
+  </ol>
+  <p class="sm"><b>Phím:</b> <kbd>n</kbd>/<kbd>p</kbd> điểm sau/trước, <kbd>←</kbd>/<kbd>→</kbd> năm, <kbd>c</kbd> chép năm trước, <kbd>v</kbd> điền về sau, <kbd>f</kbd> cần xem lại, <kbd>g</kbd> về điểm, <kbd>b</kbd> nháy lớp đối chiếu, <kbd>m</kbd> chế độ thêm điểm, <kbd>Shift</kbd>+1/2/3 độ tin cậy, <kbd>Backspace</kbd> xoá nhãn năm này, <kbd>[</kbd> ẩn / hiện bảng điều khiển.</p>
+  </div>
+  <div id="helpcls"></div>
+  <div class="row"><button id="hClose">Đóng</button></div>
+</dialog>
+<dialog id="dlgCurve">
+  <h3>Đường mùa vụ nhiều năm</h3>
+  <div id="curveBig"></div>
+  <div class="row"><button id="cvClose" type="button">Đóng</button></div>
+</dialog>
+<dialog id="dlgBo">
+  <h3 id="boTieuDe">Tạo bộ điểm mới</h3>
+  <table class="bo-t">
+    <tr><td>Tên bộ</td><td><input id="boTen" type="text" size="34" placeholder="vd lưới 1 km Thuỷ Nguyên"></td></tr>
+    <tr data-moi><td>Cách tạo</td><td><select id="boCach">
+      <option value="luoi">lưới đều (tâm mỗi ô)</option>
+      <option value="lech">lưới lệch ngẫu nhiên (mỗi ô một điểm)</option>
+      <option value="nn">ngẫu nhiên đơn giản</option>
+      <option value="pt">ngẫu nhiên phân tầng theo bản đồ lớp</option>
+      <option value="trong">bộ trống (tự thêm điểm bằng tay)</option>
+    </select></td></tr>
+    <tr data-moi data-cach="luoi lech"><td>Bước lưới</td><td><input id="boBuoc" type="number" value="1000" min="10" step="10" style="width:90px"> m</td></tr>
+    <tr data-moi data-cach="nn"><td>Số điểm</td><td><input id="boN" type="number" value="300" min="1" style="width:90px"></td></tr>
+    <tr data-moi data-cach="pt"><td>Bản đồ lớp</td><td><select id="boLopBD"></select> năm <select id="boNamBD"></select></td></tr>
+    <tr data-moi data-cach="pt"><td>Số điểm mỗi lớp</td><td><input id="boNLop" type="number" value="50" min="1" style="width:90px"></td></tr>
+    <tr data-moi data-cach="nn pt"><td>Cách nhau ít nhất</td><td><input id="boDmin" type="number" value="250" min="0" step="10" style="width:90px"> m</td></tr>
+    <tr data-moi><td>Phạm vi</td><td><select id="boPV">
+      <option value="nhin">khung nhìn hiện tại</option>
+      <option value="hcn">hình chữ nhật vẽ trên bản đồ</option>
+      <option value="xa">các xã chọn dưới đây</option>
+      <option value="tp">toàn thành phố (mọi xã)</option>
+      <option value="vung">một vùng đã lưu (Chọn vùng)</option>
+    </select> <button id="boVe" type="button">Vẽ…</button> <span class="mu sm" id="boPVTT"></span>
+      <div><select id="boXa" multiple size="5" style="width:100%;margin-top:3px"></select></div>
+      <div><select id="boVung" style="width:100%;margin-top:3px"></select></div></td></tr>
+    <tr><td>Các năm cần gán</td><td><div id="boNamChon" class="row"></div>
+      <div class="row"><input id="boThemNam" type="number" min="1985" max="2100" placeholder="năm khác" style="width:90px"><button id="boThemNamB" type="button">+ thêm năm</button></div>
+      <div class="mu sm">Tiến độ, lọc "đã xong", xuất tệp tính theo các năm này. Năm không có ảnh đối chiếu vẫn gán được trên ảnh Wayback.</div></td></tr>
+  </table>
+  <div class="mu sm" id="boTT"></div>
+  <div class="row"><button id="boXem" type="button" data-moi>Xem trước</button><button id="boOk" type="button" class="on">Tạo bộ</button>
+    <button id="boXoa" type="button" data-sua hidden>Xoá bộ này</button><button id="boDong" type="button">Đóng</button></div>
+</dialog>
+<dialog id="dlgLoi">
+  <h3>Báo lỗi, góp ý</h3>
+  <div class="mu sm">Mô tả đã làm gì, mong đợi gì và thấy gì. Trang tự đính kèm thông tin kỹ thuật bên dưới (không gồm nhãn đã gán của bạn).</div>
+  <textarea id="loiMoTa" rows="5" placeholder="vd: bấm Chọn vùng ở năm 2019 thì bảng không hiện"></textarea>
+  <div class="row"><input id="loiLienHe" type="text" placeholder="email hoặc tên để liên hệ lại (không bắt buộc)" style="flex:1"></div>
+  <details><summary>Thông tin kỹ thuật đính kèm</summary><pre id="loiCT" data-noi18n></pre></details>
+  <div class="row"><button id="loiGui" type="button" class="on">Gửi qua email</button><button id="loiGH" type="button" hidden>Tạo issue trên GitHub</button>
+    <button id="loiChep" type="button">Chép nội dung</button><button id="loiDong" type="button">Đóng</button></div>
+  <div class="mu sm" id="loiTT" data-noi18n></div>
+</dialog>
+<input type="file" id="fileIn" hidden accept=".csv,.json,.geojson">
+
+<script id="core">
+/* ======================= PHẦN LÕI (không dùng DOM, kiểm thử được bằng node) ======================= */
+var DEFAULT_SCHEME = /*__SCHEME__*/null;
+var CORE = (function () {
+  var UTM = "+proj=utm +zone=48 +datum=WGS84 +units=m +no_defs";
+  var GRID = {x0: 615610, y0: 2352020, res: 10};          // lưới ảnh tổng hợp S2_HP (EPSG:32648)
+  var R = 6378137;
+  function toUTM(lon, lat) { return proj4("EPSG:4326", UTM, [lon, lat]); }
+  function toLL(x, y) { return proj4(UTM, "EPSG:4326", [x, y]); }
+  function snap(x, y, g) {
+    g = g || GRID;
+    var c = Math.floor((x - g.x0) / g.res), r = Math.floor((g.y0 - y) / g.res);
+    return [g.x0 + (c + 0.5) * g.res, g.y0 - (r + 0.5) * g.res];
+  }
+  function squareLL(xc, yc, half) {                  // ô vuông quanh tâm (UTM) -> [[lat, lon], ...]
+    var pts = [[xc - half, yc - half], [xc + half, yc - half], [xc + half, yc + half], [xc - half, yc + half]];
+    return pts.map(function (p) { var ll = toLL(p[0], p[1]); return [ll[1], ll[0]]; });
+  }
+  function to3857(lon, lat) {
+    return [R * lon * Math.PI / 180, R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))];
+  }
+  function tileBbox(z, x, y) {
+    var S = 2 * Math.PI * R, s = S / Math.pow(2, z), o = S / 2;
+    return [x * s - o, o - (y + 1) * s, (x + 1) * s - o, o - y * s];
+  }
+  function inter(a, b) { return a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1]; }
+
+  function parseCSV(text) {
+    var rows = [], row = [], f = "", q = false, i, ch;
+    text = text.replace(/^﻿/, "");
+    for (i = 0; i < text.length; i++) {
+      ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(f); f = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(f); f = ""; if (row.length > 1 || row[0] !== "") rows.push(row); row = [];
+      } else f += ch;
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    if (!rows.length) return [];
+    var h = rows[0].map(function (s) { return s.trim(); });
+    return rows.slice(1).map(function (r) { var o = {}; h.forEach(function (k, j) { o[k] = r[j] === undefined ? "" : r[j]; }); return o; });
+  }
+  function csvCell(v) {
+    if (v === null || v === undefined) return "";
+    var s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function toCSV(rows, cols) {
+    return "﻿" + [cols.join(",")].concat(rows.map(function (r) { return cols.map(function (c) { return csvCell(r[c]); }).join(","); })).join("\r\n");
+  }
+  function dataUrl(cfg, path) {
+    if (cfg.base) return cfg.base.replace(/\/+$/, "") + "/" + path;
+    return "https://huggingface.co/datasets/" + cfg.repo + "/resolve/" + (cfg.rev || "main") + "/" + path;
+  }
+  function releaseForYear(REL, y) {            // bản phát hành đầu tiên sau mùa khô của năm y
+    var target = y + "-06-30", last = 0, i;
+    for (i = 0; i < REL.length; i++) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(REL[i][0])) continue;
+      last = i;
+      if (REL[i][0] >= target) return i;
+    }
+    return last;
+  }
+
+  /* ---- hệ thống lớp ---- */
+  function schemeIndex(sc) {
+    var by = {}, key = {}, grp = {};
+    (sc.nhom || []).forEach(function (g) { grp[g.ma] = g; });
+    (sc.lop || []).concat(sc.dac_biet || []).forEach(function (c) {
+      by[c.ma] = c; if (c.phim) key[c.phim.toLowerCase()] = c.ma;
+    });
+    return {by: by, key: key, grp: grp,
+      lop3: function (ma) { var c = by[ma]; if (!c || !c.nhom) return null; var g = grp[c.nhom]; return g ? g.lop3 : null; }};
+  }
+
+  /* ---- nhãn ---- */
+  function newPoint(id, lon, lat, extra) {
+    var u = snap.apply(null, toUTM(lon, lat)), ll = toLL(u[0], u[1]);
+    var p = {id: String(id), lon: +ll[0].toFixed(7), lat: +ll[1].toFixed(7), x: u[0], y: u[1],
+             bo: "", tang: "", goi_y: {}, nhan: {}, tin: {}, tg: {}, ghi_chu: "", xem_lai: false};
+    if (extra) Object.keys(extra).forEach(function (k) { p[k] = extra[k]; });
+    return p;
+  }
+  function setLabel(p, y, ma, now) { if (ma === null) { delete p.nhan[y]; } else p.nhan[y] = ma; p.tg[y] = now || Date.now(); }
+  function prevLabel(p, years, y) {
+    var i = years.indexOf(y), j;
+    for (j = i - 1; j >= 0; j--) if (p.nhan[years[j]] != null) return p.nhan[years[j]];
+    return null;
+  }
+  function fillForward(p, years, y, now) {
+    var v = p.nhan[y], i = years.indexOf(y), n = 0, j;
+    if (v == null) return 0;
+    for (j = i + 1; j < years.length; j++) if (p.nhan[years[j]] == null) { setLabel(p, years[j], v, now); n++; }
+    return n;
+  }
+  function isDone(p, years) { return years.every(function (y) { return p.nhan[y] != null; }); }
+  function nDone(p, years) { return years.filter(function (y) { return p.nhan[y] != null; }).length; }
+  function changes(p, years) {            // số lần đổi lớp giữa các năm có nhãn thật (bỏ U, M)
+    var seq = years.map(function (y) { return p.nhan[y]; }).filter(function (v) { return v != null && v !== "U" && v !== "M"; });
+    var n = 0, i;
+    for (i = 1; i < seq.length; i++) if (seq[i] !== seq[i - 1]) n++;
+    return n;
+  }
+  function merge(a, b) {                   // gộp tiến độ: điểm hợp, nhãn từng năm lấy bản mới hơn
+    Object.keys(b).forEach(function (id) {
+      var q = b[id], p = a[id];
+      if (!p) { a[id] = q; return; }
+      Object.keys(q.nhan || {}).forEach(function (y) {
+        if (p.nhan[y] == null || (q.tg && p.tg && (q.tg[y] || 0) > (p.tg[y] || 0))) {
+          p.nhan[y] = q.nhan[y]; p.tg[y] = (q.tg || {})[y] || Date.now();
+          if (q.tin && q.tin[y] != null) p.tin[y] = q.tin[y];
+        }
+      });
+      if (q.ghi_chu && q.ghi_chu !== p.ghi_chu) p.ghi_chu = p.ghi_chu ? p.ghi_chu + " | " + q.ghi_chu : q.ghi_chu;
+      p.xem_lai = p.xem_lai || q.xem_lai;
+    });
+    return a;
+  }
+  function exportLong(points, years, idx) {
+    var rows = [];
+    points.forEach(function (p) {
+      years.forEach(function (y) {
+        var ma = p.nhan[y]; if (ma == null) return;
+        var c = idx.by[ma] || {};
+        rows.push({id: p.id, bo_diem: p.bo, lon: p.lon, lat: p.lat, x_utm: p.x, y_utm: p.y, tang: p.tang, nam: y,
+                   ma_lop: ma, id_lop: c.id, nhom: c.nhom || "", lop3: idx.lop3(ma), tin_cay: p.tin[y] || "",
+                   goi_y_3lop: p.goi_y[y] == null ? "" : p.goi_y[y], xem_lai: p.xem_lai ? 1 : 0,
+                   ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : ""});
+      });
+    });
+    return rows;
+  }
+  function exportWide(points, years, idx) {
+    return points.map(function (p) {
+      var r = {id: p.id, bo_diem: p.bo, lon: p.lon, lat: p.lat, x_utm: p.x, y_utm: p.y, tang: p.tang,
+               so_nam_co_nhan: nDone(p, years), so_lan_doi: changes(p, years), xem_lai: p.xem_lai ? 1 : 0, ghi_chu: p.ghi_chu};
+      years.forEach(function (y) { r["ma_" + y] = p.nhan[y] || ""; r["lop3_" + y] = p.nhan[y] ? (idx.lop3(p.nhan[y]) || "") : ""; });
+      return r;
+    });
+  }
+  function reconstruct(pcs, he, k) {      // PC × he_so_nhan -> 72 đặc trưng: mean + std · (W[:k]ᵀ pc)
+    var W = he.W, nb = he.mean.length, out = new Array(nb), j, i, s = he.he_so_nhan || 100;
+    for (j = 0; j < nb; j++) { var z = 0; for (i = 0; i < k; i++) z += (pcs[i] / s) * W[i][j]; out[j] = he.mean[j] + he.std[j] * z; }
+    return out;
+  }
+  function curveOf(full, bang, feat, nky) {
+    var r = [], i;
+    for (i = 0; i < nky; i++) { var n = bang.indexOf(feat + "_p" + (i < 9 ? "0" : "") + (i + 1)); r.push(n < 0 ? null : full[n]); }
+    return r;
+  }
+
+  /* ---- đọc ô bản đồ từ COG, đúng vị trí điểm ảnh (không làm tròn cửa sổ như readRasters({bbox})) ---- */
+  function pickImage(list, want) {          // list: [{rx, ...}] từ mịn đến thô; chọn ảnh thô nhất vẫn đủ chi tiết
+    var use = list[0], i;
+    for (i = 1; i < list.length; i++) if (list[i].rx <= want * 1.0001) use = list[i];
+    return use;
+  }
+  function windowFor(bb, ox, oy, rx, ry, W, H) {
+    var c0 = Math.max(0, Math.floor((bb[0] - ox) / rx)), c1 = Math.min(W, Math.ceil((bb[2] - ox) / rx));
+    var r0 = Math.max(0, Math.floor((oy - bb[3]) / ry)), r1 = Math.min(H, Math.ceil((oy - bb[1]) / ry));
+    return (c1 <= c0 || r1 <= r0) ? null : [c0, r0, c1, r1];
+  }
+  function resample(src, win, n, ox, oy, rx, ry, bb, w, h) {   // lân cận gần nhất theo tâm điểm ảnh đích
+    var sw = win[2] - win[0], sh = win[3] - win[1], out = new src.constructor(w * h * n);
+    var px = (bb[2] - bb[0]) / w, py = (bb[3] - bb[1]) / h, ci = new Int32Array(w), ri = new Int32Array(h), i, j, b;
+    for (i = 0; i < w; i++) { var c = Math.floor((bb[0] + (i + 0.5) * px - ox) / rx) - win[0]; ci[i] = (c < 0 || c >= sw) ? -1 : c; }
+    for (j = 0; j < h; j++) { var r = Math.floor((oy - (bb[3] - (j + 0.5) * py)) / ry) - win[1]; ri[j] = (r < 0 || r >= sh) ? -1 : r; }
+    for (j = 0; j < h; j++) {
+      if (ri[j] < 0) continue;
+      for (i = 0; i < w; i++) {
+        if (ci[i] < 0) continue;
+        var s0 = (ri[j] * sw + ci[i]) * n, d0 = (j * w + i) * n;
+        for (b = 0; b < n; b++) out[d0 + b] = src[s0 + b];
+      }
+    }
+    return out;
+  }
+  /* ---- bảng màu liên tục cho lớp một băng (1..255, 0 = trống) ---- */
+  var CMAP = {
+    xam: [[0, 0, 0], [255, 255, 255]],
+    rdbu: [[33, 102, 172], [103, 169, 207], [209, 229, 240], [247, 247, 247], [253, 219, 199], [239, 138, 98], [178, 24, 43]],
+    viridis: [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]],
+    magma: [[0, 0, 4], [81, 18, 124], [183, 55, 121], [252, 137, 97], [252, 253, 191]],
+    ndvi: [[120, 70, 30], [215, 180, 110], [245, 240, 190], [140, 200, 90], [20, 110, 40]],
+    burd: [[178, 24, 43], [239, 138, 98], [253, 219, 199], [247, 247, 247], [209, 229, 240], [103, 169, 207], [33, 102, 172]]
+  };
+  function lut(name) {                       // 256 × [r, g, b]; chỉ số 0 không dùng (trống)
+    var cp = CMAP[name] || CMAP.xam, out = new Array(256), i;
+    for (i = 0; i < 256; i++) {
+      var t = Math.max(0, i - 1) / 254 * (cp.length - 1), a = Math.floor(t), b = Math.min(cp.length - 1, a + 1), f = t - a;
+      out[i] = [0, 1, 2].map(function (q) { return Math.round(cp[a][q] + (cp[b][q] - cp[a][q]) * f); });
+    }
+    return out;
+  }
+  /* ======================= CHỌN VÙNG TƯƠNG TỰ (hàm thuần, kiểm thử bằng node) ======================= */
+  /* Lưới phân tích trên EPSG:3857, căn theo lưới COG (gốc x0, y1, cỡ res0). Điểm ảnh (i, j) phủ
+     [x0 + i·res, x0 + (i+1)·res] × [y1 − (j+1)·res, y1 − j·res]. */
+  function gridFor(bb, maxPx, ref) {
+    ref = ref || {x0: 0, y1: 0, res0: 10};
+    var res0 = ref.res0 || 10, span = Math.max(bb[2] - bb[0], bb[3] - bb[1]);
+    var k = Math.max(1, Math.ceil(span / res0 / (maxPx || 1536)));
+    var res = k * res0;
+    var i0 = Math.floor((bb[0] - ref.x0) / res), i1 = Math.ceil((bb[2] - ref.x0) / res);
+    var j0 = Math.floor((ref.y1 - bb[3]) / res), j1 = Math.ceil((ref.y1 - bb[1]) / res);
+    var x0 = ref.x0 + i0 * res, y1 = ref.y1 - j0 * res, w = Math.max(1, i1 - i0), h = Math.max(1, j1 - j0);
+    return {x0: x0, y1: y1, res: res, w: w, h: h, bb: [x0, y1 - h * res, x0 + w * res, y1]};
+  }
+  function m2ll(x, y) { return [x / R * 180 / Math.PI, (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * 180 / Math.PI]; }
+  function pixToLL(g, px, py) { return m2ll(g.x0 + px * g.res, g.y1 - py * g.res); }
+  function llToPix(g, lon, lat) { var m = to3857(lon, lat); return [(m[0] - g.x0) / g.res, (g.y1 - m[1]) / g.res]; }
+  function rowArea(g) {                  // diện tích mặt đất (m²) của một điểm ảnh ở từng hàng: (res·cos φ)²
+    var a = new Float64Array(g.h), j;
+    for (j = 0; j < g.h; j++) {
+      var lat = m2ll(0, g.y1 - (j + 0.5) * g.res)[1] * Math.PI / 180, s = g.res * Math.cos(lat);
+      a[j] = s * s;
+    }
+    return a;
+  }
+  /* các lớp (mảng xen kẽ n băng, 0 = trống) -> đặc trưng uint8 xen kẽ nf kênh + mặt nạ hợp lệ */
+  function stackFeat(list, N) {
+    var nf = 0, i, L, b, k;
+    list.forEach(function (x) { nf += x.n; });
+    var F = new Uint8Array(N * nf), valid = new Uint8Array(N).fill(1), off = 0;
+    for (L = 0; L < list.length; L++) {
+      var d = list[L].data, n = list[L].n;
+      for (i = 0; i < N; i++) {
+        var z = true;
+        for (b = 0; b < n; b++) { k = d[i * n + b]; F[i * nf + off + b] = k; if (k) z = false; }
+        if (z) valid[i] = 0;
+      }
+      off += n;
+    }
+    return {F: F, nf: nf, valid: valid};
+  }
+  /* trung bình ô (2r+1)² chỉ trên điểm hợp lệ, bằng ảnh tích phân, từng kênh một */
+  function smoothFeat(F, nf, w, h, r, valid) {
+    if (!r) return F;
+    var out = new Uint8Array(F.length), W1 = w + 1, S = new Float64Array(W1 * (h + 1)), C = new Float64Array(W1 * (h + 1));
+    var x, y, c, i;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      i = (y + 1) * W1 + x + 1; C[i] = (valid[y * w + x] ? 1 : 0) + C[i - 1] + C[i - W1] - C[i - W1 - 1];
+    }
+    for (c = 0; c < nf; c++) {
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        i = (y + 1) * W1 + x + 1; var p = y * w + x;
+        S[i] = (valid[p] ? F[p * nf + c] : 0) + S[i - 1] + S[i - W1] - S[i - W1 - 1];
+      }
+      for (y = 0; y < h; y++) {
+        var ya = Math.max(0, y - r), yb = Math.min(h, y + r + 1);
+        for (x = 0; x < w; x++) {
+          var xa = Math.max(0, x - r), xb = Math.min(w, x + r + 1), p2 = y * w + x;
+          if (!valid[p2]) continue;
+          var s = S[yb * W1 + xb] - S[ya * W1 + xb] - S[yb * W1 + xa] + S[ya * W1 + xa];
+          var n = C[yb * W1 + xb] - C[ya * W1 + xb] - C[yb * W1 + xa] + C[ya * W1 + xa];
+          out[p2 * nf + c] = n > 0 ? Math.round(s / n) : 0;
+        }
+      }
+    }
+    return out;
+  }
+  function featAt(F, nf, p) { var v = [], c; for (c = 0; c < nf; c++) v.push(F[p * nf + c]); return v; }
+  /* chọn: khoảng cách (chuẩn hoá 0..1) tới điểm mẫu dương gần nhất < tau, và gần mẫu dương hơn mẫu âm */
+  function distSel(F, nf, N, valid, pos, neg, tau, scope) {
+    var sel = new Uint8Array(N), d = new Float32Array(N), s = 1 / (255 * Math.sqrt(nf)), i, k, c;
+    for (i = 0; i < N; i++) {
+      if (!valid[i] || (scope && !scope[i])) { d[i] = 9; continue; }
+      var best = 1e18, bn = 1e18, o = i * nf;
+      for (k = 0; k < pos.length; k++) {
+        var q = pos[k], t = 0;
+        for (c = 0; c < nf; c++) { var e = F[o + c] - q[c]; t += e * e; }
+        if (t < best) best = t;
+      }
+      for (k = 0; k < neg.length; k++) {
+        var q2 = neg[k], t2 = 0;
+        for (c = 0; c < nf; c++) { var e2 = F[o + c] - q2[c]; t2 += e2 * e2; }
+        if (t2 < bn) bn = t2;
+      }
+      d[i] = Math.sqrt(best) * s;
+      if (d[i] < tau && best < bn) sel[i] = 1;
+    }
+    return {sel: sel, d: d};
+  }
+  function circleScope(g, centers, Rm) {        // hình tròn bán kính Rm (m mặt đất) quanh các tâm (lon, lat)
+    var m = new Uint8Array(g.w * g.h), k, x, y;
+    for (k = 0; k < centers.length; k++) {
+      var c = llToPix(g, centers[k][0], centers[k][1]), cs = Math.cos(centers[k][1] * Math.PI / 180);
+      var rp = Rm / (g.res * cs);
+      var ya = Math.max(0, Math.floor(c[1] - rp)), yb = Math.min(g.h - 1, Math.ceil(c[1] + rp));
+      for (y = ya; y <= yb; y++) {
+        var dy = y + 0.5 - c[1], hw = Math.sqrt(Math.max(0, rp * rp - dy * dy));
+        var xa = Math.max(0, Math.ceil(c[0] - hw - 0.5)), xb = Math.min(g.w - 1, Math.floor(c[0] + hw - 0.5));
+        for (x = xa; x <= xb; x++) m[y * g.w + x] = 1;
+      }
+    }
+    return m;
+  }
+  /* tô các vòng (toạ độ điểm ảnh) theo luật chẵn-lẻ, lấy mẫu ở tâm điểm ảnh */
+  function rasterizeRings(rings, w, h, out, val) {
+    out = out || new Uint8Array(w * h); val = val == null ? 1 : val;
+    var edges = [], r, i;
+    for (r = 0; r < rings.length; r++) {
+      var R_ = rings[r];
+      for (i = 0; i < R_.length; i++) {
+        var a = R_[i], b = R_[(i + 1) % R_.length];
+        if (a[1] === b[1]) continue;
+        edges.push(a[1] < b[1] ? [a[0], a[1], b[0], b[1]] : [b[0], b[1], a[0], a[1]]);
+      }
+    }
+    if (!edges.length) return out;
+    var ymin = Infinity, ymax = -Infinity;
+    edges.forEach(function (e) { if (e[1] < ymin) ymin = e[1]; if (e[3] > ymax) ymax = e[3]; });
+    var y0 = Math.max(0, Math.floor(ymin)), y1 = Math.min(h - 1, Math.ceil(ymax)), xs = [], y, k;
+    for (y = y0; y <= y1; y++) {
+      var yc = y + 0.5; xs.length = 0;
+      for (k = 0; k < edges.length; k++) {
+        var e = edges[k];
+        if (yc >= e[1] && yc < e[3]) xs.push(e[0] + (yc - e[1]) * (e[2] - e[0]) / (e[3] - e[1]));
+      }
+      xs.sort(function (p, q) { return p - q; });
+      for (k = 0; k + 1 < xs.length; k += 2) {
+        var xa = Math.max(0, Math.ceil(xs[k] - 0.5)), xb = Math.min(w - 1, Math.ceil(xs[k + 1] - 0.5) - 1);
+        for (var x = xa; x <= xb; x++) out[y * w + x] = val;
+      }
+    }
+    return out;
+  }
+  /* nhãn thành phần liên thông (conn 4 hoặc 8) của các điểm có giá trị `fg` */
+  function labelComp(mask, w, h, conn, fg) {
+    fg = fg == null ? 1 : fg;
+    var lab = new Int32Array(w * h), q = new Int32Array(w * h), sizes = [0], n = 0, touch = [false], p;
+    for (p = 0; p < w * h; p++) {
+      if (lab[p] || (mask[p] ? 1 : 0) !== fg) continue;
+      n++; var qh = 0, qt = 0, sz = 0, tb = false; q[qt++] = p; lab[p] = n;
+      while (qh < qt) {
+        var c = q[qh++], x = c % w, y = (c - x) / w; sz++;
+        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) tb = true;
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          if (conn === 4 && dx && dy) continue;
+          var xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          var nb = yy * w + xx;
+          if (!lab[nb] && (mask[nb] ? 1 : 0) === fg) { lab[nb] = n; q[qt++] = nb; }
+        }
+      }
+      sizes.push(sz); touch.push(tb);
+    }
+    return {lab: lab, sizes: sizes, touch: touch, n: n};
+  }
+  function keepSeeded(mask, w, h, seedIdx) {    // chỉ giữ các mảng (8 liên thông) chứa điểm mẫu
+    var L = labelComp(mask, w, h, 8, 1), keep = {}, out = new Uint8Array(w * h), p;
+    seedIdx.forEach(function (i) { if (L.lab[i]) keep[L.lab[i]] = 1; });
+    for (p = 0; p < w * h; p++) if (keep[L.lab[p]]) out[p] = 1;
+    return out;
+  }
+  function boxCount(mask, w, h, r) {            // số điểm = 1 trong ô (2r+1)² quanh mỗi điểm
+    var W1 = w + 1, I = new Int32Array(W1 * (h + 1)), out = new Int32Array(w * h), x, y;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var i = (y + 1) * W1 + x + 1; I[i] = (mask[y * w + x] ? 1 : 0) + I[i - 1] + I[i - W1] - I[i - W1 - 1];
+    }
+    for (y = 0; y < h; y++) {
+      var ya = Math.max(0, y - r), yb = Math.min(h, y + r + 1);
+      for (x = 0; x < w; x++) {
+        var xa = Math.max(0, x - r), xb = Math.min(w, x + r + 1);
+        out[y * w + x] = I[yb * W1 + xb] - I[ya * W1 + xb] - I[yb * W1 + xa] + I[ya * W1 + xa];
+      }
+    }
+    return out;
+  }
+  function morphClose(mask, w, h, r) {          // giãn rồi co (ô vuông bán kính r): lấp khe hẹp
+    if (!r) return mask;
+    var c1 = boxCount(mask, w, h, r), dil = new Uint8Array(w * h), p;
+    for (p = 0; p < w * h; p++) dil[p] = c1[p] > 0 ? 1 : 0;
+    var c2 = boxCount(dil, w, h, r), out = new Uint8Array(w * h);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var ya = Math.max(0, y - r), yb = Math.min(h, y + r + 1), xa = Math.max(0, x - r), xb = Math.min(w, x + r + 1);
+      out[y * w + x] = c2[y * w + x] === (yb - ya) * (xb - xa) ? 1 : 0;
+    }
+    return out;
+  }
+  function removeSmall(mask, w, h, minPx) {
+    if (!(minPx > 1)) return mask;
+    var L = labelComp(mask, w, h, 8, 1), out = new Uint8Array(w * h), p;
+    for (p = 0; p < w * h; p++) if (L.lab[p] && L.sizes[L.lab[p]] >= minPx) out[p] = 1;
+    return out;
+  }
+  function fillHoles(mask, w, h, maxPx) {       // lấp lỗ (nền 4 liên thông, không chạm mép khung) ≤ maxPx
+    if (!(maxPx > 0)) return mask;
+    var L = labelComp(mask, w, h, 4, 0), out = new Uint8Array(mask), p;
+    for (p = 0; p < w * h; p++) { var l = L.lab[p]; if (l && !L.touch[l] && L.sizes[l] <= maxPx) out[p] = 1; }
+    return out;
+  }
+  /* mặt nạ -> đa giác theo cạnh điểm ảnh (4 liên thông): [{outer: vòng, holes: [vòng...]}], toạ độ điểm ảnh */
+  function traceRings(mask, w, h) {
+    var L = labelComp(mask, w, h, 4, 1), outE = new Map(), E = [], x, y, p;
+    function fgAt(xx, yy) { return xx >= 0 && yy >= 0 && xx < w && yy < h && mask[yy * w + xx] ? 1 : 0; }
+    function add(ax, ay, bx, by, pix) {
+      var k = ax + "," + ay, e = {a: [ax, ay], b: [bx, by], pix: pix, used: false};
+      E.push(e); if (!outE.has(k)) outE.set(k, []); outE.get(k).push(e);
+    }
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      p = y * w + x; if (!mask[p]) continue;
+      if (!fgAt(x - 1, y)) add(x, y, x, y + 1, p);
+      if (!fgAt(x, y + 1)) add(x, y + 1, x + 1, y + 1, p);
+      if (!fgAt(x + 1, y)) add(x + 1, y + 1, x + 1, y, p);
+      if (!fgAt(x, y - 1)) add(x + 1, y, x, y, p);
+    }
+    var byComp = {}, i;
+    for (i = 0; i < E.length; i++) {
+      if (E[i].used) continue;
+      var ring = [], e = E[i];
+      while (e && !e.used) {
+        e.used = true; ring.push(e.a);
+        var cand = (outE.get(e.b[0] + "," + e.b[1]) || []).filter(function (c) { return !c.used; });
+        var nx = null;
+        if (cand.length === 1) nx = cand[0];
+        else if (cand.length > 1) nx = cand.filter(function (c) { return c.pix === e.pix; })[0] || cand[0];
+        e = nx;
+      }
+      var r2 = [], n = ring.length, k;                 // bỏ đỉnh thẳng hàng
+      for (k = 0; k < n; k++) {
+        var pa = ring[(k - 1 + n) % n], pb = ring[k], pc = ring[(k + 1) % n];
+        if ((pb[0] - pa[0]) * (pc[1] - pb[1]) - (pb[1] - pa[1]) * (pc[0] - pb[0]) !== 0) r2.push(pb);
+      }
+      var comp = L.lab[E[i].pix], ar = ringArea(r2);
+      if (!byComp[comp]) byComp[comp] = {outer: null, holes: []};
+      if (ar < 0) byComp[comp].outer = r2; else byComp[comp].holes.push(r2);
+    }
+    return Object.keys(byComp).map(function (k2) { return byComp[k2]; }).filter(function (o) { return o.outer; });
+  }
+  function ringArea(r) {                     // shoelace (trục y hướng xuống): vòng ngoài < 0, lỗ > 0
+    var s = 0, i;
+    for (i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length]; s += a[0] * b[1] - b[0] * a[1]; }
+    return s / 2;
+  }
+  function simplifyRing(r, tol) {            // Douglas-Peucker cho vòng kín, giữ ít nhất 4 đỉnh
+    if (!(tol > 0) || r.length <= 4) return r;
+    var n = r.length, far = 0, fd = -1, i;
+    for (i = 1; i < n; i++) { var d = (r[i][0] - r[0][0]) * (r[i][0] - r[0][0]) + (r[i][1] - r[0][1]) * (r[i][1] - r[0][1]); if (d > fd) { fd = d; far = i; } }
+    function dp(a, b, pts, out) {
+      var mx = -1, mi = -1, k;
+      for (k = a + 1; k < b; k++) {
+        var P = pts[k], A = pts[a], B = pts[b % n], dx = B[0] - A[0], dy = B[1] - A[1], L2 = dx * dx + dy * dy;
+        var t = L2 ? ((P[0] - A[0]) * dx + (P[1] - A[1]) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+        var ex = A[0] + t * dx - P[0], ey = A[1] + t * dy - P[1], dd = ex * ex + ey * ey;
+        if (dd > mx) { mx = dd; mi = k; }
+      }
+      if (mx > tol * tol) { dp(a, mi, pts, out); out.push(pts[mi]); dp(mi, b, pts, out); }
+    }
+    var out = [r[0]]; dp(0, far, r, out); out.push(r[far]); dp(far, n, r, out);
+    return out.length >= 3 ? out : r;
+  }
+  function vectorize(mask, g, tol) {         // -> MultiPolygon (lon, lat), vòng ngoài ngược chiều kim đồng hồ
+    return traceRings(mask, g.w, g.h).map(function (pg) {
+      return [pg.outer].concat(pg.holes).map(function (rg) {
+        var s = simplifyRing(rg, tol).map(function (q) { var ll = pixToLL(g, q[0], q[1]); return [+ll[0].toFixed(7), +ll[1].toFixed(7)]; });
+        s.push(s[0]); return s;
+      });
+    });
+  }
+  function polysToPixRings(g, mpoly) {       // MultiPolygon (lon, lat) -> các vòng (toạ độ điểm ảnh của lưới g)
+    var rings = [];
+    mpoly.forEach(function (pg) { pg.forEach(function (rg) { rings.push(rg.map(function (q) { return llToPix(g, q[0], q[1]); })); }); });
+    return rings;
+  }
+  function geodesicArea(mpoly) {             // m², công thức hình cầu (như Leaflet.GeometryUtil)
+    var tot = 0, d2r = Math.PI / 180;
+    mpoly.forEach(function (pg) {
+      pg.forEach(function (rg, ri) {
+        var a = 0, n = rg.length, i;
+        for (i = 0; i < n - 1; i++) {
+          var p1 = rg[i], p2 = rg[i + 1];
+          a += (p2[0] - p1[0]) * d2r * (2 + Math.sin(p1[1] * d2r) + Math.sin(p2[1] * d2r));
+        }
+        a = Math.abs(a * 6378137 * 6378137 / 2);
+        tot += ri === 0 ? a : -a;
+      });
+    });
+    return tot;
+  }
+  /* thống kê mặt nạ: diện tích, số mảng, theo xã (mảng chỉ số xã), thành phần lớp của các bản đồ */
+  function maskStats(mask, g, opt) {
+    opt = opt || {};
+    var ra = rowArea(g), N = g.w * g.h, A = 0, n = 0, j, i, p;
+    var xa = {}, cls = {};
+    (opt.lop || []).forEach(function (L) { cls[L.id] = {}; });
+    for (j = 0; j < g.h; j++) for (i = 0; i < g.w; i++) {
+      p = j * g.w + i; if (!mask[p]) continue;
+      n++; A += ra[j];
+      if (opt.xaIdx) { var q = opt.xaIdx[p]; xa[q] = (xa[q] || 0) + ra[j]; }
+      (opt.lop || []).forEach(function (L) { var v = L.data[p]; cls[L.id][v] = (cls[L.id][v] || 0) + ra[j]; });
+    }
+    var C = labelComp(mask, g.w, g.h, 8, 1), lg = 0;
+    for (i = 1; i <= C.n; i++) if (C.sizes[i] > lg) lg = C.sizes[i];
+    var tb = A / Math.max(n, 1);
+    return {n_px: n, dien_tich_ha: A / 1e4, n_manh: C.n, manh_lon_nhat_ha: lg * tb / 1e4, do_phan_giai_m: Math.sqrt(tb),
+            theo_xa: xa, thanh_phan: cls, N: N};
+  }
+  function samplePixels(mask, n, seed) {     // n điểm ảnh ngẫu nhiên (lặp lại được) trong mặt nạ
+    var idx = [], p;
+    for (p = 0; p < mask.length; p++) if (mask[p]) idx.push(p);
+    var s = seed || 1, out = [];
+    function rnd() { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }
+    for (var k = 0; k < Math.min(n, idx.length); k++) { var j = k + Math.floor(rnd() * (idx.length - k)); var t = idx[k]; idx[k] = idx[j]; idx[j] = t; out.push(idx[k]); }
+    return out;
+  }
+  /* ---------- mô tả từng mảng (một lượt qua ảnh nhãn) và tìm mảng giống các mảng đã xoá ---------- */
+  function compDesc(lab, n, g, F, nf, dmap, lop) {
+    var w = g.w, h = g.h, ra = rowArea(g), K = n + 1, x, y, k, c, p;
+    var cnt = new Float64Array(K), area = new Float64Array(K), sF = new Float64Array(K * nf), sF2 = new Float64Array(K * nf);
+    var sd = new Float64Array(K), sx = new Float64Array(K), sy = new Float64Array(K), sxx = new Float64Array(K),
+        syy = new Float64Array(K), sxy = new Float64Array(K), per = new Float64Array(K), cls = new Float64Array(K * 4);
+    var bx0 = new Int32Array(K).fill(w), bx1 = new Int32Array(K).fill(-1), by0 = new Int32Array(K).fill(h), by1 = new Int32Array(K).fill(-1);
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      p = y * w + x; k = lab[p]; if (!k || k > n) continue;
+      cnt[k]++; area[k] += ra[y];
+      if (F) for (c = 0; c < nf; c++) { var v = F[p * nf + c]; sF[k * nf + c] += v; sF2[k * nf + c] += v * v; }
+      if (dmap) sd[k] += Math.min(dmap[p], 1);
+      sx[k] += x; sy[k] += y; sxx[k] += x * x; syy[k] += y * y; sxy[k] += x * y;
+      if (lop) { var q = lop[p]; if (q >= 0 && q < 4) cls[k * 4 + q]++; }
+      if (x === 0 || lab[p - 1] !== k) per[k]++;
+      if (x === w - 1 || lab[p + 1] !== k) per[k]++;
+      if (y === 0 || lab[p - w] !== k) per[k]++;
+      if (y === h - 1 || lab[p + w] !== k) per[k]++;
+      if (x < bx0[k]) bx0[k] = x; if (x > bx1[k]) bx1[k] = x; if (y < by0[k]) by0[k] = y; if (y > by1[k]) by1[k] = y;
+    }
+    var out = [];
+    for (k = 1; k <= n; k++) {
+      var m = cnt[k];
+      if (!m) { out.push(null); continue; }
+      var mean = [], sdv = [];
+      for (c = 0; c < nf; c++) { var mu = sF[k * nf + c] / m; mean.push(mu); sdv.push(Math.sqrt(Math.max(0, sF2[k * nf + c] / m - mu * mu))); }
+      var cx = sx[k] / m, cy = sy[k] / m, vx = sxx[k] / m - cx * cx + 1 / 12, vy = syy[k] / m - cy * cy + 1 / 12, cv = sxy[k] / m - cx * cy;
+      var tr = vx + vy, dt = Math.sqrt(Math.max(0, (vx - vy) * (vx - vy) / 4 + cv * cv)), l1 = tr / 2 + dt, l2 = Math.max(tr / 2 - dt, 1e-6);
+      var nc = cls[k * 4] + cls[k * 4 + 1] + cls[k * 4 + 2] + cls[k * 4 + 3];
+      out.push({k: k, n_px: m, dien_tich_ha: area[k] / 1e4, mean: mean, std: sdv, d_mean: dmap ? sd[k] / m : 0,
+                compact: Math.min(1, 4 * Math.PI * m / (per[k] * per[k])), elong: Math.sqrt(l1 / l2),
+                comp: [0, 1, 2, 3].map(function (q) { return nc ? cls[k * 4 + q] / nc : 0; }),
+                cx: cx + 0.5, cy: cy + 0.5, bbox: [bx0[k], by0[k], bx1[k] + 1, by1[k] + 1]});
+    }
+    return out;
+  }
+  function descVec(d, grp) {                 // nhóm 0: phổ/embedding, 1: hình dạng, 2: lớp bản đồ
+    var v = [], gi = [];
+    if (grp.pho) {
+      d.mean.forEach(function (m) { v.push(m / 255); gi.push(0); });
+      d.std.forEach(function (s) { v.push(Math.min(s, 64) / 64); gi.push(0); });
+      v.push(d.d_mean); gi.push(0);
+    }
+    if (grp.hinh) { v.push(Math.log10(Math.max(d.dien_tich_ha, 1e-4)), d.compact, Math.log(d.elong)); gi.push(1, 1, 1); }
+    if (grp.lop) { v.push(d.comp[1], d.comp[2], d.comp[3]); gi.push(2, 2, 2); }
+    return {v: v, gi: gi};
+  }
+  /* điểm "giống mảng sai" của từng ứng viên: dRef / (dXoá + dRef), dXoá = khoảng cách tới mảng đã xoá gần nhất,
+     dRef = tới mảng đã GIỮ gần nhất (nếu có), không thì tới mảng "điển hình" (trung vị các ứng viên) */
+  function similarWrong(cand, del, keep, grp, wts) {
+    wts = wts || [1, 1, 1];
+    if (!cand.length || !del.length) return cand.map(function () { return {score: 0, dDel: Infinity, dRef: 0}; });
+    var V = cand.concat(del, keep).map(function (d) { return descVec(d, grp); });
+    var nd = V[0].v.length, gi = V[0].gi, i, j;
+    if (!nd) return cand.map(function () { return {score: 0, dDel: Infinity, dRef: 0}; });
+    var mu = new Array(nd).fill(0), sd = new Array(nd).fill(0), gs = [0, 0, 0];
+    gi.forEach(function (g_) { gs[g_]++; });
+    V.forEach(function (o) { for (j = 0; j < nd; j++) mu[j] += o.v[j] / V.length; });
+    V.forEach(function (o) { for (j = 0; j < nd; j++) sd[j] += (o.v[j] - mu[j]) * (o.v[j] - mu[j]) / V.length; });
+    var sc = [];
+    for (j = 0; j < nd; j++) sc.push(wts[gi[j]] / Math.sqrt(gs[gi[j]]) / Math.max(Math.sqrt(sd[j]), 1e-3));
+    var Z = V.map(function (o) { return o.v.map(function (x, q) { return (x - mu[q]) * sc[q]; }); });
+    var nc = cand.length, Zc = Z.slice(0, nc), Zd = Z.slice(nc, nc + del.length), Zk = Z.slice(nc + del.length);
+    function dist(a, b) { var s = 0; for (var q = 0; q < a.length; q++) { var e = a[q] - b[q]; s += e * e; } return Math.sqrt(s); }
+    function minD(a, S) { var m = Infinity; for (var t = 0; t < S.length; t++) { var dd = dist(a, S[t]); if (dd < m) m = dd; } return m; }
+    var med = null;
+    if (!Zk.length) {
+      med = [];
+      for (j = 0; j < nd; j++) { var col = Zc.map(function (z) { return z[j]; }).sort(function (a, b) { return a - b; }); med.push(col[Math.floor(col.length / 2)]); }
+    }
+    return Zc.map(function (z) {
+      var dD = minD(z, Zd), dR = Zk.length ? minD(z, Zk) : dist(z, med);
+      return {score: dR / (dD + dR + 1e-9), dDel: dD, dRef: dR};
+    });
+  }
+
+  /* ======================= BẢN 2.0: liên kết ngoài, mùa vụ nhiều năm, dịch (hàm thuần) ======================= */
+  /* ghim = 1: trang đặt ghim đúng điểm; 0: trang không nhận tham số ghim, điểm nằm ở giữa màn hình */
+  function links(lat, lon, o) {             // các trang ngoài xem một điểm; o: {year, wayback, lang, ten}
+    o = o || {};
+    var la = lat.toFixed(6), lo = lon.toFixed(6), q = la + "," + lo, y = o.year, L = [];
+    L.push(["gmap", "https://www.google.com/maps/search/?api=1&query=" + q, 1]);
+    L.push(["gsat", "https://www.google.com/maps/place/" + q + "/@" + q + ",600m/data=!3m1!1e3", 1]);
+    L.push(["sv", "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=" + q, 0]);
+    L.push(["gearth", "https://earth.google.com/web/search/" + q + "/@" + q + ",0a,1200d,35y,0h,0t,0r", 1]);
+    if (o.wayback) L.push(["wayback", "https://livingatlas.arcgis.com/wayback/#active=" + o.wayback + "&mapCenter=" + lo + "%2C" + la + "%2C17", 0]);
+    var cop = "https://browser.dataspace.copernicus.eu/?zoom=16&lat=" + la + "&lng=" + lo + "&themeId=DEFAULT-THEME";
+    if (y) cop += "&datasetId=S2_L2A_CDAS&fromTime=" + (y - 1) + "-11-01T00%3A00%3A00.000Z&toTime=" + y + "-04-30T23%3A59%3A59.999Z";
+    L.push(["copernicus", cop, 0]);
+    L.push(["bing", "https://www.bing.com/maps?cp=" + la + "~" + lo + "&lvl=17&style=a&sp=point." + la + "_" + lo + "_" +
+            encodeURIComponent(o.ten || "diem"), 1]);
+    L.push(["yandex", "https://yandex.ru/maps/?ll=" + lo + "%2C" + la + "&z=17&l=sat&pt=" + lo + "%2C" + la + "%2Cpm2rdm", 1]);
+    L.push(["osm", "https://www.openstreetmap.org/?mlat=" + la + "&mlon=" + lo + "#map=18/" + la + "/" + lo, 1]);
+    L.push(["diachi", "https://nominatim.openstreetmap.org/ui/reverse.html?lat=" + la + "&lon=" + lo + "&zoom=18", 1]);
+    L.push(["wikimapia", "http://wikimapia.org/#lang=" + (o.lang || "vi") + "&lat=" + la + "&lon=" + lo + "&z=17", 0]);
+    L.push(["quyhoach", "https://quyhoach.haiphong.gov.vn/#map=17/" + la + "/" + lo + "&lng=" + lo + "&lat=" + la, 0]);
+    return L.map(function (x) { return {k: x[0], url: x[1], ghim: !!x[2]}; });
+  }
+
+  /* ======================= BẢN 2.1: chọn vùng nhiều lớp, S2 10 băng + CTX, bộ điểm mới (hàm thuần) ======================= */
+  /* groups: mảng các lớp, mỗi lớp là danh sách vector điểm mẫu; mỗi điểm ảnh về lớp có điểm mẫu GẦN NHẤT,
+     nếu khoảng cách (chuẩn hoá 0..1) < tau và gần hơn mọi điểm loại trừ. cls: 0 = không lớp nào, c + 1 = lớp c */
+  function distSelMulti(F, nf, N, valid, groups, neg, tau, scope) {
+    var cls = new Uint8Array(N), d = new Float32Array(N), s = 1 / (255 * Math.sqrt(nf)), i, k, c, g;
+    for (i = 0; i < N; i++) {
+      if (!valid[i] || (scope && !scope[i])) { d[i] = 9; continue; }
+      var best = 1e18, bg = -1, bn = 1e18, o = i * nf;
+      for (g = 0; g < groups.length; g++) {
+        var G = groups[g];
+        for (k = 0; k < G.length; k++) {
+          var q = G[k], t = 0;
+          for (c = 0; c < nf; c++) { var e = F[o + c] - q[c]; t += e * e; }
+          if (t < best) { best = t; bg = g; }
+        }
+      }
+      for (k = 0; k < neg.length; k++) {
+        var q2 = neg[k], t2 = 0;
+        for (c = 0; c < nf; c++) { var e2 = F[o + c] - q2[c]; t2 += e2 * e2; }
+        if (t2 < bn) bn = t2;
+      }
+      d[i] = Math.sqrt(best) * s;
+      if (bg >= 0 && d[i] < tau && best < bn) cls[i] = bg + 1;
+    }
+    return {cls: cls, d: d};
+  }
+  /* bản 2.3: như distSelMulti, nhưng mỗi điểm mẫu chỉ có hiệu lực trong MIỀN của nó (xã của nó, vòng tròn quanh nó),
+     và điểm ảnh đã thuộc vùng lưu có thể bị chặn. seeds: [{g: chỉ số lớp (-1 = điểm loại trừ), v: vector, dom: Int32Array
+     chỉ số điểm ảnh | null = mọi nơi}], xếp theo lớp rồi theo thứ tự đặt (hoà thì mẫu đứng trước thắng, như distSelMulti).
+     block: Int32Array mã chủ của điểm ảnh (0 = tự do; ≥ KHOA = đã chốt, chặn mọi lớp) | null; gcode[g]: mã của lớp g
+     (0 = lớp chưa gán, chỉ bị chặn bởi chỗ đã chốt); blockAll: chặn mọi chỗ có chủ */
+  var KHOA = 1048576;
+  function chan(b, gc, all) { return b > 0 && (all || b >= KHOA || (gc !== 0 && b !== gc)); }
+  function distSelZoned(F, nf, N, valid, seeds, tau, scope, block, gcode, blockAll) {
+    var bD = new Float32Array(N).fill(Infinity), bN = new Float32Array(N).fill(Infinity), bG = new Int16Array(N).fill(-1);
+    var cls = new Uint8Array(N), d = new Float32Array(N), s = 1 / (255 * Math.sqrt(nf)), q, k, i, c;
+    for (q = 0; q < seeds.length; q++) {
+      var S = seeds[q], dom = S.dom, n = dom ? dom.length : N, v = S.v, gg = S.g, gc = gg >= 0 && gcode ? gcode[gg] : 0;
+      for (k = 0; k < n; k++) {
+        i = dom ? dom[k] : k;
+        if (!valid[i] || (scope && !scope[i])) continue;
+        if (gg >= 0 && block && chan(block[i], gc, blockAll)) continue;
+        var o = i * nf, t = 0;
+        for (c = 0; c < nf; c++) { var e = F[o + c] - v[c]; t += e * e; }
+        if (gg < 0) { if (t < bN[i]) bN[i] = t; } else if (t < bD[i]) { bD[i] = t; bG[i] = gg; }
+      }
+    }
+    for (i = 0; i < N; i++) {
+      if (bG[i] < 0) { d[i] = 9; continue; }
+      d[i] = Math.sqrt(bD[i]) * s;
+      if (d[i] < tau && bD[i] < bN[i]) cls[i] = bG[i] + 1;
+    }
+    return {cls: cls, d: d};
+  }
+  function circlePix(g, lon, lat, Rm) {         // chỉ số các điểm ảnh trong vòng tròn bán kính Rm (m mặt đất) quanh (lon, lat)
+    var c = llToPix(g, lon, lat), rp = Rm / (g.res * Math.cos(lat * Math.PI / 180)), out = [], x, y;
+    var ya = Math.max(0, Math.floor(c[1] - rp)), yb = Math.min(g.h - 1, Math.ceil(c[1] + rp));
+    for (y = ya; y <= yb; y++) {
+      var dy = y + 0.5 - c[1], hw = Math.sqrt(Math.max(0, rp * rp - dy * dy));
+      var xa = Math.max(0, Math.ceil(c[0] - hw - 0.5)), xb = Math.min(g.w - 1, Math.floor(c[0] + hw - 0.5));
+      for (x = xa; x <= xb; x++) out.push(y * g.w + x);
+    }
+    return Int32Array.from(out);
+  }
+  function khongDau(s) {                        // chữ thường, bỏ dấu tiếng Việt: tìm "thuy nguyen" ra "Thuỷ Nguyên"
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().trim();
+  }
+  var S2_BANDS = ["B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12"];
+  var IDX_NAMES = ["NDVI", "NDWI", "MNDWI", "NDBI", "BSI"];
+  /* chỉ số như s2_classify / s2_fast: phản xạ = DN / 10000, mẫu số tối thiểu 1e-6 */
+  function indices(v) {
+    var r = v.map(function (x) { return x / 10000; });
+    function nd(a, b) { return (a - b) / Math.max(a + b, 1e-6); }
+    return [nd(r[6], r[2]), nd(r[1], r[6]), nd(r[1], r[8]), nd(r[8], r[6]),
+            ((r[8] + r[2]) - (r[6] + r[0])) / Math.max((r[8] + r[2]) + (r[6] + r[0]), 1e-6)];
+  }
+  /* CTX tại một điểm ảnh: trung bình và độ lệch chuẩn trong ô win × win, biên kiểu 'nearest'
+     (lặp giá trị mép), đúng như scipy.ndimage.uniform_filter(mode="nearest") trong s2_classify.
+     a: cửa sổ xen kẽ nb băng, cỡ w × h, phải chứa trọn ô quanh (cx, cy) trừ khi chạm mép ảnh */
+  function ctxPoint(a, w, h, nb, cx, cy, win) {
+    var r = (win - 1) / 2, n = win * win, m = [], s = [], b, dx, dy;
+    for (b = 0; b < nb; b++) {
+      var sum = 0, sq = 0;
+      for (dy = -r; dy <= r; dy++) {
+        var yy = Math.min(h - 1, Math.max(0, cy + dy));
+        for (dx = -r; dx <= r; dx++) {
+          var xx = Math.min(w - 1, Math.max(0, cx + dx)), v = a[(yy * w + xx) * nb + b];
+          sum += v; sq += v * v;
+        }
+      }
+      var mu = sum / n; m.push(mu); s.push(Math.sqrt(Math.max(sq / n - mu * mu, 0)));
+    }
+    return {m: m, s: s};
+  }
+  /* ảnh trung bình / độ lệch chuẩn ô (2r+1)² của MỘT băng trên cả cửa sổ (ảnh tích phân, biên 'nearest') */
+  function boxImage(a, w, h, nb, b, r) {
+    var W1 = w + 2 * r, H1 = h + 2 * r, S = new Float64Array((W1 + 1) * (H1 + 1)), Q = new Float64Array((W1 + 1) * (H1 + 1));
+    var x, y, i;
+    for (y = 0; y < H1; y++) {
+      var sy = Math.min(h - 1, Math.max(0, y - r));
+      for (x = 0; x < W1; x++) {
+        var sx = Math.min(w - 1, Math.max(0, x - r)), v = a[(sy * w + sx) * nb + b];
+        i = (y + 1) * (W1 + 1) + x + 1;
+        S[i] = v + S[i - 1] + S[i - W1 - 1] - S[i - W1 - 2];
+        Q[i] = v * v + Q[i - 1] + Q[i - W1 - 1] - Q[i - W1 - 2];
+      }
+    }
+    var m = new Float32Array(w * h), s = new Float32Array(w * h), n = (2 * r + 1) * (2 * r + 1), k = 2 * r + 1;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var A = y * (W1 + 1) + x, B = A + k, C = A + k * (W1 + 1), D = C + k;
+      var su = S[D] - S[B] - S[C] + S[A], qq = Q[D] - Q[B] - Q[C] + Q[A], mu = su / n;
+      m[y * w + x] = mu; s[y * w + x] = Math.sqrt(Math.max(qq / n - mu * mu, 0));
+    }
+    return {m: m, s: s};
+  }
+  /* số ngẫu nhiên lặp lại được (cùng công thức với samplePixels) */
+  function rnd(seed) {
+    var s = (seed >>> 0) % 2147483648 || 1;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  function pip(lon, lat, mp) {               // điểm trong MultiPolygon (lon, lat), có lỗ
+    var tr = false;
+    mp.forEach(function (pg) { pg.forEach(function (r) {
+      for (var i = 0, j = r.length - 1; i < r.length; j = i++) {
+        var a = r[i], b = r[j];
+        if ((a[1] > lat) !== (b[1] > lat) && lon < (b[0] - a[0]) * (lat - a[1]) / (b[1] - a[1]) + a[0]) tr = !tr;
+      }
+    }); });
+    return tr;
+  }
+  /* lưới đều (UTM, bước S m, căn theo bội số của S); lech = true: mỗi ô một điểm ngẫu nhiên (lưới lệch) */
+  function gridPts(bb, S, lech, rf) {
+    var out = [], x, y, x0 = Math.floor(bb[0] / S) * S, y0 = Math.floor(bb[1] / S) * S;
+    for (y = y0; y < bb[3]; y += S) for (x = x0; x < bb[2]; x += S) {
+      var px = lech ? x + rf() * S : x + S / 2, py = lech ? y + rf() * S : y + S / 2;
+      if (px >= bb[0] && px <= bb[2] && py >= bb[1] && py <= bb[3]) out.push([px, py]);
+    }
+    return out;
+  }
+  /* giữ các điểm cách nhau ≥ dmin (m), theo thứ tự cho trước; băm lưới để nhanh */
+  function thinPts(pts, dmin, nMax) {
+    if (!(dmin > 0)) return nMax ? pts.slice(0, nMax) : pts.slice();
+    var H = new Map(), out = [], d2 = dmin * dmin;
+    for (var i = 0; i < pts.length && (!nMax || out.length < nMax); i++) {
+      var p = pts[i], cx = Math.floor(p[0] / dmin), cy = Math.floor(p[1] / dmin), ok = true;
+      for (var dy = -1; dy <= 1 && ok; dy++) for (var dx = -1; dx <= 1 && ok; dx++) {
+        var L = H.get((cx + dx) + "," + (cy + dy));
+        if (L) for (var k = 0; k < L.length; k++) { var e = L[k]; if ((e[0] - p[0]) * (e[0] - p[0]) + (e[1] - p[1]) * (e[1] - p[1]) < d2) { ok = false; break; } }
+      }
+      if (!ok) continue;
+      out.push(p); var key = cx + "," + cy; if (!H.has(key)) H.set(key, []); H.get(key).push(p);
+    }
+    return out;
+  }
+  /* n điểm ngẫu nhiên đều trong hộp bb (UTM), lọc bằng hàm trong(x, y), cách nhau ≥ dmin */
+  function randPts(bb, n, dmin, trong, rf) {
+    var cand = [], tries = 0, lim = Math.max(2000, n * 60);
+    while (cand.length < n * 8 && tries < lim) {
+      tries++;
+      var x = bb[0] + rf() * (bb[2] - bb[0]), y = bb[1] + rf() * (bb[3] - bb[1]);
+      if (!trong || trong(x, y)) cand.push([x, y]);
+    }
+    return thinPts(cand, dmin, n);
+  }
+  /* rải phân tầng theo ảnh lớp (mảng giá trị lớp trên lưới w × h): nPer điểm mỗi lớp (hoặc {lớp: n}),
+     điểm ảnh được phép theo mặt nạ cho; trả {lớp: [chỉ số điểm ảnh]} */
+  function stratPick(cls, allow, nPer, rf) {
+    var by = {}, i;
+    for (i = 0; i < cls.length; i++) { var v = cls[i]; if (!v || (allow && !allow[i])) continue; (by[v] = by[v] || []).push(i); }
+    var out = {};
+    Object.keys(by).forEach(function (k) {
+      var L = by[k], n = typeof nPer === "object" ? (nPer[k] || 0) : nPer, j;
+      for (j = L.length - 1; j > 0; j--) { var t = Math.floor(rf() * (j + 1)), z = L[j]; L[j] = L[t]; L[t] = z; }
+      out[k] = L.slice(0, Math.min(n * 6, L.length));
+    });
+    return out;
+  }
+  /* ======================= BẢN 2.2: OpenStreetMap (hàm thuần) ======================= */
+  var OSM_UU_TIEN = ["building", "landuse", "natural", "water", "wetland", "leisure", "waterway", "highway", "railway", "aeroway",
+                     "amenity", "shop", "tourism", "office", "historic", "place"];
+  function osmThe(tags) {                  // thẻ chính "khoá=giá trị" (như cột `the` của tệp FlatGeobuf)
+    tags = tags || {};
+    for (var i = 0; i < OSM_UU_TIEN.length; i++) {
+      var v = tags[OSM_UU_TIEN[i]]; if (v != null && v !== "" && v !== "no") return OSM_UU_TIEN[i] + "=" + v;
+    }
+    return "";
+  }
+  /* biểu thức lọc: các vế cách nhau bởi dấu cách (VÀ). Vế: khoá | !khoá | khoá=a|b | khoá!=a | khoá~biểu_thức (không phân biệt
+     hoa thường) | khoá=* ; giá trị có dấu cách để trong ngoặc kép. Khoá bắt đầu bằng @ là trường tính thêm: @lop, @the, @hinh */
+  function osmLoc(expr) {
+    var toks = String(expr || "").match(/(?:[^\s"]+|"[^"]*")+/g) || [], tests = [];
+    toks.forEach(function (tk) {
+      var m = /^(!)?([^=!~]+?)(?:(!=|=|~)(.*))?$/.exec(tk.replace(/"/g, ""));
+      if (!m) throw new Error("vế lọc không hợp lệ: " + tk);
+      var neg = !!m[1], k = m[2], op = m[3], v = m[4];
+      var get = function (t, ex) { return k.charAt(0) === "@" ? (ex || {})[k.slice(1)] : t[k]; };
+      if (!op) { tests.push(function (t, ex) { var x = get(t, ex), co = x != null && x !== ""; return neg ? !co : co; }); return; }
+      if (op === "~") { var re = new RegExp(v, "i"); tests.push(function (t, ex) { var x = get(t, ex); return x != null && re.test(String(x)); }); return; }
+      var vs = v.split("|");
+      tests.push(function (t, ex) {
+        var x = get(t, ex), co = x != null && x !== "", hit = v === "*" ? co : co && vs.indexOf(String(x)) >= 0;
+        return op === "=" ? hit : !hit;
+      });
+    });
+    return function (t, ex) { for (var i = 0; i < tests.length; i++) if (!tests[i](t || {}, ex)) return false; return true; };
+  }
+  /* quy đổi mặc định thẻ OSM -> mã lớp của hệ 12 + 3 lớp (chỉ là gợi ý; người dùng sửa được trong bảng quy đổi) */
+  function osmLopMacDinh(t) {
+    t = t || {};
+    var lu = t.landuse, na = t.natural, b = t.building, w = t.water, le = t.leisure;
+    if (b && b !== "no") return /^(industrial|warehouse|factory|manufacture|hangar|storage_tank)$/.test(b) ? "X3" : "X1";
+    if (t.wetland === "mangrove") return "T5";
+    if (lu) {
+      if (/^(industrial|port|depot|railway)$/.test(lu)) return "X3";
+      if (/^(commercial|retail|education|religious|military|institutional|garages)$/.test(lu)) return "X1";
+      if (lu === "residential") return "X2";
+      if (/^(construction|brownfield|greenfield|landfill)$/.test(lu)) return "D1";
+      if (lu === "quarry") return "D2";
+      if (lu === "paddy" || (lu === "farmland" && /rice|paddy|lúa/i.test(t.crop || ""))) return "T1";
+      if (/^(farmland|allotments|greenhouse_horticulture)$/.test(lu)) return "T2";
+      if (/^(orchard|plant_nursery|meadow|grass|village_green|recreation_ground|flowerbed|vineyard)$/.test(lu)) return "T3";
+      if (lu === "forest") return "T4";
+      if (lu === "aquaculture" || lu === "salt_pond") return "N2";
+      if (/^(reservoir|basin)$/.test(lu)) return "N1";
+    }
+    if (na) {
+      if (na === "water") return /^(pond|fishpond|fish_pond|aquaculture)$/.test(w || "") ? "N2" : "N1";
+      if (na === "bay") return "N3";
+      if (na === "wood") return "T4";
+      if (/^(scrub|grassland|heath|wetland)$/.test(na)) return "T3";
+      if (/^(beach|sand|shingle|mud)$/.test(na)) return "D3";
+      if (/^(bare_rock|rock|cliff)$/.test(na)) return "D2";
+    }
+    if (w) return /^(pond|fishpond|fish_pond|aquaculture)$/.test(w) ? "N2" : "N1";
+    if (t.waterway === "riverbank" || t.waterway === "dock" || t.waterway === "canal") return "N1";
+    if (le) return /^(park|garden|golf_course|nature_reserve)$/.test(le) ? "T3" : (/^(pitch|stadium)$/.test(le) ? "X1" : "");
+    if (t.aeroway || (t.highway && t.area === "yes")) return "X4";
+    return "";
+  }
+  function osmLop(tags, bang) {
+    var th = osmThe(tags);
+    if (bang && Object.prototype.hasOwnProperty.call(bang, th)) return bang[th];
+    return osmLopMacDinh(tags);
+  }
+  function geomMP(g) {                     // hình học GeoJSON -> MultiPolygon (mảng), đường và điểm -> null
+    if (!g) return null;
+    return g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : null;
+  }
+  function bbMP(mp) {
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    mp.forEach(function (pg) { pg[0].forEach(function (q) { if (q[0] < b[0]) b[0] = q[0]; if (q[1] < b[1]) b[1] = q[1]; if (q[0] > b[2]) b[2] = q[0]; if (q[1] > b[3]) b[3] = q[1]; }); });
+    return b;
+  }
+  function distBien(lon, lat, mp) {        // khoảng cách (m) từ điểm tới cạnh gần nhất của đa giác (toạ độ phẳng cục bộ)
+    var kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110540, best = Infinity;
+    mp.forEach(function (pg) { pg.forEach(function (r) {
+      for (var i = 1; i < r.length; i++) {
+        var ax = (r[i - 1][0] - lon) * kx, ay = (r[i - 1][1] - lat) * ky, bx = (r[i][0] - lon) * kx, by = (r[i][1] - lat) * ky;
+        var dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, t = L2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L2)) : 0;
+        var px = ax + t * dx, py = ay + t * dy, d = Math.sqrt(px * px + py * py); if (d < best) best = d;
+      }
+    }); });
+    return best;
+  }
+  /* rải n điểm ngẫu nhiên trong các đa giác (chọn đa giác theo diện tích), cách mép ≥ bien m, cách nhau ≥ dmin m.
+     polys: [{mp, ...}] ; trả [{lon, lat, i}] với i là chỉ số đa giác */
+  function rdTrongDaGiac(polys, n, dmin, bien, rf) {
+    var P = polys.map(function (o) { return {mp: o.mp, b: bbMP(o.mp), a: Math.max(1, geodesicArea(o.mp))}; }), tong = 0, cum = [];
+    P.forEach(function (o) { tong += o.a; cum.push(tong); });
+    if (!P.length || !(n > 0)) return [];
+    var cand = [], tries = 0, lim = Math.max(3000, n * 200);
+    while (cand.length < n * 6 && tries < lim) {
+      tries++;
+      var r = rf() * tong, lo = 0, hi = cum.length - 1;
+      while (lo < hi) { var mid = (lo + hi) >> 1; if (cum[mid] < r) lo = mid + 1; else hi = mid; }
+      var o = P[lo], lon = o.b[0] + rf() * (o.b[2] - o.b[0]), lat = o.b[1] + rf() * (o.b[3] - o.b[1]);
+      if (!pip(lon, lat, o.mp)) continue;
+      if (bien > 0 && distBien(lon, lat, o.mp) < bien) continue;
+      var u = toUTM(lon, lat); u.i = lo; u.lon = lon; u.lat = lat; cand.push(u);
+    }
+    return thinPts(cand, dmin, n).map(function (u) { return {lon: u.lon, lat: u.lat, i: u.i}; });
+  }
+  function overpassQL(sels, bb, tmo) {     // bb = [tây, nam, đông, bắc]
+    var q = "(" + bb[1].toFixed(6) + "," + bb[0].toFixed(6) + "," + bb[3].toFixed(6) + "," + bb[2].toFixed(6) + ")";
+    return "[out:json][timeout:" + (tmo || 60) + "];(" + sels.map(function (s) { return s + q + ";"; }).join("") + ");out geom;";
+  }
+  function quant(v, q) {                    // v đã sắp tăng dần
+    if (!v.length) return null;
+    var i = (v.length - 1) * q, a = Math.floor(i), b = Math.ceil(i);
+    return v[a] + (v[b] - v[a]) * (i - a);
+  }
+  /* quy luật mùa vụ của một điểm qua các năm: trung vị và MAD từng kỳ; năm lệch theo z bền
+     z = (giá trị − trung vị) / max(1.4826·MAD, 0.05); năm lệch nếu |z| trung bình ≥ 2 hoặc |z| lớn nhất ≥ 3.5 (cần ≥ 4 năm) */
+  function seasonStats(ys, feat, nky) {
+    var yrs = Object.keys(ys).filter(function (y) { return ys[y] && ys[y][feat]; }).sort();
+    var med = [], mad = [], i;
+    for (i = 0; i < nky; i++) {
+      var v = yrs.map(function (y) { return ys[y][feat][i]; }).filter(function (x) { return x != null && isFinite(x); })
+        .sort(function (a, b) { return a - b; });
+      if (!v.length) { med.push(null); mad.push(null); continue; }
+      var m = quant(v, 0.5); med.push(m);
+      mad.push(quant(v.map(function (x) { return Math.abs(x - m); }).sort(function (a, b) { return a - b; }), 0.5));
+    }
+    var score = {}, worst = {}, anom = [];
+    yrs.forEach(function (y) {
+      var s = 0, n = 0, wz = 0, wi = -1;
+      for (i = 0; i < nky; i++) {
+        var x = ys[y][feat][i]; if (x == null || med[i] == null) continue;
+        var z = (x - med[i]) / Math.max(1.4826 * mad[i], 0.05); s += Math.abs(z); n++;
+        if (Math.abs(z) > Math.abs(wz)) { wz = z; wi = i; }
+      }
+      score[y] = n ? s / n : 0; worst[y] = {z: wz, ky: wi};
+      if (yrs.length >= 4 && (score[y] >= 2 || Math.abs(wz) >= 3.5)) anom.push(+y);
+    });
+    return {yrs: yrs.map(Number), med: med, mad: mad, score: score, worst: worst, anom: anom};
+  }
+  /* dịch: khoá là câu tiếng Việt gốc; không có thì thử mẫu biểu thức chính quy (__re); {x} thay bằng v.x */
+  function tr(dict, lang, s, v) {
+    var r = s, d = lang !== "vi" && dict ? dict[lang] : null;
+    if (d) {
+      if (d[s] != null && typeof d[s] === "string") r = d[s];
+      else if (d.__re) {
+        if (!d.__reC) d.__reC = d.__re.map(function (p) { return [new RegExp(p[0]), p[1]]; });
+        for (var i = 0; i < d.__reC.length; i++) {
+          var m = s.match(d.__reC[i][0]);
+          if (m) { r = d.__reC[i][1].replace(/\$(\d)/g, function (x, k) { return m[+k] == null ? "" : m[+k]; }); break; }
+        }
+      }
+    }
+    if (v) r = r.replace(/\{(\w+)\}/g, function (x, k) { return v[k] != null ? String(v[k]) : x; });
+    return r;
+  }
+
+  return {links: links, quant: quant, seasonStats: seasonStats, tr: tr,
+          osmThe: osmThe, osmLoc: osmLoc, osmLopMacDinh: osmLopMacDinh, osmLop: osmLop, geomMP: geomMP, bbMP: bbMP, distBien: distBien,
+          rdTrongDaGiac: rdTrongDaGiac, overpassQL: overpassQL,
+          distSelMulti: distSelMulti, distSelZoned: distSelZoned, chan: chan, KHOA: KHOA, circlePix: circlePix, khongDau: khongDau, S2_BANDS: S2_BANDS, IDX_NAMES: IDX_NAMES, indices: indices, ctxPoint: ctxPoint,
+          boxImage: boxImage, rnd: rnd, pip: pip, gridPts: gridPts, thinPts: thinPts, randPts: randPts, stratPick: stratPick,
+          UTM: UTM, GRID: GRID, lut: lut, CMAP: CMAP, toUTM: toUTM, toLL: toLL, snap: snap, squareLL: squareLL, to3857: to3857,
+          tileBbox: tileBbox, inter: inter, parseCSV: parseCSV, toCSV: toCSV, dataUrl: dataUrl,
+          releaseForYear: releaseForYear, schemeIndex: schemeIndex, newPoint: newPoint, setLabel: setLabel,
+          prevLabel: prevLabel, fillForward: fillForward, isDone: isDone, nDone: nDone, changes: changes,
+          merge: merge, exportLong: exportLong, exportWide: exportWide, reconstruct: reconstruct, curveOf: curveOf,
+          pickImage: pickImage, windowFor: windowFor, resample: resample,
+          gridFor: gridFor, m2ll: m2ll, pixToLL: pixToLL, llToPix: llToPix, rowArea: rowArea, stackFeat: stackFeat,
+          smoothFeat: smoothFeat, featAt: featAt, distSel: distSel, circleScope: circleScope, rasterizeRings: rasterizeRings,
+          labelComp: labelComp, keepSeeded: keepSeeded, morphClose: morphClose, removeSmall: removeSmall,
+          fillHoles: fillHoles, traceRings: traceRings, ringArea: ringArea, simplifyRing: simplifyRing,
+          vectorize: vectorize, polysToPixRings: polysToPixRings, geodesicArea: geodesicArea, maskStats: maskStats,
+          samplePixels: samplePixels, compDesc: compDesc, descVec: descVec, similarWrong: similarWrong};
+})();
+if (typeof module !== "undefined") module.exports = {CORE: CORE, DEFAULT_SCHEME: DEFAULT_SCHEME};
+</script>
+
+<script id="ui">
+/* =============================== GIAO DIỆN =============================== */
+/*__REL__*/
+const WB = "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer";
+const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
+/*__WAYBACK__*/
+
+const VERSION = "2.3";
+const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
+const $ = id => document.getElementById(id);
+function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+
+/* ---------------- ngôn ngữ (vi gốc; ru, en trong I18N; thêm ngôn ngữ = thêm một khoá vào I18N) ---------------- */
+const I18N = /*__I18N__*/{};
+const LANGS = ["vi"].concat(Object.keys(I18N).filter(k => k !== "vi"));
+const VI_RE = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+let LANG = (function () {
+  let q = null; try { q = new URLSearchParams(location.search).get("lang"); } catch (e) { /* bỏ qua */ }
+  if (q && LANGS.includes(q)) return q;
+  const s = ls("laymau_hp_lang_v1"); if (s && LANGS.includes(s)) return s;
+  return /^ru/i.test(navigator.language || "") && LANGS.includes("ru") ? "ru" : "vi";
+})();
+const LOCALE = {vi: "vi-VN", ru: "ru-RU", en: "en-GB"};
+const T_MISS = new Set();                 // câu chưa có bản dịch (xem trong bảng điều khiển: T_MISS)
+function T(s, v) {
+  if (s == null) return "";
+  const k = String(s), r = CORE.tr(I18N, LANG, k, v);
+  if (LANG !== "vi" && VI_RE.test(r) && !(k in (I18N[LANG] || {}))) T_MISS.add(k);
+  return r;
+}
+function cten(c) {                        // tên lớp theo ngôn ngữ
+  if (!c) return "";
+  if (LANG === "vi") return c.ten;
+  const x = ((I18N[LANG] || {}).__lop || {})[c.ma];
+  return c["ten_" + LANG] || (LANG === "ru" && c.ru) || (x && x.ten) || c.ten;
+}
+function cdau(c) {
+  if (!c) return "";
+  if (LANG === "vi") return c.dau_hieu || "";
+  const x = ((I18N[LANG] || {}).__lop || {})[c.ma];
+  return c["dau_hieu_" + LANG] || (x && x.dau_hieu) || c.dau_hieu || "";
+}
+function cmadat(c) {                      // mã đất kèm chú thích theo ngôn ngữ
+  if (!c || !c.ma_dat) return "";
+  if (LANG === "vi") return c.ma_dat;
+  const x = ((I18N[LANG] || {}).__lop || {})[c.ma];
+  return (x && x.ma_dat) || c.ma_dat;
+}
+function lname(L0) {                      // tên lớp đối chiếu trong manifest
+  if (!L0) return "";
+  if (LANG === "vi") return L0.ten;
+  if (L0["ten_" + LANG]) return L0["ten_" + LANG];
+  const d = (I18N[LANG] || {}).__layer || {};
+  if (d[L0.id]) return d[L0.id];
+  let m = /^pc(\d+)$/.exec(L0.id || "");
+  if (m && d.__pc) return d.__pc.replace("{n}", m[1]);
+  m = /^Embedding (\S+), thành phần ([\d-]+)/.exec(L0.ten || "");
+  if (m && d.__emb) return d.__emb.replace("{e}", m[1]).replace("{t}", m[2]);
+  return T(L0.ten);
+}
+function psname(ps) { if (!ps) return ""; if (LANG === "vi") return ps.ten; return ps["ten_" + LANG] || T(ps.ten); }
+const I18N_ORIG = new WeakMap(), STATIC_N = new WeakSet();
+let STATIC_READY = false;                 // nút có sẵn khi mở trang = chữ tĩnh; chỉ chúng mới ghi vào T_MISS
+function applyStatic(root) {              // dịch chữ tĩnh của trang; giữ bản gốc để đổi lại được
+  root = root || document.body;
+  const H_ = (I18N[LANG] || {}).__html || {};
+  root.querySelectorAll("[data-i18n-html]").forEach(el => {
+    if (el._i18nHTML === undefined) el._i18nHTML = el.innerHTML;
+    const k = el.dataset.i18nHtml, v = LANG !== "vi" && H_[k] ? H_[k] : el._i18nHTML;
+    if (el.innerHTML !== v) el.innerHTML = v;
+  });
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode(n) {
+    const p = n.parentElement;
+    return !p || p.closest("script,style,[data-i18n-html],[data-noi18n]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+  }});
+  const list = []; let n; while ((n = w.nextNode())) list.push(n);
+  list.forEach(n => {
+    let o = I18N_ORIG.get(n); if (o === undefined) { o = n.nodeValue; I18N_ORIG.set(n, o); if (!STATIC_READY) STATIC_N.add(n); }
+    const k = o.replace(/\s+/g, " ").trim(); if (!k || !/\p{L}/u.test(k)) return;
+    const t = STATIC_N.has(n) ? T(k) : CORE.tr(I18N, LANG, k), nv = t === k ? o : o.match(/^\s*/)[0] + t + o.match(/\s*$/)[0];
+    if (n.nodeValue !== nv) n.nodeValue = nv;
+  });
+  root.querySelectorAll("[title],[placeholder]").forEach(el => ["title", "placeholder"].forEach(a => {
+    if (!el.hasAttribute(a)) return;
+    if (!el._i18nA) { el._i18nA = {}; el._i18nS = !STATIC_READY; }
+    if (el._i18nA[a] === undefined) el._i18nA[a] = el.getAttribute(a);
+    const v = el._i18nS ? T(el._i18nA[a]) : CORE.tr(I18N, LANG, el._i18nA[a]); if (el.getAttribute(a) !== v) el.setAttribute(a, v);
+  }));
+  STATIC_READY = true;
+}
+
+let CFG = Object.assign({repo: "lopmaybay/haiphong-lop-tham-chieu", rev: "main", base: "",
+                         years: [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], auto: true}, ls(KEY_CFG) || {});
+let SCHEME = (ls(KEY_STATE) || {}).scheme || DEFAULT_SCHEME;
+let IDX = CORE.schemeIndex(SCHEME);
+let ST = Object.assign({diem: {}, bo: "", cur: null, nam: 2025, filter: "all"}, ls(KEY_STATE) || {});
+ST.scheme = SCHEME;
+let MAN = null, CURVES = {}, addMode = false, blinkOff = false, saveT = null;
+const OVL = {};              // id lớp -> {layer, on, op}
+const olPref = ls("laymau_hp_ol_v1") || {};
+
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { ls(KEY_STATE, ST); }, 300); }
+function msg(txt, kind, ms) {
+  const d = document.createElement("div"); d.className = "msg " + (kind || "wa"); d.textContent = T(txt);
+  $("msgs").appendChild(d); if (ms !== 0) setTimeout(() => d.remove(), ms || 6000);
+}
+function tileWarn(on) { $("tilewarn").hidden = !on; }
+ST.bo_cfg = ST.bo_cfg || {};              // bản 2.1: cấu hình từng bộ điểm {id: {ten, nam, tu_tao, cach, tham_so, tao_luc}}
+let BO_VE = null;                         // đang vẽ hình chữ nhật phạm vi cho bộ điểm mới (các bộ bắt nhấp khác nhường)
+function boCfg(id) { return ST.bo_cfg[id === undefined ? ST.bo : id] || null; }
+function years() { const c = boCfg(); return c && c.nam && c.nam.length ? c.nam : CFG.years; }   // các năm cần gán của bộ đang chọn
+function allYears() {                     // hợp các năm cần gán của mọi bộ (xuất tệp)
+  const s = new Set(CFG.years); Object.values(ST.bo_cfg).forEach(c => (c.nam || []).forEach(y => s.add(y)));
+  return [...s].sort((a, b) => a - b);
+}
+function pts() { return Object.values(ST.diem).filter(p => !ST.bo || p.bo === ST.bo); }
+function cur() { return ST.cur ? ST.diem[ST.cur] : null; }
+let PROBE = null;                          // bản 2.3: điểm tra cứu tạm (nhấp bản đồ), không thuộc bộ điểm nào
+function vizPt() { return PROBE || cur(); } // điểm mà dải ảnh và đường mùa vụ đang vẽ
+function visible() {
+  const ys = years();
+  return pts().filter(p => ST.filter === "all" || (ST.filter === "todo" && !CORE.isDone(p, ys)) ||
+    (ST.filter === "done" && CORE.isDone(p, ys)) || (ST.filter === "change" && CORE.changes(p, ys) > 0) ||
+    (ST.filter === "flag" && p.xem_lai));
+}
+
+/* ---------------- bản đồ ---------------- */
+// pmIgnore: false để công cụ sửa ranh giới (Leaflet-Geoman, chế độ opt-in) gắn được vào bản đồ
+const map = L.map("map", {zoomControl: true, preferCanvas: true, pmIgnore: false}).setView([20.86, 106.68], 12);
+L.control.scale({imperial: false}).addTo(map);
+const cvs = L.canvas({padding: 0.3});
+const gPts = L.layerGroup().addTo(map), gPix = L.layerGroup().addTo(map);
+let base = null, relIdx = REL.length - 1;
+
+function setBase() {
+  const mode = $("selBase").value;
+  if (base) { map.removeLayer(base); base = null; }
+  tileWarn(false); PHONG.n = 0; PHONG.z = null;
+  if (mode === "none") { $("relnote").textContent = ""; phongNote(); return; }
+  if (mode === "now") { base = new WaybackLayer("now", {maxZoom: 21, maxNativeZoom: 19, attribution: ATTR}); updRelNote(); }
+  else {
+    if (mode === "auto") relIdx = CORE.releaseForYear(REL, ST.nam);
+    $("selRel").value = String(relIdx);
+    base = new WaybackLayer(REL[relIdx][1], {maxZoom: 21, maxNativeZoom: 19, attribution: ATTR});
+    updRelNote();
+  }
+  base.addTo(map); base.bringToBack();
+}
+function updRelNote() {
+  const mode = $("selBase").value;
+  $("relnote").textContent = mode === "none" ? "" : mode === "now" ? T("ảnh Esri mới nhất") :
+    T("bản phát hành {d} (ảnh có thể chụp sớm hơn ngày này)", {d: REL[relIdx][0]});
+  phongNote();
+}
+function phongNote() {                     // ô được phóng to từ mức thấp hơn (bản này không có ảnh chi tiết hơn ở đó)
+  let e = $("phongTT");
+  if (!e) { e = document.createElement("div"); e.id = "phongTT"; e.className = "mu sm"; $("relnote").after(e); }
+  e.textContent = PHONG.n && $("selBase").value !== "none" ? T("một số ô được phóng to có nội suy từ mức {z} (bản này không có ảnh chi tiết hơn ở đó)", {z: PHONG.z}) : "";
+}
+map.on("zoomstart", () => { PHONG.n = 0; PHONG.z = null; phongNote(); });
+
+/* lớp COG đọc thẳng từ Hugging Face bằng geotiff.js */
+const TIFF = new Map();
+function tiffOf(url) {                      // mở COG một lần: hộp bao + danh sách ảnh (gốc và overview)
+  if (!TIFF.has(url)) {
+    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: 400}).then(async t => {
+      const im0 = await t.getImage(), bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
+      for (let i = 0; i < n; i++) {
+        const im = i ? await t.getImage(i) : im0, fd = im.fileDirectory;
+        if (i && !((fd.NewSubfileType || 0) & 1)) continue;          // bỏ ảnh mặt nạ
+        L1.push({im, w: im.getWidth(), h: im.getHeight(), rx: (bb[2] - bb[0]) / im.getWidth(), ry: (bb[3] - bb[1]) / im.getHeight()});
+      }
+      L1.sort((a, b) => a.rx - b.rx);
+      t._bb = bb; t._imgs = L1; t._n = im0.getSamplesPerPixel();
+      return t;
+    });
+    pr.catch(() => TIFF.delete(url));
+    TIFF.set(url, pr);
+  }
+  return TIFF.get(url);
+}
+const LUTS = {};
+function paint(canvas, data, n, L0) {
+  const ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height, img = ctx.createImageData(w, h), d = img.data;
+  const pal = {};
+  if (L0.kieu === "xam" || n === 1 && L0.kieu !== "lop") {           // một băng: tô theo bảng màu liên tục
+    const nm = L0.bang_mau_lien_tuc || "xam", lt = LUTS[nm] || (LUTS[nm] = CORE.lut(nm));
+    for (let i = 0, j = 0; i < w * h; i++, j += 4) {
+      const v = data[i * n]; if (!v) { d[j + 3] = 0; continue; }
+      const c = lt[v]; d[j] = c[0]; d[j + 1] = c[1]; d[j + 2] = c[2]; d[j + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0); return;
+  }
+  if (L0.kieu === "lop") Object.entries(L0.bang_mau || {}).forEach(([k, v]) => {
+    pal[k] = [parseInt(v.slice(1, 3), 16), parseInt(v.slice(3, 5), 16), parseInt(v.slice(5, 7), 16)];
+  });
+  for (let i = 0, j = 0; i < w * h; i++, j += 4) {
+    if (L0.kieu === "lop") {
+      const c = pal[data[i]]; if (!c) { d[j + 3] = 0; continue; }
+      d[j] = c[0]; d[j + 1] = c[1]; d[j + 2] = c[2]; d[j + 3] = 255;
+    } else {
+      const r = data[i * n], g = data[i * n + 1], b = data[i * n + 2];
+      if (r === 0 && g === 0 && b === 0) { d[j + 3] = 0; continue; }
+      d[j] = r; d[j + 1] = g; d[j + 2] = b; d[j + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+async function readBox(url, bb, w, h) {
+  const t = await tiffOf(url);
+  if (!CORE.inter(bb, t._bb)) return null;
+  const I = CORE.pickImage(t._imgs, (bb[2] - bb[0]) / w);
+  const win = CORE.windowFor(bb, t._bb[0], t._bb[3], I.rx, I.ry, I.w, I.h);
+  if (!win) return null;
+  const src = await I.im.readRasters({window: win, interleave: true});
+  return {data: CORE.resample(src, win, t._n, t._bb[0], t._bb[3], I.rx, I.ry, bb, w, h), n: t._n};
+}
+const COGLayer = L.GridLayer.extend({
+  initialize(url, L0, opts) { this._url = url; this._L0 = L0; L.GridLayer.prototype.initialize.call(this, opts); },
+  createTile(coords, done) {
+    const c = document.createElement("canvas"); c.width = c.height = 256;
+    readBox(this._url, CORE.tileBbox(coords.z, coords.x, coords.y), 256, 256).then(r => {
+      if (r) paint(c, r.data, r.n, this._L0); done(null, c);
+    }).catch(e => { this._err = (this._err || 0) + 1; if (this._err === 3) olMsg(T("không đọc được {l}: {e}", {l: lname(this._L0), e: e.message || e})); done(null, c); });
+    return c;
+  },
+});
+function olMsg(t) { $("olmsg").textContent = t; }
+function layerYear(L0, y) {
+  if (L0.nam.includes(y)) return y;
+  return null;
+}
+function buildOverlays() {
+  const box = $("ols"); box.innerHTML = "";
+  if (!MAN) { box.innerHTML = '<div class="mu sm">' + T("chưa nạp manifest") + '</div>'; return; }
+  const ds = MAN.s2d ? [s2dL0()].concat(MAN.layers) : MAN.layers;
+  ds.forEach(L0 => {
+    const pref = olPref[L0.id] || {on: false, op: L0.kieu === "lop" ? 0.55 : 0.9};
+    OVL[L0.id] = OVL[L0.id] || {layer: null, on: pref.on, op: pref.op, L0: L0};
+    const o = OVL[L0.id];
+    const div = document.createElement("div"); div.className = "ol";
+    div.innerHTML = `<label><input type="checkbox" ${o.on ? "checked" : ""}> ${lname(L0)}</label>
+      <div class="row sm"><input type="range" min="0" max="1" step="0.05" value="${o.op}"> <span class="mu" data-y></span></div>` +
+      (L0.kieu === "s2d" ? '<div class="s2v" data-s2v></div>' : "");
+    const [cb, rg] = div.querySelectorAll("input");
+    cb.onchange = () => { o.on = cb.checked; savePref(); refreshOverlays(); };
+    rg.oninput = () => { o.op = +rg.value; if (o.layer) o.layer.setOpacity(o.op); savePref(); };
+    o.span = div.querySelector("[data-y]");
+    if (L0.kieu === "s2d") s2vUI(div.querySelector("[data-s2v]"));
+    box.appendChild(div);
+  });
+  refreshOverlays();
+}
+function savePref() { Object.entries(OVL).forEach(([k, o]) => { olPref[k] = {on: o.on, op: o.op}; }); ls("laymau_hp_ol_v1", olPref); }
+function refreshOverlays() {
+  Object.values(OVL).forEach(o => {
+    const y = layerYear(o.L0, ST.nam);
+    const url = y ? CORE.dataUrl(CFG, o.L0.duong_dan.replace("{y}", y)) : null;
+    if (o.span) o.span.textContent = y ? String(y) : T("không có năm {y}", {y: ST.nam});
+    if (o.layer && (o.layer._url !== url || !o.on || blinkOff)) { map.removeLayer(o.layer); o.layer = null; }
+    if (o.on && url && !blinkOff && !o.layer) {
+      o.layer = o.L0.kieu === "s2d" ? new S2DLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
+        : new COGLayer(url, o.L0, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 5});
+      o.layer.addTo(map);
+    }
+  });
+  if (typeof pnTomTat === "function") pnTomTat();
+}
+
+/* ---------------- dữ liệu từ Hugging Face ---------------- */
+async function getText(path) {
+  const r = await fetch(CORE.dataUrl(CFG, path));
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  return r.text();
+}
+async function loadManifest() {
+  try {
+    MAN = JSON.parse(await getText("manifest.json"));
+    msg(T("đã nạp manifest: {a} lớp đối chiếu, {b} bộ điểm", {a: MAN.layers.length, b: MAN.point_sets.length}), "ok", 4000);
+  } catch (e) {
+    MAN = null;
+    msg(T("không nạp được manifest.json từ {src} ({e}). Vẫn gán nhãn được trên ảnh Wayback; kiểm tra Cài đặt.", {src: CFG.base || CFG.repo, e: e.message}), "wa", 12000);
+  }
+  buildOverlays(); buildSetSelect(); buildStripSelect();
+}
+async function loadPointSet(ps) {
+  try {
+    const rows = CORE.parseCSV(await getText(ps.duong_dan));
+    addRows(rows, ps.id);
+    if (ps.duong_cong) { try { CURVES[ps.id] = JSON.parse(await getText(ps.duong_cong)); indexCurves(ps.id); pcCache = {}; } catch (e) { msg(T("không nạp được đường mùa vụ của {id}", {id: ps.id})); } }
+    msg(T("đã nạp {n} điểm của {id}", {n: rows.length, id: ps.id}), "ok", 3000);
+  } catch (e) { msg(T("không nạp được {f}: {e}", {f: ps.duong_dan, e: e.message}), "er", 9000); }
+}
+function indexCurves(id) { const c = CURVES[id]; c._pos = {}; c.id.forEach((k, i) => { c._pos[k] = i; }); }
+function addRows(rows, bo) {
+  let n = 0;
+  rows.forEach(r => {
+    let lon = parseFloat(r.lon), lat = parseFloat(r.lat);
+    if (!(isFinite(lon) && isFinite(lat)) && r.x_utm) { const ll = CORE.toLL(+r.x_utm, +r.y_utm); lon = ll[0]; lat = ll[1]; }
+    if (!(isFinite(lon) && isFinite(lat))) return;
+    const id = String(r.id || `${bo}_${n}`);
+    const old = ST.diem[id];
+    const p = old || CORE.newPoint(id, lon, lat);
+    if (!old && r.x_utm && r.y_utm && isFinite(+r.x_utm)) { p.x = +r.x_utm; p.y = +r.y_utm; p.lon = lon; p.lat = lat; }  // giữ đúng toạ độ thiết kế
+    p.bo = bo; p.tang = r.tang || r.stratum || p.tang;
+    if (r.lop3_ban_do) p.ban_do = +r.lop3_ban_do;
+    Object.keys(r).forEach(k => { const m = k.match(/^goi_y_(\d{4})$/); if (m && r[k] !== "" && r[k] !== "0") p.goi_y[m[1]] = +r[k]; });
+    ST.diem[id] = p; n++;
+  });
+  if (!ST.bo) ST.bo = bo;
+  buildSetSelect(); save(); render();
+}
+function buildSetSelect() {
+  const s = $("selSet"), sets = new Set(Object.values(ST.diem).map(p => p.bo));
+  s.innerHTML = "";
+  (MAN ? MAN.point_sets : []).forEach(ps => {
+    const o = document.createElement("option"); o.value = ps.id;
+    o.textContent = sets.has(ps.id) ? psname(ps) : psname(ps) + " " + T("(bấm để nạp)"); s.appendChild(o);
+  });
+  Object.keys(ST.bo_cfg).forEach(b => { if (ST.bo_cfg[b].tu_tao) sets.add(b); });
+  sets.forEach(b => { if (!(MAN && MAN.point_sets.some(ps => ps.id === b))) {
+    const o = document.createElement("option"); o.value = b;
+    const c = ST.bo_cfg[b], n = Object.values(ST.diem).filter(p => p.bo === b).length;
+    o.textContent = b === "tay" ? T("điểm thêm tay") : (c && c.ten ? `${c.ten} (${n})` : b); s.appendChild(o); } });
+  if (!s.options.length) { const o = document.createElement("option"); o.value = ""; o.textContent = T("(chưa có bộ điểm)"); s.appendChild(o); }
+  s.value = ST.bo || s.options[0].value;
+  const ys = years(), bn = $("boNam");
+  if (bn) bn.textContent = T("năm cần gán: {a}", {a: ys.length > 3 && ys[ys.length - 1] - ys[0] === ys.length - 1 ? `${ys[0]}-${ys[ys.length - 1]}` : ys.join(", ")}) +
+    (boCfg() && boCfg().nam ? "" : " " + T("(mặc định, đổi bằng ⚙)"));
+}
+
+/* ---------------- vẽ ---------------- */
+function color(ma) { const c = IDX.by[ma]; return c ? c.mau : "#999"; }
+function drawPoints() {
+  gPts.clearLayers();
+  const ys = years();
+  visible().forEach(p => {
+    const d = CORE.nDone(p, ys), full = d === ys.length;
+    const ma = p.nhan[ST.nam];
+    const m = L.circleMarker([p.lat, p.lon], {renderer: cvs, radius: p.id === ST.cur ? 7 : 4, weight: p.id === ST.cur ? 3 : 1,
+      color: p.id === ST.cur ? "#fff" : (full ? "#1a7f37" : d ? "#f79009" : "#555"),
+      fillColor: ma ? color(ma) : "#fff", fillOpacity: ma ? 0.95 : 0.5, bubblingMouseEvents: false});
+    m.on("click", () => { if (!addMode) select(p.id, true); });
+    m.addTo(gPts);
+  });
+}
+function drawPixel() {
+  gPix.clearLayers();
+  const p = cur(); if (!p) return;
+  const c = CORE.snap(p.x, p.y);                     // ô điểm ảnh 10 m chứa điểm
+  L.polygon(CORE.squareLL(c[0], c[1], 15), {color: "#ffd400", weight: 1.5, fill: false, dashArray: "4 3", interactive: false}).addTo(gPix);
+  L.polygon(CORE.squareLL(c[0], c[1], 5), {color: "#ff2d2d", weight: 2, fill: false, interactive: false}).addTo(gPix);
+}
+function render() {
+  renderYears(); renderClasses(); renderPoint(); drawPoints(); drawPixel(); renderStats(); renderProgress(); hud();
+}
+function renderYears() {
+  const box = $("years"); box.innerHTML = "";
+  const p = cur(), all = (MAN && MAN.years) ? Array.from(new Set(MAN.years.concat(years()))).sort() : years();
+  all.forEach(y => {
+    const b = document.createElement("button"); b.textContent = y;
+    if (y === ST.nam) b.classList.add("on");
+    if (p && p.nhan[y]) { b.classList.add("lab"); b.style.boxShadow = `inset 0 -4px 0 ${color(p.nhan[y])}`; }
+    if (!years().includes(y)) b.title = T("năm này không nằm trong các năm cần gán (Cài đặt)");
+    b.onclick = () => setYear(y); box.appendChild(b);
+  });
+}
+function renderClasses() {
+  const box = $("cls"); box.innerHTML = "";
+  const p = cur(), sel = p ? p.nhan[ST.nam] : null;
+  (SCHEME.lop || []).concat(SCHEME.dac_biet || []).forEach(c => {
+    const b = document.createElement("button");
+    b.innerHTML = `<span class="k">${(c.phim || "").toUpperCase()}</span><span class="sw" style="background:${c.mau}"></span><span class="${c.bat_buoc === false ? "opt" : ""}">${c.ma} ${cten(c)}</span>`;
+    b.title = cdau(c) + (c.ma_dat ? "\n" + T("mã đất") + ": " + cmadat(c) : "") + (c.bat_buoc === false ? "\n" + T("lớp tuỳ chọn, gộp vào {x}", {x: c.gop_vao}) : "");
+    if (sel === c.ma) b.classList.add("on");
+    b.onclick = () => label(c.ma);
+    box.appendChild(b);
+  });
+}
+function renderPoint() {
+  const p = cur(), ys = years();
+  const t = $("ytab"); t.innerHTML = "";
+  if (!p) { $("pinfo").textContent = T("Chưa chọn điểm."); $("note").value = ""; renderStrip(); renderCurve(); renderLinks(null); return; }
+  const lop3 = {1: T("thực vật"), 2: T("nước"), 3: T("xây dựng"), 4: T("đất trống")};
+  $("pinfo").innerHTML = `<b>${p.id}</b> · ${T("bộ")} ${p.bo || "?"}${p.tang !== "" ? " · " + T("tầng") + " " + p.tang : ""}${p.ban_do ? " · " + T("bản đồ CTX 2025") + ": " + (lop3[p.ban_do] || p.ban_do) : ""}${p.xem_lai ? ' · <b style="color:#b54708">' + T("cần xem lại") + "</b>" : ""}<br>
+    ${p.lat.toFixed(6)}, ${p.lon.toFixed(6)} · UTM ${p.x.toFixed(0)} ${p.y.toFixed(0)} · ${T("đổi lớp {n} lần", {n: CORE.changes(p, ys)})}` +
+    (p.osm ? `<br>OSM: <a href="https://www.openstreetmap.org/${p.osm.id}" target="_blank" rel="noopener noreferrer">${p.osm.the || p.osm.id}</a>${p.osm.lop ? " → " + T("gợi ý {m}", {m: p.osm.lop}) : ""}` : "");
+  t.innerHTML = `<tr><th>${T("năm")}</th><th>${T("nhãn")}</th><th>${T("tin cậy")}</th><th>${T("gợi ý 3 lớp")}</th></tr>`;
+  ys.forEach(y => {
+    const tr = document.createElement("tr"); if (y === ST.nam) tr.className = "cur";
+    const ma = p.nhan[y], c = IDX.by[ma];
+    tr.innerHTML = `<td>${y}</td><td>${ma ? `<span class="chip"><span class="sw" style="background:${c ? c.mau : "#999"}"></span>${ma} ${cten(c)}</span>` : '<span class="mu">·</span>'}</td>
+      <td>${p.tin[y] ? T(["", "thấp", "vừa", "cao"][p.tin[y]]) : ""}</td><td class="mu">${p.goi_y[y] ? lop3[p.goi_y[y]] || p.goi_y[y] : ""}</td>`;
+    tr.onclick = () => setYear(y);
+    t.appendChild(tr);
+  });
+  if (document.activeElement !== $("note")) $("note").value = p.ghi_chu || "";
+  renderStrip(); renderCurve(); renderLinks(p);
+}
+function renderStats() {
+  const ys = years(), all = pts(), cnt = {};
+  all.forEach(p => { const m = p.nhan[ST.nam]; if (m) cnt[m] = (cnt[m] || 0) + 1; });
+  const rows = (SCHEME.lop || []).concat(SCHEME.dac_biet || []).filter(c => cnt[c.ma]).map(c =>
+    `<span class="chip" style="margin-right:8px"><span class="sw" style="background:${c.mau}"></span>${c.ma}: <b>${cnt[c.ma]}</b></span>`);
+  const it = (SCHEME.lop || []).filter(c => c.bat_buoc !== false && (cnt[c.ma] || 0) < 50).map(c => c.ma);
+  $("stats").innerHTML = (rows.join(" ") || '<span class="mu">' + T("chưa có nhãn năm này") + '</span>') +
+    (it.length ? `<div class="mu" style="margin-top:4px">${T("lớp chính dưới 50 điểm năm {y}: {l}", {y: ST.nam, l: it.join(", ")})}</div>` : "");
+}
+function renderProgress() {
+  const ys = years(), all = pts(), done = all.filter(p => CORE.isDone(p, ys)).length, v = visible();
+  $("progbar").style.width = all.length ? (100 * done / all.length).toFixed(1) + "%" : "0";
+  $("progtxt").textContent = T("{a}/{b} điểm đủ nhãn {y0}-{y1} · {c} điểm có đổi lớp", {a: done, b: all.length, y0: ys[0], y1: ys[ys.length - 1], c: all.filter(p => CORE.changes(p, ys) > 0).length});
+  const i = v.findIndex(p => p.id === ST.cur);
+  $("pos").textContent = v.length ? `${i + 1}/${v.length}` : "0/0";
+}
+function hud() {
+  const p = cur();
+  $("hud").textContent = T("năm {y}", {y: ST.nam}) + (p ? ` · ${p.id} · ${p.nhan[ST.nam] || T("chưa gán")}` : "") +
+    (addMode ? " · " + T("THÊM ĐIỂM: nhấp lên bản đồ") : "") + (blinkOff ? " · " + T("lớp đối chiếu đang tắt (b)") : "");
+  grip();
+}
+
+/* ---------------- dải ảnh theo năm ---------------- */
+let stripTok = 0;
+function buildStripSelect() {
+  const s = $("selStrip"); s.innerHTML = "";
+  (MAN ? (MAN.s2d ? [s2dL0()] : []).concat(MAN.layers.filter(L0 => L0.kieu === "rgb" || L0.kieu === "xam")) : []).forEach(L0 => { const o = document.createElement("option"); o.value = L0.id; o.textContent = L0.kieu === "s2d" ? lname(L0) + " " + T("(như đang đặt ở bảng lớp)") : lname(L0); s.appendChild(o); });
+  if (!s.options.length) { const o = document.createElement("option"); o.textContent = T("(cần manifest)"); s.appendChild(o); }
+  const pref = ls("laymau_hp_strip_v1"); if (pref && [...s.options].some(o => o.value === pref)) s.value = pref;
+}
+async function renderStrip() {
+  const box = $("strip"), p = vizPt(), tok = ++stripTok;
+  box.innerHTML = ""; $("stripmsg").textContent = "";
+  if (typeof vzNguon === "function") vzNguon();
+  if (!p || !MAN) return;
+  const L0 = $("selStrip").value === "s2d" && MAN.s2d ? s2dL0() : MAN.layers.find(l => l.id === $("selStrip").value); if (!L0) return;
+  const c = CORE.to3857(p.lon, p.lat), half = 485, bb = [c[0] - half, c[1] - half, c[0] + half, c[1] + half];
+  const ys = Array.from(new Set(L0.nam.concat(years()))).sort();
+  if (L0.kieu === "s2d") { renderStripS2D(L0, p, bb, ys, tok); return; }
+  for (const y of ys) {
+    const it = document.createElement("div"); it.className = "it" + (y === ST.nam ? " cur" : "");
+    const cv = document.createElement("canvas"); cv.width = cv.height = 97;
+    it.appendChild(cv);
+    it.insertAdjacentHTML("beforeend", `<span class="lb">${y}</span>` + (p.nhan[y] ? `<span class="lc" style="background:${color(p.nhan[y])}"></span>` : ""));
+    it.onclick = () => setYear(y);
+    box.appendChild(it);
+    if (!L0.nam.includes(y)) { const g = cv.getContext("2d"); g.fillStyle = "#555"; g.fillText(T("không có"), 26, 50); continue; }
+    readBox(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), bb, 97, 97).then(r => {
+      if (tok !== stripTok || !r) return;
+      paint(cv, r.data, r.n, L0);
+      const g = cv.getContext("2d"); g.strokeStyle = "#ff2d2d"; g.lineWidth = 1; g.strokeRect(47.5, 47.5, 2, 2);
+      g.strokeStyle = "rgba(255,212,0,.9)"; g.strokeRect(45.5, 45.5, 5, 5);
+    }).catch(e => { if (tok === stripTok) $("stripmsg").textContent = T("không đọc được: ") + (e.message || e); });
+  }
+}
+
+/* ---------------- đường mùa vụ ---------------- */
+let pcCache = {}, pcvCache = {};
+function curveFeats() {                   // các đặc trưng 6 kỳ có được: tên trước "_p" trong he_so.bang (10 băng + NDVI + MNDWI)
+  const f = new Set(((MAN && MAN.curves && MAN.curves.feats) || ["NDVI", "MNDWI"]));
+  if (MAN && MAN.pc && MAN.pc.he_so && MAN.pc.he_so.bang) MAN.pc.he_so.bang.forEach(b => f.add(b.slice(0, b.lastIndexOf("_p"))));
+  const ord = ["NDVI", "MNDWI"].concat(CORE.S2_BANDS);
+  return [...f].sort((a, b) => (ord.indexOf(a) + 99) % 99 - (ord.indexOf(b) + 99) % 99 || a.localeCompare(b));
+}
+async function pcAt(p) {                   // PC (int16 × he_so_nhan) + NFILL tại điểm, mọi năm của ảnh "pc"
+  if (!MAN || !MAN.pc) return {};
+  const key = p.x + "," + p.y;
+  if (pcvCache[key]) return pcvCache[key];
+  const k = MAN.pc.k, out = {};
+  for (const y of MAN.pc.nam) {
+    try {
+      const t = await tiffOf(CORE.dataUrl(CFG, MAN.pc.duong_dan.replace("{y}", y)));
+      const im = await t.getImage(), o = im.getOrigin(), rs = im.getResolution();
+      const col = Math.floor((p.x - o[0]) / rs[0]), row = Math.floor((p.y - o[1]) / rs[1]);
+      if (col < 0 || row < 0 || col >= im.getWidth() || row >= im.getHeight()) continue;
+      const v = await im.readRasters({window: [col, row, col + 1, row + 1], interleave: true});
+      if (v[0] === -32768) continue;
+      out[y] = {pcs: Array.from(v).slice(0, k), nfill: v[k]};
+    } catch (e) { /* bỏ năm lỗi */ }
+  }
+  return (pcvCache[key] = out);
+}
+async function curvesFor(p) {
+  const key = p.id + "@" + p.x + "," + p.y;
+  if (pcCache[key]) return pcCache[key];
+  const c = CURVES[p.bo], out = {}; let src = null;
+  if (c && c._pos[p.id] !== undefined) {
+    const i = c._pos[p.id];
+    Object.entries(c.nam).forEach(([y, d]) => { if (d.NDVI[i]) out[y] = {NDVI: d.NDVI[i], MNDWI: d.MNDWI[i], NFILL: d.NFILL[i]}; });
+    src = {kieu: "san", k: c.k || "?"};
+  }
+  if (MAN && MAN.pc) {                     // các băng còn lại (và mọi đặc trưng khi điểm không có đường tính sẵn): tái dựng từ ảnh PC
+    const he = MAN.pc.he_so, k = MAN.pc.k, bang = he.bang, nky = new Set(bang.map(b => b.slice(b.lastIndexOf("_p") + 2))).size;
+    const fs = curveFeats(), pv = await pcAt(p);
+    Object.entries(pv).forEach(([y, d]) => {
+      const full = CORE.reconstruct(d.pcs, he, k), o = out[y] || (out[y] = {NFILL: d.nfill});
+      fs.forEach(f => { if (o[f] == null) o[f] = CORE.curveOf(full, bang, f, nky); });
+    });
+    if (!src && Object.keys(pv).length) src = {kieu: "pc", k: k};
+  }
+  return src ? (pcCache[key] = {src: src, ys: out}) : null;
+}
+/* ---------------- đường mùa vụ: một năm nổi bật, chồng các năm, chuỗi liên tục (bản 2.0) ---------------- */
+let CVS = Object.assign({mode: "mot", feat: "NDVI", kind: "ky", grp: "pc", z: false, an: {}}, ls("laymau_hp_curve_v1") || {});
+CVS.an = CVS.an || {};
+const KY = ["1-2", "3-4", "5-6", "7-8", "9-10", "11-12"];
+const CVCOL = {NDVI: "#2e9d3a", MNDWI: "#1f5fbf", B2: "#3b6fd6", B3: "#2f9e44", B4: "#d6336c", B5: "#c2410c", B6: "#a16207", B7: "#65a30d",
+  B8: "#7c3aed", B8A: "#9333ea", B11: "#b45309", B12: "#7f1d1d"};
+function cvCol(f) { return CVCOL[f] || "#6941c6"; }
+function yearColor(i, n) {                // bảng màu viridis: năm cũ tím sẫm, năm mới vàng
+  const cp = CORE.CMAP.viridis, t = n > 1 ? i / (n - 1) : 1;
+  const a = Math.min(cp.length - 2, Math.floor(t * (cp.length - 1))), f = t * (cp.length - 1) - a;
+  const c = [0, 1, 2].map(q => Math.round(cp[a][q] + (cp[a + 1][q] - cp[a][q]) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function curveSVG(cv, p, mode, feat, W, H) {
+  const ys = cv.ys, yrs = Object.keys(ys).map(Number).sort((a, b) => a - b), nky = KY.length;
+  const feats = mode === "mot" ? (feat === "NDVI" || feat === "MNDWI" ? ["NDVI", "MNDWI"] : [feat]) : [feat], st = {};
+  feats.forEach(f => { st[f] = CORE.seasonStats(ys, f, nky); });
+  let lo = 1, hi = -1;
+  yrs.forEach(y => feats.forEach(f => (ys[y][f] || []).forEach(v => { if (v != null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } })));
+  if (lo > hi) { lo = -1; hi = 1; }
+  lo = Math.max(-1, Math.floor((lo - 0.05) * 10) / 10); hi = Math.min(1, Math.ceil((hi + 0.05) * 10) / 10);
+  if (hi - lo < 0.4) hi = Math.min(1, lo + 0.4);
+  const L0 = 30, R0 = 8, T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;
+  const X = i => L0 + (n > 1 ? i * (W - L0 - R0) / (n - 1) : 0);
+  const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
+  const pl = (pts, c, w, op, dash) => {
+    const q = pts.filter(t => t && t[1] != null && isFinite(t[1])); if (q.length < 2) return "";
+    return `<polyline points="${q.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="${w}" opacity="${op}"${dash ? ` stroke-dasharray="${dash}"` : ""} stroke-linejoin="round"/>`;
+  };
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">`;
+  for (let k = Math.ceil(lo * 5 - 1e-9); k <= Math.floor(hi * 5 + 1e-9); k++) {
+    const v = k / 5; s += `<line x1="${L0}" x2="${W - R0}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${v === 0 ? "#c9ced6" : "#e9ecf0"}"/><text x="3" y="${(Y(v) + 3.5).toFixed(1)}" font-size="9" fill="#98a2b3">${v.toFixed(1)}</text>`;
+  }
+  if (mode === "chuoi") {
+    const f = feat, S0 = st[f], dx = n > 1 ? (X(1) - X(0)) : 10;
+    yrs.forEach((y, k) => {
+      const x0 = k ? X(k * nky) - dx / 2 : L0, x1 = k === yrs.length - 1 ? W - R0 : X(k * nky + nky) - dx / 2, d = ys[y];
+      if (k) s += `<line x1="${x0.toFixed(1)}" x2="${x0.toFixed(1)}" y1="${T0}" y2="${H - B0}" stroke="#d0d5dd"/>`;
+      if (y === ST.nam) s += `<rect x="${x0.toFixed(1)}" y="${T0}" width="${(x1 - x0).toFixed(1)}" height="${H - B0 - T0}" fill="#0b63ce" opacity=".06"/>`;
+      if (d.NFILL) s += `<rect x="${x0.toFixed(1)}" y="${T0}" width="${(x1 - x0).toFixed(1)}" height="${H - B0 - T0}" fill="#f79009" opacity=".09"><title>${T("năm {y} có {n} kỳ phải nội suy", {y: y, n: d.NFILL})}</title></rect>`;
+      const ma = p && p.nhan[y], c = ma ? color(ma) : "#eef0f3";
+      s += `<rect x="${(x0 + 1).toFixed(1)}" y="${H - B0 + 4}" width="${Math.max(1, x1 - x0 - 2).toFixed(1)}" height="9" fill="${c}" rx="2"><title>${y}: ${ma ? ma + " " + cten(IDX.by[ma]) : T("chưa gán")}</title></rect>`;
+      s += `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${H - 5}" font-size="9" text-anchor="middle" fill="${y === ST.nam ? "#0b63ce" : "#667085"}" font-weight="${y === ST.nam ? 700 : 400}">${y}</text>`;
+    });
+    s += pl(yrs.flatMap((y, k) => S0.med.map((m, i) => [k * nky + i, m])), "#98a2b3", 1.2, 1, "4 3");
+    s += pl(yrs.flatMap((y, k) => KY.map((t, i) => [k * nky + i, (ys[y][f] || [])[i]])), cvCol(f), 2, 1);
+    yrs.forEach((y, k) => (ys[y][f] || []).forEach((v, i) => {
+      if (v == null || !isFinite(v)) return;
+      const an = S0.anom.includes(y);
+      s += `<circle cx="${X(k * nky + i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${an ? 3 : 2}" fill="${an ? "#d92d20" : cvCol(f)}"><title>${y}, ${T("kỳ")} ${KY[i]}: ${v.toFixed(3)} (${T("trung vị")} ${S0.med[i] == null ? "" : S0.med[i].toFixed(3)})</title></circle>`;
+    }));
+  } else {
+    KY.forEach((t, i) => { s += `<text x="${X(i).toFixed(1)}" y="${H - 5}" font-size="9" fill="#98a2b3" text-anchor="middle">${T("th")} ${t}</text>`; });
+    feats.forEach(f => {
+      const S0 = st[f];
+      if (S0.yrs.length >= 3) {
+        const up = [], dn = [];
+        S0.med.forEach((m, i) => { if (m != null) { up.push([i, m + 1.4826 * S0.mad[i]]); dn.push([i, m - 1.4826 * S0.mad[i]]); } });
+        if (up.length > 1) s += `<polygon points="${up.concat(dn.reverse()).map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="${cvCol(f)}" opacity=".09"/>`;
+        s += pl(S0.med.map((m, i) => [i, m]), "#667085", 1.3, 0.9, "4 3");
+      }
+      yrs.forEach((y, k) => {
+        const d = ys[y][f]; if (!d) return;
+        const cur_ = y === ST.nam, an = S0.anom.includes(y);
+        if (mode === "mot") { if (!cur_) s += pl(d.map((v, i) => [i, v]), cvCol(f), 1, 0.25); }
+        else s += pl(d.map((v, i) => [i, v]), yearColor(k, yrs.length), cur_ ? 3 : 1.6, cur_ ? 1 : 0.85, an ? "5 3" : null);
+      });
+      if (mode === "mot" && ys[ST.nam] && ys[ST.nam][f]) s += pl(ys[ST.nam][f].map((v, i) => [i, v]), cvCol(f), 2.5, 1);
+    });
+  }
+  return s + "</svg>";
+}
+function curveLegend(cv, p, mode, feat) {
+  const yrs = Object.keys(cv.ys).map(Number).sort((a, b) => a - b), f = mode === "mot" && feat === "MNDWI" ? "NDVI" : feat;
+  const S = CORE.seasonStats(cv.ys, f, KY.length);
+  let h = "";
+  if (mode === "chong") {
+    h += `<div class="cvleg">` + yrs.map((y, k) => `<span data-y="${y}" class="${S.anom.includes(y) ? "an" : ""}" title="${T("bấm để chọn năm")}"><i style="background:${yearColor(k, yrs.length)}"></i>${y}${S.anom.includes(y) ? " ⚠" : ""}${y === ST.nam ? " ●" : ""}</span>`).join("") + `</div>`;
+  } else if (mode === "mot") {
+    h += `<div class="cvleg">` + (f === "NDVI" ? `<span><i style="background:${CVCOL.NDVI}"></i>NDVI</span><span><i style="background:${CVCOL.MNDWI}"></i>MNDWI</span>` : `<span><i style="background:${cvCol(f)}"></i>${f}</span>`) +
+      `<span>${T("đậm = năm {y}, nhạt = năm khác", {y: ST.nam})}</span></div>`;
+  } else {
+    h += `<div class="cvleg"><span><i style="background:${cvCol(f)}"></i>${f}</span><span><i style="background:#98a2b3"></i>${T("trung vị các năm, lặp lại")}</span>` +
+      `<span><i style="background:#d92d20"></i>${T("năm lệch")}</span><span>${T("dải màu dưới trục: nhãn đã gán")}</span></div>`;
+  }
+  if (yrs.length >= 4) {
+    const an = S.anom.map(y => {
+      const w = S.worst[y], v = w.ky >= 0 ? cv.ys[y][f][w.ky] - S.med[w.ky] : 0;
+      return T("{y} ({f} kỳ {k} {dir} trung vị {d})", {y: y, f: f, k: w.ky >= 0 ? KY[w.ky] : "", dir: v < 0 ? T("thấp hơn") : T("cao hơn"), d: Math.abs(v).toFixed(2)});
+    });
+    h += an.length ? `<div class="cvwarn">${T("Năm lệch khỏi quy luật mùa vụ của điểm:")} ${an.join("; ")}</div>`
+      : `<div class="cvnote">${T("Không có năm nào lệch rõ khỏi quy luật mùa vụ của điểm.")}</div>`;
+  }
+  const d = cv.ys[ST.nam], src = cv.src || {};
+  const sanF = src.kieu === "san" && (f === "NDVI" || f === "MNDWI");
+  h += `<div class="cvnote">${sanF ? T("tính sẵn, k = {k} PC", {k: src.k}) : T("đọc từ ảnh PC, k = {k}", {k: (MAN && MAN.pc && MAN.pc.k) || src.k})} · ${T("{n} năm", {n: yrs.length})}` +
+    (d ? (d.NFILL ? ` · <b style="color:#b54708">${T("năm {y} có {n} kỳ phải nội suy", {y: ST.nam, n: d.NFILL})}</b>` : "") : ` · <b>${T("không có năm {y}", {y: ST.nam})}</b>`) +
+    (yrs.some(y => y <= 2018) ? ` · <b style="color:#b54708">${T("2017-2018 ảnh S2 thưa, đường kém tin cậy")}</b>` : "") + `</div>`;
+  if (mode !== "mot") h += `<div class="cvnote">${T("Đọc hình: nét đứt xám là trung vị các năm, tức quy luật mùa vụ của điểm; năm lệch xa là năm đổi lớp, năm ảnh xấu hoặc năm bất thường.")}</div>`;
+  return h;
+}
+let curveTok = 0, lastCV = null;
+async function renderCurve() {
+  const box = $("curve"), p = vizPt(), tok = ++curveTok;
+  cvCtl();
+  if (CVS.kind === "nam") { renderAnnual(tok); return; }
+  if (!p) { box.innerHTML = ""; lastCV = null; return; }
+  box.innerHTML = `<div class="mu sm">${T("đang đọc…")}</div>`;
+  const cv = await curvesFor(p);
+  if (tok !== curveTok) return;
+  lastCV = cv;
+  if (!cv || !Object.keys(cv.ys).length) {
+    box.innerHTML = `<div class="mu sm">${T('không có đường mùa vụ cho điểm này (chỉ có sẵn cho hai bộ điểm, hoặc khi bộ dữ liệu có lớp "pc").')}</div>`; return;
+  }
+  if (!Object.values(cv.ys).some(d => d[CVS.feat])) {
+    box.innerHTML = `<div class="mu sm">${T("không có {f} cho điểm này: băng ngoài NDVI, MNDWI cần ảnh PC (lớp pc) của bộ dữ liệu.", {f: CVS.feat})}</div>`; return;
+  }
+  const Wc = cvW(box);
+  box.innerHTML = curveSVG(cv, p, CVS.mode, CVS.feat, Wc, Math.round((CVS.mode === "chuoi" ? 175 : 150) * cvH())) + curveLegend(cv, p, CVS.mode, CVS.feat);
+  wireCurveLeg(box);
+  if ($("dlgCurve").open) renderCurveBig();
+}
+function wireCurveLeg(root) {
+  root.querySelectorAll(".cvleg [data-y]").forEach(e => { e.onclick = () => setYear(+e.dataset.y); });
+  root.querySelectorAll(".cvleg [data-s]").forEach(e => { e.onclick = () => {
+    const an = CVS.an[CVS.grp] = CVS.an[CVS.grp] || [], s = e.dataset.s, i = an.indexOf(s);
+    if (i >= 0) an.splice(i, 1); else an.push(s); ls("laymau_hp_curve_v1", CVS); renderCurve(); }; });
+}
+function renderCurveBig() {
+  const p = vizPt(), b = $("curveBig");
+  if (!p) { b.innerHTML = `<div class="mu sm">${T("Chưa chọn điểm.")}</div>`; return; }
+  const ctl = $("curveCtl").cloneNode(true); ctl.removeAttribute("id");
+  ctl.querySelectorAll("[id]").forEach(e => { e.dataset.big = e.id; e.removeAttribute("id"); });
+  const bb = ctl.querySelector('[data-big="bCurveBig"]'); if (bb) bb.remove();
+  b.innerHTML = ""; b.appendChild(ctl);
+  ctl.querySelectorAll("select, input").forEach(e => {
+    const o = $(e.dataset.big); if (!o) return;
+    if (e.type === "checkbox") e.checked = o.checked; else e.value = o.value;
+    e.onchange = () => { if (e.type === "checkbox") o.checked = e.checked; else o.value = e.value; o.onchange(); };
+  });
+  const info = document.createElement("div"); info.className = "mu sm"; info.textContent = `${p.id} · ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`;
+  b.appendChild(info);
+  const body = document.createElement("div"); b.appendChild(body);
+  if (CVS.kind === "nam") { if (lastAN) body.innerHTML = annualSVG(lastAN, p, 920, 330) + annualLegend(lastAN, p); }
+  else if (lastCV && Object.keys(lastCV.ys).length) body.innerHTML = curveSVG(lastCV, p, CVS.mode, CVS.feat, 920, 330) + curveLegend(lastCV, p, CVS.mode, CVS.feat);
+  wireCurveLeg(b);
+}
+$("selCurveMode").onchange = () => { CVS.mode = $("selCurveMode").value; ls("laymau_hp_curve_v1", CVS); renderCurve(); };
+$("selCurveFeat").onchange = () => { CVS.feat = $("selCurveFeat").value; ls("laymau_hp_curve_v1", CVS); renderCurve(); };
+$("selCurveKind").onchange = () => { CVS.kind = $("selCurveKind").value; ls("laymau_hp_curve_v1", CVS); renderCurve(); };
+$("selCurveGrp").onchange = () => { CVS.grp = $("selCurveGrp").value; ls("laymau_hp_curve_v1", CVS); renderCurve(); };
+$("cbCurveZ").onchange = () => { CVS.z = $("cbCurveZ").checked; ls("laymau_hp_curve_v1", CVS); renderCurve(); };
+$("bCurveBig").onclick = () => { $("dlgCurve").showModal(); renderCurveBig(); };
+$("cvClose").onclick = () => $("dlgCurve").close();
+$("dlgCurve").addEventListener("close", () => { $("curveBig").innerHTML = ""; });
+
+/* ---------------- liên kết ngoài theo điểm (như bảng thông tin điểm của công cụ GEE) ---------------- */
+const LINK_LBL = {
+  gmap: "🗺 Google Maps (bản đồ)", gsat: "🛰 Google Maps (ảnh vệ tinh)", sv: "🧍 Google Street View 360°",
+  gearth: "🌍 Google Earth (3D, lịch sử ảnh)", wayback: "🕰 Esri Wayback (bản phát hành đang xem)",
+  copernicus: "🛰 Copernicus Browser (Sentinel-2, mùa khô năm {y})", bing: "🅱 Bing Maps (ảnh vệ tinh)",
+  yandex: "🟡 Yandex Maps (ảnh vệ tinh)", osm: "🗾 OpenStreetMap", diachi: "🏠 Tra ĐỊA CHỈ của điểm (OSM)",
+  wikimapia: "📌 Wikimapia (mô tả từ cộng đồng)", quyhoach: "🏙 Cổng quy hoạch Hải Phòng (bản đồ quy hoạch)"};
+function linkHTML(lat, lon, ten) {
+  const la = lat.toFixed(6), lo = lon.toFixed(6), u = CORE.toUTM(lon, lat);
+  const L_ = CORE.links(lat, lon, {year: ST.nam, wayback: REL[relIdx] ? REL[relIdx][1] : null, lang: LANG, ten: ten});
+  return `<div class="lk"><div class="sm">${T("📍 Toạ độ (vĩ độ, kinh độ): bôi đen hoặc bấm Chép")}</div>
+    <div class="co"><input type="text" readonly value="${la},${lo}" aria-label="lat,lon"><button type="button" data-a="chep">${T("Chép")}</button></div>
+    <div class="gee">GEE [lon, lat]: [${lo}, ${la}] · UTM 48N: ${u[0].toFixed(0)}, ${u[1].toFixed(0)}</div>` +
+    L_.map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer" data-k="${x.k}" data-ghim="${x.ghim ? 1 : 0}" title="${x.ghim ?
+      T("trang này đặt ghim đúng điểm") : T("trang này không nhận ghim: điểm nằm chính giữa màn hình; bấm sẽ chép toạ độ để dán vào ô tìm kiếm của trang")}">${T(LINK_LBL[x.k], {y: ST.nam})}` +
+      `<span class="gh">${x.ghim ? " 📍" : " ⌖ " + T("giữa màn hình")}</span></a>`).join("") +
+    `<button type="button" data-a="diachi">${T("Tra địa chỉ ngay tại đây")}</button><div class="dc" data-dc hidden></div>
+    <div class="mu sm">${T("Mẹo: Google Earth có thanh lịch sử ảnh; Copernicus xem được ảnh Sentinel theo từng ngày; Wayback mở đúng bản ảnh nền đang xem.")}</div></div>`;
+}
+function wireLinks(root, lat, lon) {
+  const inp = root.querySelector(".co input");
+  if (inp) inp.onfocus = () => inp.select();
+  const bc = root.querySelector('[data-a="chep"]');
+  if (bc) bc.onclick = () => {
+    const t = inp.value;
+    const pr = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject(new Error("no clipboard"));
+    pr.then(() => msg(T("đã chép toạ độ"), "ok", 1200)).catch(() => { inp.focus(); inp.select(); });
+  };
+  root.querySelectorAll('a[data-ghim="0"]').forEach(a => a.addEventListener("click", () => {   // trang không ghim được: chép toạ độ
+    const t = lat.toFixed(6) + ", " + lon.toFixed(6);
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(() => {}); } catch (e) { /* không có quyền */ }
+    msg(T("{s}: điểm ở chính giữa màn hình. Đã chép toạ độ {t}: dán vào ô tìm kiếm của trang (nếu có) để đặt ghim.", {s: a.textContent.replace(/⌖.*$/, "").trim(), t: t}), "ok", 7000);
+  }));
+  const bd = root.querySelector('[data-a="diachi"]'), dc = root.querySelector("[data-dc]");
+  if (bd) bd.onclick = async () => {
+    dc.hidden = false; dc.textContent = T("đang tra…");
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&zoom=18&accept-language=${LANG}`);
+      const j = await r.json(); dc.textContent = j.display_name || T("không tìm thấy địa chỉ");
+    } catch (e) { dc.textContent = T("không tra được địa chỉ: ") + (e.message || e); }
+  };
+}
+function renderLinks(p) {
+  const b = $("plinkBody"); if (!b) return;
+  if (!p) { b.innerHTML = ""; return; }
+  b.innerHTML = linkHTML(p.lat, p.lon, p.id); wireLinks(b, p.lat, p.lon);
+}
+let infoOn = !!ls("laymau_hp_info_v1"), infoPopup = null, infoMark = null;
+function showInfo(ll) {
+  if (infoMark) { map.removeLayer(infoMark); infoMark = null; }
+  infoMark = L.circleMarker(ll, {radius: 7, color: "#ff00ff", weight: 2, fill: false, interactive: false}).addTo(map);
+  const div = document.createElement("div");
+  div.innerHTML = `<b>${T("Thông tin điểm")}</b>` + linkHTML(ll.lat, ll.lng);
+  wireLinks(div, ll.lat, ll.lng);
+  if (infoPopup) map.closePopup(infoPopup);
+  if (isMobile()) { document.body.classList.remove("show-panel"); $("fLayers").classList.remove("on"); }
+  const padR = isMobile() || $("panel").offsetParent === null ? 16 : $("panel").offsetWidth + 28;   // không để bảng che khung thông tin
+  const padB = isMobile() ? $("side").offsetHeight + 16 : 24;                                      // không để ngăn kéo dưới che
+  infoPopup = L.popup({maxWidth: 310, autoPanPaddingTopLeft: [16, 60], autoPanPaddingBottomRight: [padR, padB]}).setLatLng(ll).setContent(div);
+  infoPopup.on("remove", () => { if (infoMark) { map.removeLayer(infoMark); infoMark = null; } });
+  infoPopup.openOn(map);
+}
+function setInfo(on) {
+  infoOn = !!on; ls("laymau_hp_info_v1", infoOn);
+  $("cInfo").checked = infoOn; $("fInfo").classList.toggle("on", infoOn);
+  if (!infoOn && infoPopup) map.closePopup(infoPopup);
+}
+map.on("click", e => { if (!infoOn || addMode || BO_VE || (typeof VG !== "undefined" && VG.mode)) return; showInfo(e.latlng); });
+map.on("contextmenu", e => {                // chuột phải, hoặc giữ lâu trên màn hình cảm ứng
+  if (BO_VE || (typeof VG !== "undefined" && VG.mode)) return;
+  if (e.originalEvent && e.originalEvent.preventDefault) e.originalEvent.preventDefault();
+  showInfo(e.latlng);
+});
+$("cInfo").onchange = () => setInfo($("cInfo").checked);
+
+/* ---------------- giao diện di động: bảng dưới kéo được, nút nổi ---------------- */
+const MQ = window.matchMedia ? window.matchMedia("(max-width: 760px)") : null;
+function isMobile() { return !!(MQ && MQ.matches); }
+function sheet(st) {
+  document.body.dataset.sheet = st; ls("laymau_hp_sheet_v1", st); $("side").style.height = "";
+  setTimeout(() => map.invalidateSize(), 220);
+}
+function sheetNext() { const o = ["min", "mid", "max"], i = o.indexOf(document.body.dataset.sheet); sheet(o[(i + 1) % 3]); }
+function grip() {
+  const g = $("gripInfo"); if (!g) return;
+  const p = cur(), ma = p ? p.nhan[ST.nam] : null;
+  g.textContent = `${ST.nam} · ` + (p ? `${p.id} · ${ma ? ma + " " + cten(IDX.by[ma]) : T("chưa gán")}` : T("Chưa chọn điểm."));
+}
+(function keoTay() {
+  const g = $("grip"), side = $("side"); let y0 = null, h0 = 0, moved = false;
+  g.addEventListener("pointerdown", e => {
+    if (e.target.closest("button")) return;
+    y0 = e.clientY; h0 = side.offsetHeight; moved = false; document.body.classList.add("keo");
+    try { g.setPointerCapture(e.pointerId); } catch (x) { /* không hỗ trợ */ }
+  });
+  g.addEventListener("pointermove", e => {
+    if (y0 == null) return;
+    const dy = y0 - e.clientY; if (Math.abs(dy) > 5) moved = true;
+    if (moved) side.style.height = Math.max(90, Math.min(window.innerHeight - 52, h0 + dy)) + "px";
+  });
+  const end = () => {
+    if (y0 == null) return;
+    document.body.classList.remove("keo"); y0 = null;
+    if (!moved) { sheetNext(); return; }
+    const f = side.offsetHeight / Math.max(1, window.innerHeight);
+    sheet(f < 0.3 ? "min" : f < 0.72 ? "mid" : "max");
+  };
+  g.addEventListener("pointerup", end); g.addEventListener("pointercancel", end);
+})();
+$("gPrev").onclick = () => step(-1); $("gNext").onclick = () => step(1);
+$("fLayers").onclick = () => {
+  const on = !document.body.classList.contains("show-panel");
+  document.body.classList.toggle("show-panel", on); $("fLayers").classList.toggle("on", on);
+};
+$("fInfo").onclick = () => { setInfo(!infoOn); msg(infoOn ? T("bật thông tin điểm: chạm lên bản đồ để xem liên kết") : T("tắt thông tin điểm"), "ok", 1800); };
+$("fSheet").onclick = sheetNext;
+L.DomEvent.disableClickPropagation($("fab")); L.DomEvent.disableScrollPropagation($("fab"));
+if (MQ && MQ.addEventListener) MQ.addEventListener("change", () => setTimeout(() => map.invalidateSize(), 200));
+
+/* ---------------- thao tác ---------------- */
+function select(id, pan) {
+  ST.cur = id; save(); render();
+  const p = cur(); if (p && pan) map.setView([p.lat, p.lon], Math.max(map.getZoom(), 17));
+  if (p && isMobile()) {
+    if (document.body.dataset.sheet === "min") sheet("mid");
+    if (pan) map.panBy([0, Math.round($("side").offsetHeight / 2)], {animate: false});
+  }
+}
+function step(d) {
+  const v = visible(); if (!v.length) return;
+  let i = v.findIndex(p => p.id === ST.cur);
+  i = i < 0 ? 0 : (i + d + v.length) % v.length;
+  select(v[i].id, true);
+}
+function setYear(y) {
+  ST.nam = y; save();
+  if ($("selBase").value === "auto") setBase();
+  refreshOverlays(); render();
+}
+function stepYear(d) { const ys = years(), i = ys.indexOf(ST.nam); setYear(ys[Math.max(0, Math.min(ys.length - 1, (i < 0 ? 0 : i + d)))]); }
+function label(ma) {
+  const p = cur(); if (!p) { msg("chọn một điểm trước"); return; }
+  CORE.setLabel(p, ST.nam, ma); save();
+  const ys = years(), i = ys.indexOf(ST.nam);
+  if (CFG.auto && i >= 0 && i < ys.length - 1) setYear(ys[i + 1]); else render();
+}
+function setConf(v) { const p = cur(); if (!p) return; p.tin[ST.nam] = v; save(); renderPoint(); }
+function copyPrev() { const p = cur(); if (!p) return; const v = CORE.prevLabel(p, years(), ST.nam); if (v) label(v); else msg("năm trước chưa có nhãn"); }
+function fillFwd() { const p = cur(); if (!p) return; const n = CORE.fillForward(p, years(), ST.nam); save(); render(); msg(T("đã điền {n} năm", {n: n}), "ok", 1500); }
+function toggleFlag() { const p = cur(); if (!p) return; p.xem_lai = !p.xem_lai; save(); render(); }
+function delPoint() {
+  const p = cur(); if (!p) return;
+  if (p.bo !== "tay" && !(boCfg(p.bo) && boCfg(p.bo).tu_tao)) { msg("chỉ xoá được điểm thêm tay hoặc điểm của bộ tự tạo"); return; }
+  if (!confirm(T("Xoá điểm {id}?", {id: p.id}))) return;
+  delete ST.diem[p.id]; ST.cur = null; save(); render();
+}
+function themDiemTai(lon, lat) {           // điểm thêm tay (nút Thêm điểm, hoặc biến điểm tra cứu thành điểm)
+  const bo = boCfg() && boCfg().tu_tao ? ST.bo : "tay";            // bộ tự tạo đang chọn: điểm thêm tay vào bộ đó
+  const id = (bo === "tay" ? "T" : bo + "-T") + Date.now().toString(36);
+  const p = CORE.newPoint(id, lon, lat, {bo: bo});
+  ST.diem[id] = p; ST.bo = bo; buildSetSelect(); select(id, false);
+  return p;
+}
+map.on("click", e => {
+  if (!addMode || BO_VE) return;
+  themDiemTai(e.latlng.lng, e.latlng.lat);
+});
+
+/* ---------------- tệp ---------------- */
+function download(name, text, type) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type: type || "text/plain"}));
+  a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+function allPts() { return Object.values(ST.diem); }
+$("eLong").onclick = () => {
+  const rows = CORE.exportLong(allPts(), allYears(), IDX);
+  download(`laymau_dai_${stamp()}.csv`, CORE.toCSV(rows, ["id", "bo_diem", "lon", "lat", "x_utm", "y_utm", "tang", "nam", "ma_lop", "id_lop", "nhom", "lop3", "tin_cay", "goi_y_3lop", "xem_lai", "ghi_chu", "cap_nhat"]), "text/csv");
+};
+$("eWide").onclick = () => {
+  const ys = allYears(), rows = CORE.exportWide(allPts(), ys, IDX);
+  const cols = ["id", "bo_diem", "lon", "lat", "x_utm", "y_utm", "tang", "so_nam_co_nhan", "so_lan_doi", "xem_lai", "ghi_chu"]
+    .concat(ys.map(y => "ma_" + y)).concat(ys.map(y => "lop3_" + y));
+  download(`laymau_rong_${stamp()}.csv`, CORE.toCSV(rows, cols), "text/csv");
+};
+$("eGeo").onclick = () => {
+  const fc = {type: "FeatureCollection", features: CORE.exportWide(allPts(), allYears(), IDX).map(r => ({type: "Feature",
+    geometry: {type: "Point", coordinates: [r.lon, r.lat]}, properties: r}))};
+  download(`laymau_${stamp()}.geojson`, JSON.stringify(fc), "application/geo+json");
+};
+$("eJson").onclick = () => download(`laymau_tien_do_${stamp()}.json`, JSON.stringify({loai: "laymau_hp", phien_ban: 1, cfg: CFG, st: ST}), "application/json");
+$("fileIn").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const text = await f.text();
+  try {
+    if (/\.csv$/i.test(f.name)) { addRows(CORE.parseCSV(text), f.name.replace(/\.csv$/i, "")); return; }
+    const j = JSON.parse(text);
+    if (j.loai === "laymau_hp") {
+      const n0 = Object.keys(ST.diem).length;
+      CORE.merge(ST.diem, j.st.diem || {}); if (j.st.vung && typeof vungGop === "function") vungGop(j.st.vung);
+      Object.entries(j.st.bo_cfg || {}).forEach(([k, c]) => { if (!ST.bo_cfg[k]) ST.bo_cfg[k] = c; }); if (j.st.scheme) { SCHEME = ST.scheme = j.st.scheme; IDX = CORE.schemeIndex(SCHEME); }
+      save(); buildSetSelect(); render(); msg(T("đã gộp tiến độ: {n} điểm mới, nhãn mới hơn được giữ", {n: Object.keys(ST.diem).length - n0}), "ok");
+    } else if (j.lop && j.nhom) { SCHEME = ST.scheme = j; IDX = CORE.schemeIndex(SCHEME); save(); render(); msg("đã nạp hệ thống lớp", "ok"); }
+    else if (j.type === "FeatureCollection" && j.features.some(ft => ft.geometry && /Polygon/.test(ft.geometry.type))
+             && typeof vungNhapGeo === "function") { vungNhapGeo(j, f.name); }
+    else if (j.type === "FeatureCollection") {
+      addRows(j.features.map((ft, i) => Object.assign({id: (ft.properties || {}).id || i, lon: ft.geometry.coordinates[0], lat: ft.geometry.coordinates[1]}, ft.properties || {})), f.name.replace(/\.(geo)?json$/i, ""));
+    } else msg("không nhận ra định dạng tệp", "er");
+  } catch (err) { msg(T("lỗi đọc tệp: ") + err.message, "er"); }
+};
+
+/* ---------------- sự kiện ---------------- */
+$("bLoad").onclick = () => $("fileIn").click();
+$("bExport").onclick = () => $("dlgExp").showModal(); $("eClose").onclick = () => $("dlgExp").close();
+$("bHelp").onclick = openHelp; $("hClose").onclick = () => $("dlgHelp").close();
+$("bSet").onclick = () => {
+  $("cRepo").value = CFG.repo; $("cRev").value = CFG.rev; $("cBase").value = CFG.base; $("cYears").value = CFG.years.join(", "); $("cAuto").checked = CFG.auto;
+  $("dlgSet").showModal();
+};
+$("cCancel").onclick = () => $("dlgSet").close();
+$("cOk").onclick = () => {
+  const ys = $("cYears").value.split(/[ ,;]+/).map(Number).filter(v => v > 1980 && v < 2100).sort();
+  CFG = {repo: $("cRepo").value.trim(), rev: $("cRev").value.trim() || "main", base: $("cBase").value.trim(), years: ys.length ? ys : CFG.years, auto: $("cAuto").checked};
+  ls(KEY_CFG, CFG); TIFF.clear(); $("dlgSet").close(); loadManifest(); render();
+};
+$("bScheme").onclick = () => $("fileIn").click();
+$("bSchemeOut").onclick = () => download("he_lop.json", JSON.stringify(SCHEME, null, 1), "application/json");
+$("selSet").onchange = () => {
+  ST.bo = $("selSet").value; save();
+  const ps = MAN && MAN.point_sets.find(x => x.id === ST.bo);
+  if (ps && !pts().length) loadPointSet(ps); else if (ps && ps.duong_cong && !CURVES[ps.id]) loadPointSet(ps);
+  render();
+};
+$("selFilter").onchange = () => { ST.filter = $("selFilter").value; save(); render(); };
+$("bPrev").onclick = () => step(-1); $("bNext").onclick = () => step(1);
+$("goto").onchange = () => { const id = $("goto").value.trim(); if (ST.diem[id]) select(id, true); else msg(T("không có mã {id}", {id: id})); };
+$("bMode").onclick = () => { addMode = !addMode; $("bMode").classList.toggle("on", addMode); map.getContainer().style.cursor = addMode ? "crosshair" : ""; hud(); };
+$("bCopy").onclick = copyPrev; $("bFill").onclick = fillFwd; $("bFlag").onclick = toggleFlag; $("bDel").onclick = delPoint;
+document.querySelectorAll("[data-conf]").forEach(b => { b.onclick = () => setConf(+b.dataset.conf); });
+$("note").oninput = () => { const p = cur(); if (p) { p.ghi_chu = $("note").value; save(); } };
+$("selBase").onchange = () => { ls("laymau_hp_base_v1", $("selBase").value); setBase(); };
+$("selRel").onchange = () => { relIdx = +$("selRel").value; $("selBase").value = "fixed"; setBase(); };
+$("selStrip").onchange = () => { ls("laymau_hp_strip_v1", $("selStrip").value); renderStrip(); };
+document.addEventListener("keydown", e => {
+  const t = e.target.tagName; if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
+  if ($("dlgSet").open || $("dlgExp").open || $("dlgHelp").open) return;
+  if (typeof vgPhim === "function" && vgPhim(e)) return;          // chế độ chọn vùng dùng phím riêng
+  if (e.shiftKey && /^Digit[123]$/.test(e.code)) { setConf(+e.code.slice(5)); e.preventDefault(); return; }
+  const k = e.key.toLowerCase();
+  if (k === "arrowleft") { stepYear(-1); e.preventDefault(); return; }
+  if (k === "arrowright") { stepYear(1); e.preventDefault(); return; }
+  if (k === "n" || k === "j") return step(1);
+  if (k === "p" || k === "k") return step(-1);
+  if (k === "c") return copyPrev();
+  if (k === "v") return fillFwd();
+  if (k === "f") return toggleFlag();
+  if (k === "m") return $("bMode").click();
+  if (k === "h") return openHelp();
+  if (k === "g") { const p = cur(); if (p) map.setView([p.lat, p.lon], Math.max(map.getZoom(), 17)); return; }
+  if (k === "b") { blinkOff = !blinkOff; refreshOverlays(); hud(); return; }
+  if (k === "backspace" || k === "delete") { const p = cur(); if (p) { CORE.setLabel(p, ST.nam, null); save(); render(); } e.preventDefault(); return; }
+  if (IDX.key[k]) { label(IDX.key[k]); e.preventDefault(); }
+});
+function openHelp() {
+  const rows = (SCHEME.lop || []).concat(SCHEME.dac_biet || []).map(c =>
+    `<tr><td><kbd>${(c.phim || "").toUpperCase()}</kbd></td><td><span class="sw" style="background:${c.mau}"></span> <b>${c.ma}</b></td><td>${cten(c)}${c.bat_buoc === false ? ` <i class="mu">(${T("tuỳ chọn, gộp vào {x}", {x: c.gop_vao})})</i>` : ""}</td><td class="mu">${cmadat(c)}</td><td>${cdau(c)}</td></tr>`).join("");
+  const sc = LANG === "vi" ? {} : ((I18N[LANG] || {}).__scheme || {});
+  $("helpcls").innerHTML = `<p class="sm"><b>${sc.ten || SCHEME.ten || T("Hệ thống lớp")}</b><br>${sc.ghi_chu || SCHEME.ghi_chu || ""}</p><table><tr><th>${T("phím")}</th><th>${T("mã")}</th><th>${T("lớp")}</th><th>${T("mã đất")}</th><th>${T("dấu hiệu")}</th></tr>${rows}</table>`;
+  $("dlgHelp").showModal();
+}
+function setLang(l) {
+  if (!LANGS.includes(l)) l = "vi";
+  LANG = l; ls("laymau_hp_lang_v1", l);
+  document.documentElement.lang = l; document.title = T("Geoportal lớp phủ Hải Phòng");
+  if ($("selLang")) $("selLang").value = l;
+  buildOverlays(); buildSetSelect(); buildStripSelect(); updRelNote(); render();      // phần động vẽ lại trước
+  if (typeof vgDoiNgonNgu === "function") vgDoiNgonNgu();
+  if (infoPopup && map.hasLayer(infoPopup)) showInfo(infoPopup.getLatLng());
+  if ($("dlgHelp").open) openHelp(); else $("helpcls").innerHTML = "";
+  if ($("dlgCurve").open) renderCurveBig(); else $("curveBig").innerHTML = "";
+  applyStatic(document.body);                                                           // rồi mới dịch chữ tĩnh
+}
+
+/*__V21__*/
+/*__OSM__*/
+/*__V22__*/
+
+/* ---------------- khởi động ---------------- */
+(function init() {
+  $("ver").textContent = "v" + VERSION;
+  [...$("selLang").options].forEach(o => { if (!LANGS.includes(o.value)) o.remove(); });
+  $("selLang").value = LANG; $("selLang").onchange = () => setLang($("selLang").value);
+  document.documentElement.lang = LANG; document.title = T("Geoportal lớp phủ Hải Phòng");
+  applyStatic(document.body);
+  document.body.dataset.sheet = ls("laymau_hp_sheet_v1") || "mid";
+  setInfo(infoOn);
+  REL.forEach((r, i) => { const o = document.createElement("option"); o.value = String(i); o.textContent = r[0]; $("selRel").appendChild(o); });
+  $("selBase").value = ls("laymau_hp_base_v1") || "auto";
+  $("selFilter").value = ST.filter || "all";
+  if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1];
+  pnThu(!!ls("laymau_hp_pnthu_v1")); setDock(ls("laymau_hp_dock_v1") || "trai", true);
+  setBase(); render();
+  napCauHinh().then(() => { if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1]; render(); return loadManifest(); }).then(() => {
+    const ps = MAN && MAN.point_sets;
+    if (ps && ps.length) ps.forEach(x => { if (Object.values(ST.diem).some(p => p.bo === x.id)) loadPointSet(x); });
+    if (ps && ps.length && !Object.keys(ST.diem).length) loadPointSet(ps[0]);
+  });
+  if (location.protocol === "file:") msg("Đang mở bằng file://. Nếu lớp đối chiếu không hiện, mở qua máy chủ cục bộ (xem Cài đặt).", "wa", 8000);
+})();
+</script>
+
+<script id="vung">
+/*__VUNG__*/
+/*__V23__*/
+</script>
+</body>
+</html>

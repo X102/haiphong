@@ -1,0 +1,71 @@
+# Geoportal lớp phủ Hải Phòng
+
+Trang web một tệp (`index.html`) để xem và gán nhãn lớp phủ đa năm (2017-2026) cho thành phố Hải Phòng mới:
+ảnh Esri Wayback theo năm, ảnh Sentinel-2 mùa khô, PCA chuỗi năm, embedding, CTX, bản đồ lớp và OpenStreetMap.
+Dữ liệu đọc thẳng từ bộ dữ liệu Hugging Face [`lopmaybay/haiphong-lop-tham-chieu`](https://huggingface.co/datasets/lopmaybay/haiphong-lop-tham-chieu)
+theo từng đoạn (COG, FlatGeobuf), nên trang không cần máy chủ riêng.
+
+Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), dùng được trên điện thoại.
+
+## Tính năng chính
+
+- Gán nhãn từng điểm cho từng năm theo hệ 12 + 3 lớp; tạo bộ điểm mới (lưới, ngẫu nhiên, phân tầng theo bản đồ, từ OpenStreetMap) với các năm cần gán riêng.
+- Ảnh nền Wayback theo năm đang gán; ô thiếu ảnh chi tiết được phóng to có nội suy từ ô cha của cùng bản phát hành, không còn ô trắng.
+- Lớp đối chiếu: màu thật, B11-B8-B4, PCA chuỗi năm, PC1-5, embedding g7, bản đồ 3 lớp, và lớp S2 10 băng với tổ hợp màu, chỉ số, CTX tính trong trình duyệt.
+- Đường mùa vụ 6 kỳ nhiều năm, đồ thị giá trị điểm ảnh theo năm (PC, embedding, S2, chỉ số, CTX) có đánh dấu năm lệch.
+- Tra cứu nhanh: nhấp bất kỳ chỗ nào trên bản đồ để xem dải ảnh theo năm và đường mùa vụ tại đó, không cần tạo điểm.
+- Chọn vùng nhiều lớp (điểm mẫu gắn lớp, các lớp cạnh tranh), xoá hoặc giữ mảng, sửa ranh giới; phạm vi theo xã có điểm mẫu hoặc xã chọn ở danh sách (nhóm xã đặt tên); điểm mẫu chỉ có hiệu lực trong xã của nó hoặc trong bán kính R; trừ chỗ đã lưu; chốt khu rồi làm khu khác.
+- So sánh các năm: bảng, biểu đồ diện tích từng lớp theo năm, bản đồ vùng từng năm, được / mất, số năm thuộc lớp, năm bắt đầu thuộc lớp.
+- Tìm xã, phường theo tên (không dấu cũng được); ẩn bảng điều khiển để rộng bản đồ; ẩn, hiện vùng đã lưu.
+- OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
+- Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
+- Tiến độ lưu tự động trong trình duyệt; xuất CSV, GeoJSON, tệp tiến độ JSON (nhập lại, gộp nhiều người).
+
+## Cấu trúc kho
+
+| thư mục, tệp | nội dung |
+|---|---|
+| `index.html` | trang đã dựng, là thứ được đăng lên web |
+| `cau_hinh.json` | cấu hình web (xem dưới) |
+| `src/` | mã nguồn trang: `tpl.html` (khung, CSS, lõi), `*_ui.js`, từ điển `i18n.json` và các tệp sinh từ điển |
+| `tools/dung_trang.py` | dựng `index.html` từ `src/` |
+| `tools/phuc_vu_cuc_bo.py` | máy chủ tĩnh cục bộ có HTTP Range, để thử trang với dữ liệu trên máy |
+| `tests/` | bài thử jsdom trên dữ liệu giả (`mk_fixtures.py` tạo dữ liệu, `chay_het.sh` chạy tất cả) |
+| `colab/` | ô và notebook Colab dựng dữ liệu rồi đẩy lên Hugging Face |
+| `docs/TRIEN_KHAI.md` | hướng dẫn đưa lên GitHub Pages và cập nhật |
+
+## Cấu hình web (`cau_hinh.json`)
+
+| khoá | ý nghĩa |
+|---|---|
+| `hf_repo`, `hf_rev` | bộ dữ liệu Hugging Face và nhánh mặc định (người dùng vẫn đổi được trong Cài đặt) |
+| `nam_can_gan` | các năm cần gán mặc định |
+| `bao_loi.email` | địa chỉ nhận báo lỗi; để trống thì nút báo lỗi chỉ cho chép nội dung |
+| `bao_loi.github` | `tài-khoản/kho` để hiện thêm nút tạo issue trên GitHub (tuỳ chọn) |
+| `overpass` | máy chủ Overpass cho OSM trực tiếp |
+
+Địa chỉ email đặt ở đây sẽ công khai trong trang; nên dùng một hộp thư riêng cho báo lỗi.
+
+## Đăng lên GitHub Pages
+
+Xem `docs/TRIEN_KHAI.md`. Tóm tắt: tạo kho, đẩy thư mục này lên nhánh `main`, vào Settings, Pages, chọn Source: GitHub Actions.
+Quy trình `.github/workflows/trang-web.yml` đăng `index.html` và `cau_hinh.json` sau mỗi lần đẩy.
+
+## Phát triển
+
+```bash
+python tools/dung_trang.py                    # dựng lại index.html sau khi sửa src/
+cd src && python trich_khoa.py && python gen_i18n.py && cd ..   # sau khi thêm câu cần dịch
+bash tests/chay_het.sh                        # bài thử; cần node và các gói ghi ở đầu tệp
+```
+
+## Nguồn dữ liệu và ghi công
+
+- Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
+- Ảnh nền: Esri World Imagery, Esri Wayback.
+- OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.
+- Hệ thống lớp, điểm kiểm định và các lớp dẫn xuất: luận án của Phạm Đăng Hiển (MIIGAiK).
+
+## Giấy phép
+
+Mã nguồn theo giấy phép MIT (tệp `LICENSE`). Dữ liệu theo giấy phép của từng nguồn ở trên.
