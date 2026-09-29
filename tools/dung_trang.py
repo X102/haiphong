@@ -14,6 +14,7 @@ for k, v in [("/*__SCHEME__*/null", json.dumps(sc, ensure_ascii=False)),
              ("/*__V22__*/", (S / "v22_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__V23__*/", (S / "v23_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__V24__*/", (S / "v24_ui.js").read_text(encoding="utf-8").strip()),
+             ("/*__V25__*/", (S / "v25_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__CHISO__*/null", (S / "chiso_s2.json").read_text(encoding="utf-8").strip()),
              ("/*__I18N__*/{}", json.dumps(json.loads((S / "i18n.json").read_text(encoding="utf-8")), ensure_ascii=False))]:
     assert s.count(k) == 1, k

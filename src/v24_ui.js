@@ -237,7 +237,7 @@ const DEM_LUOI = new WeakMap();
 async function demLuoi(g) {                  // độ cao, độ dốc trên lưới phân tích g (láng giềng gần nhất từ ảnh DEM)
   if (DEM_LUOI.has(g)) return DEM_LUOI.get(g);
   const N = g.w * g.h, cao = new Float32Array(N).fill(NaN), doc = new Float32Array(N).fill(NaN);
-  const R = await readUTM(CORE.dataUrl(CFG, MAN.dem.duong_dan), g.bb, g.w, g.h, 1, [0], true);
+  const url = CORE.dataUrl(CFG, MAN.dem.duong_dan), R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 1, [0], true, true), url);
   if (R) {
     const G = demDoc(R.src, R.sw, R.sh, R.rx, demHeSo(), demNodata());
     for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0 || R.src[j] === demNodata()) continue; cao[i] = R.src[j] * demHeSo(); doc[i] = G.doc[j]; }

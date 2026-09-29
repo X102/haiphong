@@ -217,7 +217,7 @@ function vgCong(c) {
   VG.cong = c;
   document.querySelectorAll("#vung [data-cong]").forEach(b => b.classList.toggle("on", b.dataset.cong === c));
   vg$("vgGoiY").textContent = T(GOI_Y[c]);
-  vg$("vgGianW").hidden = c !== "sua";
+  vg$("vgGianW").hidden = c !== "sua"; if (vg$("vgChuanW")) vg$("vgChuanW").hidden = c !== "sua";
   vgPM(c === "sua");
   map.getContainer().style.cursor = c === "hat" ? "crosshair" : (c === "sua" ? "" : "pointer");
 }
@@ -260,6 +260,7 @@ function vgVeHat() {
 function vgBoHat(h, khongGhi) {
   const am = VG.neg.includes(h);
   VG.pos = VG.pos.filter(x => x !== h); VG.neg = VG.neg.filter(x => x !== h);
+  if (typeof mvBo === "function") mvBo(h);
   if (!khongGhi) VG.undo.push({kieu: "bo_hat", h, am});
   vgVeHat(); vgTinh();
 }
@@ -280,6 +281,7 @@ map.on("click", e => {
     const am = !!oe.shiftKey || !!VG.amBat, h = {lon: e.latlng.lng, lat: e.latlng.lat};
     if (!am && VG.lop) h.ma = VG.lop;
     (am ? VG.neg : VG.pos).push(h); VG.undo.push({kieu: "hat", h, am});
+    if (!am && typeof mvThem === "function") mvThem(h);          // bản 2.5: tự lưu vào bộ điểm "Mẫu chọn vùng"
     vgVeHat(); vgTinh();
     if (typeof TRA_ON !== "undefined" && TRA_ON && typeof traDat === "function") traDat(e.latlng, true);   // xem luôn dải ảnh, đường mùa vụ của điểm mẫu
   } else if ((VG.cong === "xoa" || VG.cong === "giu") && VG.obj && VG.obj.kieu === "mang") {
@@ -342,6 +344,23 @@ async function vgRef(L0, y) {
   const t = await tiffOf(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)));
   return {x0: t._bb[0], y1: t._bb[3], res0: t._imgs[0].rx};
 }
+/* bản 2.5: đọc cho phân tích dùng bản COG riêng (không bị lớp bản đồ, dải ảnh đang đọc cùng tệp làm rơi khối đệm, gây
+   "Request failed") và thử lại có giãn cách khi mạng hay máy chủ bận */
+async function vgThuLai(f, url) {
+  for (let k = 0; ; k++) {
+    try { return await f(); }
+    catch (e) {
+      const m = String((e && (e.message || e)) || "");
+      if (k >= 3 || !/Request failed|fetch|network|abort|Load failed|429|50[234]/i.test(m)) throw e;
+      if (url) TIFF_PT.delete(url);
+      await new Promise(r => setTimeout(r, 600 * Math.pow(2, k)));
+    }
+  }
+}
+function vgLoiDoc(e) {                       // câu lỗi đọc dữ liệu dễ hiểu
+  const m = String((e && (e.message || e)) || "");
+  return /Request failed|fetch|network|Load failed|429|50[234]/i.test(m) ? T("không tải được dữ liệu (mạng hoặc máy chủ bận)") + ` (${m})` : m;
+}
 async function vgDoc(g, y, ids, sc) {
   const lst = [], N = g.w * g.h; sc = sc || {};
   const u8 = (v, lo, hi) => { const o = new Uint8Array(N), d = hi - lo || 1;
@@ -351,7 +370,8 @@ async function vgDoc(g, y, ids, sc) {
   const s2 = async () => {                     // S2 10 băng năm y trên lưới g (láng giềng gần nhất), đọc một lần
     if (S2) return S2;
     if (!vgCoNam("s2:B2", y)) throw new Error(T("lớp S2 10 băng không có năm {y}", {y: y}));
-    const nb = s2Bang().length, R = await readUTM(CORE.dataUrl(CFG, MAN.s2d.duong_dan.replace("{y}", y)), g.bb, g.w, g.h, 0, Array.from({length: nb}, (_, i) => i));
+    const nb = s2Bang().length, url = CORE.dataUrl(CFG, MAN.s2d.duong_dan.replace("{y}", y));
+    const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, Array.from({length: nb}, (_, i) => i), false, true), url);
     if (!R) throw new Error(T("ảnh S2 10 băng không phủ vùng này"));
     const ok = new Uint8Array(N);
     for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0) continue; for (let b = 0; b < nb; b++) if (R.src[j * nb + b]) { ok[i] = 1; break; } }
@@ -382,7 +402,8 @@ async function vgDoc(g, y, ids, sc) {
           lst.push(u8(v, tb ? K.lo[b] : 0, tb ? K.hi[b] : (win === 5 ? K.s5[b] : K.s15[b])));
         }
       } else if (nh === "pc") {
-        const R = await readUTM(CORE.dataUrl(CFG, MAN.pc.duong_dan.replace("{y}", y)), g.bb, g.w, g.h, 0, [+k - 1]), s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, v = new Float32Array(N).fill(NaN);
+        const url = CORE.dataUrl(CFG, MAN.pc.duong_dan.replace("{y}", y)), s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, v = new Float32Array(N).fill(NaN);
+        const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, [+k - 1], false, true), url);
         if (R) for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j >= 0 && R.src[j] !== -32768) v[i] = R.src[j] / s; }
         const r = pv(v, id); lst.push(u8(v, r[0], r[1]));
       } else if (nh === "dem") {
@@ -393,12 +414,12 @@ async function vgDoc(g, y, ids, sc) {
     }
     const L0 = MAN.layers.find(l => l.id === id);
     if (!L0.nam.includes(y)) throw new Error(T("lớp {l} không có năm {y}", {l: lname(L0), y: y}));
-    const r = await readBox(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), g.bb, g.w, g.h);
+    const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url);
     lst.push(r || {data: new Uint8Array(g.w * g.h * (L0.kieu === "xam" ? 1 : 3)), n: L0.kieu === "xam" ? 1 : 3});
   }
   const lop = [];
   for (const L0 of MAN.layers.filter(l => l.kieu === "lop" && l.nam.includes(y))) {
-    const r = await readBox(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), g.bb, g.w, g.h);
+    const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url);
     if (r) lop.push({id: L0.id, ten: L0.ten, ten_lop: L0.ten_lop || TEN3, data: r.data});
   }
   return {lst, lop, sc};
@@ -436,9 +457,10 @@ async function vgTinhNgay() {
       VG.data = {y, ids: ids.join(), r, g, nf: S.nf, valid: S.valid, F: CORE.smoothFeat(S.F, S.nf, g.w, g.h, r, S.valid),
                  lop, xaIdx: vgXaIdx(g), cache: {}, sc};
     }
+    TIFF_PT.clear();
     if (!VG.data.xaIdx && VG.xa) { VG.data.xaIdx = vgXaIdx(VG.data.g); VG.data.cache = {}; }   // ranh giới xã nạp sau lần đọc ảnh
     vgChon();
-  } catch (e) { vgTrang("lỗi: " + (e.message || e)); }
+  } catch (e) { vgTrang(T("lỗi: ") + vgLoiDoc(e)); }
 }
 function vgHatV(D, H) {
   return H.map(h => { const p = CORE.llToPix(D.g, h.lon, h.lat), i = Math.floor(p[1]) * D.g.w + Math.floor(p[0]);
@@ -606,9 +628,9 @@ function vgVe() {
 }
 function vgKieuLop(l, k) {
   const o = VG.obj, thr = vgNguong2();
-  const mc = VG.res && VG.res.ma ? vgMau(VG.res.ma) : "#c2185b";
+  const mc = l._ma ? vgMau(l._ma) : (VG.res && VG.res.ma ? vgMau(VG.res.ma) : "#c2185b");
   const st = o.giu[k] ? {color: "#1a7f37", fillColor: "#1a7f37"} : (o.nghi[k] >= thr ? {color: o.tick[k] ? "#f79009" : "#fdb022", fillColor: "#f79009"} : {color: mc, fillColor: mc});
-  l.setStyle(Object.assign({weight: 2, fillOpacity: 0.15}, st));
+  l.setStyle(Object.assign({weight: 2, fillOpacity: 0.15, dashArray: null}, st, l._chon ? {weight: 4, dashArray: "6 4", color: "#facc15"} : {}));
 }
 function vgMangMP(k, tol) {                // đa giác (lon, lat) của mảng k ở giai đoạn ảnh: tính trên khung bao của mảng
   const o = VG.obj, g = VG.res.g, b = o.desc[k - 1].bbox, w = b[2] - b[0], h = b[3] - b[1];
@@ -666,13 +688,14 @@ function vgThemLai(recs) {                 // hoàn tác xoá ở giai đoạn �
 function vgHoanTac() {
   const u = VG.undo.pop(); if (!u) { msg("không còn gì để hoàn tác", "wa", 1500); return; }
   const bo = (arr, x) => { const i = arr.indexOf(x); if (i >= 0) arr.splice(i, 1); };
-  if (u.kieu === "hat") { bo(u.am ? VG.neg : VG.pos, u.h); vgVeHat(); vgTinh(); }
-  else if (u.kieu === "bo_hat") { (u.am ? VG.neg : VG.pos).push(u.h); vgVeHat(); vgTinh(); }
+  if (u.kieu === "hat") { bo(u.am ? VG.neg : VG.pos, u.h); if (typeof mvBo === "function") mvBo(u.h); vgVeHat(); vgTinh(); }
+  else if (u.kieu === "bo_hat") { (u.am ? VG.neg : VG.pos).push(u.h); if (!u.am && typeof mvThem === "function") mvThem(u.h); vgVeHat(); vgTinh(); }
   else if (u.kieu === "xoa") {
     u.recs.forEach(r => bo(VG.loai, r));
     if (VG.obj && VG.obj.kieu === "da_giac") vgThemLai(u.recs); else vgChon();
   } else if (u.kieu === "bo_xoa") { VG.loai.push(...u.recs); if (VG.obj && VG.obj.kieu === "mang") vgChon(); }
   else if (u.kieu === "giu") { bo(VG.giu, u.rec); vgLamMoiGiu(); }
+  else if (u.kieu === "chuan") { VG.sua.clearLayers(); u.truoc.forEach(x => vgThemDaGiac(x.mp, x.ma)); VG.daSua = true; vgDoiTuongDaGiac(); vgCapNhatHen(); }
   else if (u.kieu === "bo_giu") { VG.giu.push(u.rec); vgLamMoiGiu(); }
   vgTomTat(); msg("đã hoàn tác", "ok", 1000);
 }
@@ -764,7 +787,7 @@ function vgXoaKQ() {
   VG.res = null; VG.obj = null; VG.kq = null; vgBangLop(); VG.poly = null; VG.sua.clearLayers(); vgPM(false); VG.gNhan.clearLayers();
   if (VG.hien) { map.removeLayer(VG.hien); VG.hien = null; }
   ["vgTK", "vgNamTK", "vgDSMang", "vgDSNghi", "vgTom"].forEach(id => { vg$(id).innerHTML = ""; });
-  vgNamDung(); VG.nam = null; VG.namTK = null; vg$("vgNamViz").hidden = true; vg$("vgNamBD").innerHTML = ""; vg$("vgNamLeg").innerHTML = "";
+  vgNamDung(); VG.nam = null; VG.namTK = null; vg$("vgNamViz").hidden = true; vg$("vgNamBD").innerHTML = ""; vg$("vgNamLeg").innerHTML = ""; vg$("vgNamLop").innerHTML = "";
 }
 
 /* ---------- thống kê ---------- */
@@ -798,11 +821,13 @@ function vgPM(bat) {
     try { map.pm.disableGlobalEditMode(); map.pm.disableGlobalRemovalMode(); map.pm.disableDraw(); map.pm.removeControls(); } catch (e) { /* chưa bật */ }
   }
 }
-function vgThemDaGiac(mp) {
+function vgThemDaGiac(mp, ma, chon) {        // ma: lớp riêng của đa giác (bản 2.5), chon: đang được chọn
   mp.forEach(pg => {
     const lyr = L.polygon(pg.map(r => r.map(q => [q[1], q[0]])), {color: "#c2185b", weight: 2, fillOpacity: 0.15, pmIgnore: false});
+    if (ma) lyr._ma = ma; if (chon) lyr._chon = true;
     lyr.on("pm:edit", () => { VG.daSua = true; vgDoiTuongDaGiacHen(); });
     lyr.on("click", ev => {
+      if (VG.mode && VG.cong === "sua" && typeof vgChonDaGiac === "function" && vgChonDaGiac(lyr, ev)) { L.DomEvent.stopPropagation(ev); return; }
       if (!VG.mode || (VG.cong !== "xoa" && VG.cong !== "giu")) return;
       L.DomEvent.stopPropagation(ev);
       const k = VG.obj && VG.obj.layers ? VG.obj.layers.indexOf(lyr) + 1 : 0; if (!k) return;
@@ -860,16 +885,18 @@ function vgMPTuSua() {
   VG.sua.eachLayer(l => { if (!l.toGeoJSON) return; const gj = l.toGeoJSON(); (gj.type === "FeatureCollection" ? gj.features : [gj]).forEach(f => vgMP(f.geometry).forEach(pg => mp.push(pg))); });
   return mp;
 }
+async function vgTKDaGiac(mp) {             // thống kê một tập đa giác (lon, lat) trên lưới vừa khít
+  const bb = vgBB3857(mp), ids = vgDT(), y = ST.nam, L0 = MAN.layers.find(l => ids.includes(l.id) && l.nam.includes(y)) || null;
+  const g = CORE.gridFor([bb[0] - 30, bb[1] - 30, bb[2] + 30, bb[3] + 30], VG.maxPx, await vgRef(L0, y));
+  const {lop} = await vgDoc(g, y, []);
+  const m = CORE.rasterizeRings(CORE.polysToPixRings(g, mp), g.w, g.h);
+  return {m, g, lop, st: CORE.maskStats(m, g, {xaIdx: vgXaIdx(g), lop})};
+}
 async function vgCapNhat() {
   const mp = vgMPTuSua(); if (!mp.length) { msg("chưa có ranh giới: chọn công cụ ④ trước"); return; }
-  const bb = vgBB3857(mp);
   try {
     vgTrang("đang tính theo ranh giới…");
-    const ids = vgDT(), y = ST.nam, L0 = MAN.layers.find(l => ids.includes(l.id)) || null;
-    const g = CORE.gridFor([bb[0] - 30, bb[1] - 30, bb[2] + 30, bb[3] + 30], VG.maxPx, await vgRef(L0, y));
-    const {lop} = await vgDoc(g, y, []);
-    const m = CORE.rasterizeRings(CORE.polysToPixRings(g, mp), g.w, g.h);
-    const st = CORE.maskStats(m, g, {xaIdx: vgXaIdx(g), lop});
+    const {m, g, lop, st} = await vgTKDaGiac(mp);
     VG.poly = mp; VG.res = Object.assign(VG.res || {}, {mask_sua: m, g_sua: g, st_sua: st});
     vgHienTK(st, g, lop, VG.daSua ? "theo ranh giới đã sửa" : "theo ranh giới", CORE.geodesicArea(mp));
     vgTomTat(); vgTrang(`ranh giới ${mp.length} đa giác`);
@@ -890,13 +917,14 @@ function vgVeVung() {
     const c = IDX.by[v.ma_lop] || {}, k = v.khu && ST.khu[v.khu];
     L.geoJSON({type: "Feature", geometry: v.geom, properties: {}}, {pmIgnore: true,
       style: {color: c.mau || "#555", weight: k ? 2.5 : 2, fillOpacity: k ? 0.24 : 0.18, dashArray: v.nam === ST.nam ? null : "5 4"}})
-      .bindTooltip(`${v.id} · ${v.ma_lop} ${cten(c)} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ha` + (k ? ` · 🔒 ${k.ten}` : "")).addTo(VG.gVung);
+      .bindTooltip(`${v.id} · ${v.ma_lop} ${cten(c)} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ha` + (k ? ` · 🔒 ${k.ten}` : ""))
+      .on("click", e => { if (!VG.mode && typeof vgPopupVung === "function") vgPopupVung(v.id, e.latlng); }).addTo(VG.gVung);
   });
   const ds = Object.values(ST.vung).sort((a, b) => b.tg - a.tg);
   vg$("vgSoVung").textContent = ds.length;
   vg$("vgDS").innerHTML = ds.map(v => `<div class="row${vgVungThay(v) ? "" : " vg-an"}" data-v="${v.id}"><span class="sw" style="background:${(IDX.by[v.ma_lop] || {}).mau || "#555"}"></span>` +
     `<b>${v.ma_lop}</b> ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ha${v.da_sua ? " · " + T("đã sửa") : ""}${v.khu && ST.khu[v.khu] ? " · 🔒" : ""} <span class="mu">${v.ghi_chu || ""}</span>` +
-    `<button data-a="xem">${T("xem")}</button><button data-a="sua">${T("sửa")}</button><button data-a="xoa">${T("xoá")}</button></div>`).join("") || '<span class="mu">' + T("chưa có") + '</span>';
+    `<button data-a="xem">${T("xem")}</button><button data-a="lop">${T("đổi lớp")}</button><button data-a="sua">${T("sửa")}</button><button data-a="xoa">${T("xoá")}</button></div>`).join("") || '<span class="mu">' + T("chưa có") + '</span>';
   vg$("vgDS").querySelectorAll("button").forEach(b => { b.onclick = () => vgThaoTac(b.closest("[data-v]").dataset.v, b.dataset.a); });
   vg$("vgVungHien").checked = VG_HIEN.hien; vg$("vgVungNam").checked = VG_HIEN.nam; if ($("cVung")) $("cVung").checked = VG_HIEN.hien;
   vgVeKhu();
@@ -905,6 +933,7 @@ function vgThaoTac(id, a) {
   const v = ST.vung[id]; if (!v) return;
   const lyr = L.geoJSON({type: "Feature", geometry: v.geom});
   if (a === "xem") map.fitBounds(lyr.getBounds(), {maxZoom: 17});
+  if (a === "lop" && typeof vgPopupVung === "function") { map.fitBounds(lyr.getBounds(), {maxZoom: 17}); vgPopupVung(id, lyr.getBounds().getCenter()); }
   if (a === "sua") {
     if (!VG.mode) vgBat(true);
     VG.sua.clearLayers(); vgThemDaGiac(vgMP(v.geom)); VG.poly = vgMP(v.geom); VG.suaId = id;
@@ -920,6 +949,14 @@ function vgThaoTac(id, a) {
 async function vgLuu() {
   if (!VG.sua.getLayers().length) vgVec();
   if (!VG.sua.getLayers().length) return;
+  const nhom = {}; VG.sua.eachLayer(l => { if (l.toGeoJSON && l._ma && l._ma !== vg$("vgLop").value) (nhom[l._ma] = nhom[l._ma] || []).push(...vgMP(l.toGeoJSON().geometry)); });
+  for (const [maK, mpK] of Object.entries(nhom)) {                 // bản 2.5: đa giác đã gán lớp khác -> vùng riêng
+    const {st: stK} = await vgTKDaGiac(mpK), idK = "V" + Date.now().toString(36) + "_" + maK;
+    ST.vung[idK] = vgBanGhiVung(idK, maK, mpK, stK, VG.res && VG.res.prm, true, VG.res ? VG.res.ma : "");
+    VG.sua.eachLayer(l => { if (l._ma === maK) VG.sua.removeLayer(l); });
+    msg(T("đã lưu vùng {id}: {ma}, {y}, {a} ha", {id: idK, ma: maK, y: ST.nam, a: stK.dien_tich_ha.toFixed(2)}), "ok", 4000);
+  }
+  if (!VG.sua.getLayers().length) { VG.suaId = null; save(); vgVeVung(); return; }
   await vgCapNhat();
   const st = (VG.res && VG.res.st_sua) || (VG.res && VG.res.st); if (!st) return;
   const ma = vg$("vgLop").value, id = VG.suaId || ("V" + Date.now().toString(36));
@@ -960,14 +997,16 @@ function vgLuuHet(khu) {                    // mỗi lớp có điểm mẫu m�
 /* ---------- so sánh các năm ---------- */
 /* bản 2.3: giữ bản đồ lớp của từng năm (mỗi điểm ảnh: chỉ số lớp + 1) để vẽ vùng từng năm, được / mất so với năm gốc,
    số năm thuộc lớp, năm bắt đầu thuộc lớp; biểu đồ diện tích theo năm; tuỳ chọn lấy đặc trưng mẫu tại chỗ ở từng năm */
-async function vgNam9() {
+async function vgNam9(chiNam) {              // chiNam: chỉ tính lại các năm này (nút thử lại năm lỗi), giữ kết quả các năm khác
   if (!VG.data || !VG.seedV) { msg("đặt điểm mẫu trước"); return; }
   vgNamDung();
   const D0 = VG.data, prm = vgThamSo(), ids = D0.ids.split(","), g = D0.g, N = g.w * g.h, lops = VG.seedV.groups.map(G => G.ma);
   const act = VG.res ? VG.res.ma : lops[0], vec = vg$("vgNamVec").value;
-  const ys = years().filter(y => ids.every(id => vgCoNam(id, y)));
+  const cu = chiNam && VG.namTK && VG.nam && VG.nam.g === g ? {rows: VG.namTK.bang.filter(r => !chiNam.includes(r.nam)), CL: Object.assign({}, VG.nam.cls)} : null;
+  let ys = years().filter(y => ids.every(id => vgCoNam(id, y)));
   if (!ys.includes(D0.y)) ys.push(D0.y), ys.sort((a, b) => a - b);
-  const rows = [], box = vg$("vgNamTK"), CL = {}; box.innerHTML = '<span class="mu">' + T("đang tính…") + '</span>';
+  if (cu) ys = ys.filter(y => chiNam.includes(y));
+  const rows = cu ? cu.rows : [], box = vg$("vgNamTK"), CL = cu ? cu.CL : {}; if (!cu) box.innerHTML = '<span class="mu">' + T("đang tính…") + '</span>';
   const tai = (D, H) => H.map(s => D.valid[s.i] ? Object.assign({}, s, {v: CORE.featAt(D.F, D.nf, s.i)}) : null).filter(Boolean);
   for (const y of ys) {
     try {
@@ -987,13 +1026,16 @@ async function vgNam9() {
         const st = CORE.maskStats(m, g, {lop}); r.lop[ma] = {ha: +st.dien_tich_ha.toFixed(3), manh: st.n_manh};
       });
       CL[y] = c; r.ha = r.lop[act].ha; r.manh = r.lop[act].manh; rows.push(r);
-    } catch (e) { rows.push({nam: y, loi: e.message}); }
+    } catch (e) { rows.push({nam: y, loi: vgLoiDoc(e)}); }
+    TIFF_PT.clear();                          // mỗi năm mở riêng, không giữ bộ đệm các năm trước
   }
+  rows.sort((a, b) => a.nam - b.nam);
   VG.namTK = {nam_goc: D0.y, bang: rows, so_mang_xoa: VG.loai.length, lops, act, vec};
   VG.nam = {g, cls: CL, lops, ys: rows.filter(r => !r.loi).map(r => r.nam), y0: D0.y};
   VG.namY = D0.y;
   vgVeNamTK(); vgNamVizMo();
-  vgTrang(T("so sánh {n} năm xong", {n: ys.length}));
+  const loi = rows.filter(r => r.loi).length;
+  vgTrang(loi ? T("so sánh xong, {n} năm lỗi: bấm Thử lại các năm lỗi", {n: loi}) : T("so sánh {n} năm xong", {n: ys.length}));
 }
 function vgVeNamTK() {                      // vẽ (lại) bảng so sánh các năm, cả khi đổi ngôn ngữ
   const N = VG.namTK, box = vg$("vgNamTK"); if (!N || !N.lops) return;
@@ -1006,6 +1048,11 @@ function vgVeNamTK() {                      // vẽ (lại) bảng so sánh các
     `</table><div class="mu">${T(N.vec === "tung" ? "đặc trưng mẫu lấy tại chỗ ở từng năm; mảng đã xoá bị bỏ ở mọi năm. ● năm gốc. Nhấp một dòng để xem năm đó." :
       "điểm mẫu lấy đặc trưng ở năm {y}, áp cho mọi năm; mảng đã xoá cũng bị bỏ ở mọi năm. Nhấp một dòng để xem vùng của năm đó.", {y: N.nam_goc})}</div>`;
   box.querySelectorAll("tr[data-y]").forEach(tr => { tr.onclick = () => vgNamChonNam(+tr.dataset.y); });
+  const loi = rows.filter(r => r.loi).map(r => r.nam);
+  if (loi.length) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "on"; b.textContent = "↻ " + T("Thử lại các năm lỗi ({n})", {n: loi.length});
+    b.onclick = () => vgNam9(loi); box.appendChild(b);
+  }
 }
 function vgNamChonNam(y) {
   if (!VG.nam || !VG.nam.cls[y]) return;

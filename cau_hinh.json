@@ -17,5 +17,14 @@
     "email": "toan.ly.code@gmail.com",
     "github": "X102/haiphong"
   },
-  "overpass": "https://overpass-api.de/api/interpreter"
+  "overpass": "https://overpass-api.de/api/interpreter",
+  "gioi_thieu": {
+    "tac_gia": {
+      "vi": "Phạm Đăng Hiển",
+      "ru": "Фам Данг Хиен",
+      "en": "Pham Dang Hien"
+    },
+    "email": "lopmaybay@gmail.com",
+    "don_vi": ""
+  }
 }

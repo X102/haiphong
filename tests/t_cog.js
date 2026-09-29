@@ -4,7 +4,7 @@ const GeoTIFF = require(NM + "/geotiff");
 const {CORE} = require("./_js/core.js");
 const ref = require("/tmp/fx/ref.json"), fs = require("fs");
 const UI = fs.readFileSync(__dirname + "/_js/ui.js", "utf8");
-eval(UI.slice(UI.indexOf("const TIFF = new Map();"), UI.indexOf("const COGLayer")).replace("const TIFF", "var TIFF").replace("const LUTS", "var LUTS")
+eval(UI.slice(UI.indexOf("const TIFF = new Map()"), UI.indexOf("const COGLayer")).replace("const TIFF", "var TIFF").replace("const LUTS", "var LUTS")
   .replace(/^function (\w+)/gm, "global.$1 = function $1").replace(/^async function (\w+)/gm, "global.$1 = async function $1"));
 function tileOf(mx, my, z) { const S = 2 * Math.PI * 6378137, n = 2 ** z; return [Math.floor((mx + S / 2) / (S / n)), Math.floor((S / 2 - my) / (S / n))]; }
 (async () => {

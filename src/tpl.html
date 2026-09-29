@@ -270,6 +270,7 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <button id="bHelp">Trợ giúp <kbd>h</kbd></button>
     <button id="bVung" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)">Chọn vùng <kbd>o</kbd></button>
     <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang">🐞 Báo lỗi</button>
+    <button id="bGT" type="button" title="Giới thiệu geoportal, tác giả, liên hệ">ⓘ Giới thiệu</button>
     <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
       <option value="trai">▤ trong bảng này</option>
       <option value="phai">▥ cột bên phải</option>
@@ -283,6 +284,7 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <select id="selSet" style="flex:1"></select>
     <button id="bBoMoi" type="button" title="Tạo bộ điểm mới: lưới, ngẫu nhiên, phân tầng theo bản đồ; chọn các năm cần gán">＋ Bộ mới</button>
     <button id="bBoSua" type="button" title="Các năm cần gán của bộ này, đổi tên, xoá bộ tự tạo">⚙</button>
+    <button id="bBoGop" type="button" title="Gộp nhiều bộ điểm thành một bộ mới (vd các điểm mẫu chọn vùng với bộ lấy tay)">⊕ Gộp</button>
     <button id="bMode" title="Bật để nhấp lên bản đồ thêm điểm mới (phím m)">Thêm điểm <kbd>m</kbd></button>
   </div>
   <div class="mu sm" id="boNam"></div>
@@ -327,8 +329,11 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
   <section id="viz">
   <div id="vzNguon" class="vz-ng" data-noi18n></div>
   <div class="vz-o" id="vzStrip">
-  <h2>Dải ảnh theo năm quanh điểm (khoảng 900 m)</h2>
-  <div class="row"><select id="selStrip"></select><span class="mu sm" id="stripmsg"></span></div>
+  <h2 id="stripH" data-noi18n>Dải ảnh theo năm quanh điểm (khoảng 900 m)</h2>
+  <div class="row"><select id="selStrip"></select>
+    <select id="selStripR" title="khoảng quanh điểm: nhỏ để xem rõ từng điểm ảnh 10 m" data-noi18n></select>
+    <select id="selStripCo" title="cỡ ảnh trong dải"><option value="0">cỡ vừa</option><option value="5">nhỏ (5 cột)</option><option value="2">lớn (2 cột)</option><option value="1">rất lớn (1 cột)</option></select>
+    <span class="mu sm" id="stripmsg"></span></div>
   <div id="strip"></div>
   </div>
   <div class="vz-o" id="vzCurve">
@@ -432,6 +437,15 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <div id="vgGoiY" class="mu"></div>
     <div id="vgGianW" class="row" hidden>giản lược ranh giới <select id="vgGian"><option value="0">0</option><option value="0.7">0.7</option>
       <option value="1" selected>1</option><option value="1.5">1.5</option><option value="2">2</option></select> điểm ảnh</div>
+    <div id="vgChuanW" class="vg-khung" hidden>
+      <div class="row"><b>Chuẩn hoá đa giác</b> <span class="mu" id="vgChonTT" data-noi18n></span><button id="vgBoChon" type="button">bỏ chọn</button></div>
+      <div class="row"><button type="button" data-ch="tron" title="bỏ bậc thang của cạnh điểm ảnh rồi cắt góc (Chaikin)">Làm trơn cạnh</button><select id="vgTronN"><option value="1">1 lần</option><option value="2" selected>2 lần</option><option value="3">3 lần</option></select>
+        <button type="button" data-ch="vuong" title="mọi cạnh song song hoặc vuông góc với hướng chính: hợp cho nhà, công trình">Vuông góc hoá</button></div>
+      <div class="row"><button type="button" data-ch="osm" title="kéo đỉnh về đường, kênh, bờ nước OSM gần nhất">Bám đường, kênh OSM</button> trong <input id="vgBamM" type="number" value="12" min="1" style="width:50px"> m</div>
+      <div class="row"><button type="button" data-ch="vun" title="xoá đa giác và lỗ nhỏ, dải quá hẹp">Xoá mảnh vụn</button> nhỏ hơn <input id="vgVunHa" type="number" value="0.05" min="0" step="0.01" style="width:58px"> ha, hẹp hơn <input id="vgVunM" type="number" value="6" min="0" style="width:44px"> m</div>
+      <div class="row">gán lớp <select id="vgGanLop" style="max-width:160px" data-noi18n></select><button id="vgGan" type="button">Gán cho đa giác chọn</button><button id="vgXoaChon" type="button">Xoá đa giác chọn</button></div>
+      <div class="mu sm">Nhấp đa giác để chọn hoặc bỏ chọn; không chọn gì thì chuẩn hoá mọi đa giác. Đa giác gán lớp khác được lưu thành vùng riêng của lớp đó. Hoàn tác: Z.</div>
+    </div>
     <div id="vgTom" class="vg-tom"></div>
     <div id="vgBody">
       <div class="vg-tab"><button data-tab="tim" class="on">Tìm</button><button data-tab="sach">Làm sạch <b id="vgSoNghi" style="color:#b54708"></b></button>
@@ -439,6 +453,7 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
       <div data-pane="tim">
         <div class="vg-lh"><span class="mu">Lớp của điểm mẫu mới:</span><div id="vgLopHat" data-noi18n></div></div>
         <div id="vgBangLop" data-noi18n></div>
+        <div class="row sm"><label title="mỗi điểm mẫu có lớp được lưu thành một điểm có nhãn năm đang gán, để sau gộp với các bộ lấy tay"><input type="checkbox" id="vgTuLuu"> tự lưu điểm mẫu vào bộ "Mẫu chọn vùng"</label></div>
         <div class="row"><span id="vgHat"></span><button id="vgXoaHat">Xoá điểm mẫu</button><button id="vgTinh">Chọn lại</button>
           <button id="vgAm" type="button" title="bật: nhấp đặt điểm khác loại (thay cho Shift+nhấp)">− Loại trừ</button>
           <button id="vgChot" type="button" title="Lưu vùng của mọi lớp ở khu này, khoá lại (chỗ đã chốt bị trừ khi tìm tiếp), rồi xoá điểm mẫu để làm khu khác">🔒 Chốt khu</button></div>
@@ -527,6 +542,26 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
 <aside id="dock" hidden></aside>
 </div>
 
+<dialog id="dlgGT">
+  <h3>Giới thiệu</h3>
+  <div data-i18n-html="gtBody">
+  <p><b>Geoportal lớp phủ Hải Phòng</b> là công cụ web mở để xem, gán nhãn và thống kê lớp phủ mặt đất nhiều năm (2017-2026) của thành phố Hải Phòng mới. Trang phục vụ luận án tiến sĩ của tác giả và dùng chung cho mọi người quan tâm đến biến động đất đai, đô thị hoá, mặt nước và nông nghiệp ở Hải Phòng.</p>
+  <p><b>Dữ liệu</b>: ảnh tổng hợp Sentinel-2 mùa khô từng năm (10 băng), PCA chuỗi năm và đường mùa vụ 6 kỳ, embedding, đặc trưng ngữ cảnh CTX, bản đồ lớp phủ, DEM Copernicus GLO-30, OpenStreetMap, ranh giới xã; ảnh nền Esri Wayback theo năm. Dữ liệu lưu trên Hugging Face và được đọc thẳng từng đoạn, trang không cần máy chủ riêng; nhãn người dùng lưu trong trình duyệt của họ và xuất được thành tệp.</p>
+  <p><b>Chức năng chính</b>: gán nhãn điểm theo năm, tra cứu nhanh một điểm bất kỳ, chọn vùng giống điểm mẫu và chuẩn hoá ranh giới, so sánh các năm, thư viện 248 chỉ số Sentinel-2 và công thức tự nhập, thống kê theo xã, xuất CSV, GeoJSON, tệp tiến độ.</p>
+  <p class="mu sm">Mã nguồn mở theo giấy phép MIT. Dữ liệu theo giấy phép của từng nguồn: Copernicus Sentinel-2, Copernicus DEM (© DLR e.V., © Airbus Defence and Space, qua chương trình Copernicus), © OpenStreetMap contributors (ODbL), Esri World Imagery.</p>
+  </div>
+  <div id="gtTacGia" data-noi18n></div>
+  <div class="row"><button id="gtDong" type="button">Đóng</button></div>
+</dialog>
+<dialog id="dlgGop">
+  <h3>Gộp bộ điểm</h3>
+  <p class="mu sm">Chép các điểm (kèm mọi nhãn đã gán) của các bộ chọn dưới đây vào một bộ mới; các bộ cũ giữ nguyên.</p>
+  <div id="gopDS" data-noi18n></div>
+  <div class="row"><label><input type="checkbox" id="gopTrung" checked> bỏ điểm trùng ô 10 m (giữ điểm có nhiều nhãn hơn)</label></div>
+  <div class="row"><input id="gopTen" type="text" placeholder="tên bộ mới, vd mẫu tổng hợp 2025" style="flex:1"></div>
+  <div class="mu sm" id="gopTT" data-noi18n></div>
+  <div class="row"><button id="gopOk" type="button" class="on">Gộp thành bộ mới</button><button id="gopDong" type="button">Đóng</button></div>
+</dialog>
 <dialog id="dlgCS">
   <h3>Chỉ số</h3>
   <p class="mu sm">Danh sách đang dùng áp cho lớp S2 (chế độ chỉ số), đồ thị theo năm, đường mùa vụ 6 kỳ, giá trị tại điểm và đặc trưng chọn vùng. Chỉ số tính từ ảnh S2 10 băng (phản xạ 0..1); chỉ số cần B1, B9, B10 không tính được.</p>
@@ -605,6 +640,9 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <li><b>DEM</b>: Copernicus DEM GLO-30 (mô hình bề mặt 30 m, gồm cả nhà và cây): độ cao, độ dốc, bóng địa hình; giá trị tại điểm; độ cao và độ dốc làm đặc trưng chọn vùng.</li>
     <li><b>Giá trị tại điểm</b>: nhấp lên bản đồ (dòng điểm tra cứu và khung thông tin điểm) để thấy giá trị các lớp đang bật, các chỉ số, độ cao, độ dốc, xã, vùng mẫu và đối tượng OSM tại đó.</li>
     <li><b>Đặc trưng chọn vùng</b>: ngoài các ảnh 8 bit, nay có băng S2, các chỉ số đang dùng, CTX (trung bình, độ lệch chuẩn 5 × 5, 15 × 15), PC chuỗi năm và DEM.</li>
+    <li><b>Dải ảnh theo năm</b>: chọn khoảng quanh điểm từ 100 m đến 2 km (nhỏ để thấy rõ từng điểm ảnh 10 m) và cỡ ảnh.</li>
+    <li><b>Chuẩn hoá đa giác</b> (công cụ ④): làm trơn cạnh, vuông góc hoá đường viền nhà, bám đường và kênh OSM, xoá mảnh vụn; nhấp để chọn đa giác, gán lớp khác hoặc xoá chúng; Z để hoàn tác. Nhấp một vùng đã lưu trên bản đồ (khi không ở chế độ chọn vùng): đổi lớp, sửa ranh giới, xoá.</li>
+    <li><b>Điểm mẫu vào bộ</b>: điểm mẫu có lớp tự lưu vào bộ "Mẫu chọn vùng"; "⊕ Gộp" gộp các bộ thành một bộ mới. Tệp tiến độ JSON chứa đủ mọi thứ: các bộ điểm, vùng, khu, công thức chỉ số, sửa đổi OSM và cả phiên làm việc (điểm mẫu, đa giác đang sửa, cài đặt, vị trí bản đồ), tải lại là khôi phục.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
     <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mở thẳng bằng <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
   </ol>
@@ -1410,6 +1448,94 @@ var CORE = (function () {
     if (!b.length) return null; b.sort(function (x, y) { return x - y; });
     return b[Math.min(b.length - 1, Math.max(0, Math.round(q * (b.length - 1))))];
   }
+  /* ---- bản 2.5: chuẩn hoá đa giác (toạ độ mét cục bộ, vòng mở: không lặp đỉnh đầu ở cuối) ---- */
+  function hinhMet(mp) {                        // MultiPolygon (lon, lat) -> {mp: toạ độ mét quanh tâm, ve(): đổi ngược}
+    var lo = 0, la = 0, n = 0;
+    mp.forEach(function (pg) { pg[0].forEach(function (q) { lo += q[0]; la += q[1]; n++; }); });
+    lo /= n || 1; la /= n || 1;
+    var K = 111320, kx = K * Math.cos(la * Math.PI / 180);
+    var mo = function (r) { var o = r.map(function (q) { return [(q[0] - lo) * kx, (q[1] - la) * K]; });
+      if (o.length > 1 && o[0][0] === o[o.length - 1][0] && o[0][1] === o[o.length - 1][1]) o.pop(); return o; };
+    return {mp: mp.map(function (pg) { return pg.map(mo); }), toMet: function (q) { return [(q[0] - lo) * kx, (q[1] - la) * K]; },
+            ve: function (m) { return m.map(function (pg) { return pg.map(function (r) {
+              var o = r.map(function (q) { return [+(q[0] / kx + lo).toFixed(7), +(q[1] / K + la).toFixed(7)]; }); if (o.length) o.push(o[0].slice()); return o; }); }); }};
+  }
+  function dienTichVong(r) { var s = 0; for (var i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; }
+  function chuViVong(r) { var s = 0; for (var i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length]; s += Math.hypot(b[0] - a[0], b[1] - a[1]); } return s; }
+  function donGian(r, tol) {                    // Douglas-Peucker cho vòng mét (bỏ bậc thang của cạnh điểm ảnh)
+    return r.length <= 4 ? r : simplifyRing(r, tol);
+  }
+  function chaikin(r, n) {                      // làm trơn cạnh: cắt góc Chaikin n lần (vòng kín)
+    for (var k = 0; k < (n || 1); k++) {
+      var o = [];
+      for (var i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length];
+        o.push([0.75 * a[0] + 0.25 * b[0], 0.75 * a[1] + 0.25 * b[1]], [0.25 * a[0] + 0.75 * b[0], 0.25 * a[1] + 0.75 * b[1]]); }
+      r = o;
+    }
+    return r;
+  }
+  function lamTron(r, tol, n) {                 // bỏ bậc thang rồi cắt góc; co giãn quanh tâm để giữ đúng diện tích ban đầu
+    var A0 = Math.abs(dienTichVong(r)), o = chaikin(donGian(r, tol), n), A1 = Math.abs(dienTichVong(o));
+    if (!(A0 > 0 && A1 > 0)) return o;
+    var k = Math.sqrt(A0 / A1), cx = 0, cy = 0; o.forEach(function (p) { cx += p[0]; cy += p[1]; }); cx /= o.length; cy /= o.length;
+    return o.map(function (p) { return [cx + (p[0] - cx) * k, cy + (p[1] - cy) * k]; });
+  }
+  function huongChinh(r) {                      // hướng cạnh trội (radian, 0..π/2): trung bình vòng của 4θ có trọng số độ dài
+    var C = 0, S = 0;
+    for (var i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), t = Math.atan2(dy, dx);
+      C += L * Math.cos(4 * t); S += L * Math.sin(4 * t); }
+    var th = Math.atan2(S, C) / 4; return th < 0 ? th + Math.PI / 2 : th;
+  }
+  function xoay(r, th) { var c = Math.cos(th), s = Math.sin(th); return r.map(function (q) { return [q[0] * c - q[1] * s, q[0] * s + q[1] * c]; }); }
+  function vuongGoc(r, tol) {                   // vuông góc hoá đường viền nhà: mọi cạnh song song hoặc vuông góc với hướng trội
+    var d = donGian(r, tol || 1.5); if (d.length < 4) d = r;
+    var th = huongChinh(d), q = xoay(d, -th), n = q.length, A0 = Math.abs(dienTichVong(q));
+    var cls = [];                               // mỗi cạnh: 0 = ngang, 1 = dọc
+    for (var i = 0; i < n; i++) { var a = q[i], b = q[(i + 1) % n]; cls.push(Math.abs(b[0] - a[0]) >= Math.abs(b[1] - a[1]) ? 0 : 1); }
+    var bat = 0; for (i = 0; i < n; i++) if (cls[i] !== cls[(i - 1 + n) % n]) { bat = i; break; }
+    var run = [], cur = null;
+    for (var k = 0; k < n; k++) { i = (bat + k) % n; var a2 = q[i], b2 = q[(i + 1) % n], L = Math.hypot(b2[0] - a2[0], b2[1] - a2[1]);
+      if (!cur || cur.c !== cls[i]) { cur = {c: cls[i], s: 0, w: 0}; run.push(cur); }
+      cur.s += (cls[i] === 0 ? (a2[1] + b2[1]) / 2 : (a2[0] + b2[0]) / 2) * L; cur.w += L; }
+    if (run.length > 1 && run[0].c === run[run.length - 1].c) { var z = run.pop(); run[0].s += z.s; run[0].w += z.w; }
+    var hop = function () {                     // hình chữ nhật bao theo hướng trội (khi không dựng được đa giác vuông góc)
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; q.forEach(function (p) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+      return xoay([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], th); };
+    if (run.length < 4 || run.length % 2) return hop();
+    var v = run.map(function (R) { return R.s / R.w; }), out = [];
+    for (i = 0; i < run.length; i++) { var R1 = run[i], R2 = run[(i + 1) % run.length];
+      out.push(R1.c === 0 ? [v[(i + 1) % run.length], v[i]] : [v[i], v[(i + 1) % run.length]]); void R2; }
+    var A1 = Math.abs(dienTichVong(out));
+    if (!(A1 > 0.5 * A0 && A1 < 1.5 * A0)) return hop();
+    return xoay(out, th);
+  }
+  function diemGanDoan(p, a, b) {               // điểm gần p nhất trên đoạn ab
+    var dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, t = L2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2 : 0;
+    t = Math.max(0, Math.min(1, t)); return [a[0] + t * dx, a[1] + t * dy];
+  }
+  function bamDuong(r, doan, tol) {             // bám đỉnh (sau khi chia dày cạnh) vào đoạn thẳng gần nhất trong tol mét
+    var dd = [], i, j, st = Math.max(1, tol / 2);
+    for (i = 0; i < r.length; i++) { var a = r[i], b = r[(i + 1) % r.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(L / st));
+      for (j = 0; j < k; j++) dd.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); }
+    var n = 0, out = dd.map(function (p) {
+      var best = null, bd = tol;
+      for (var s = 0; s < doan.length; s++) { var D = doan[s];
+        if (p[0] < D[4] - tol || p[0] > D[5] + tol || p[1] < D[6] - tol || p[1] > D[7] + tol) continue;
+        var g = diemGanDoan(p, [D[0], D[1]], [D[2], D[3]]), d = Math.hypot(g[0] - p[0], g[1] - p[1]); if (d < bd) { bd = d; best = g; } }
+      if (best) { n++; return best; } return p; });
+    var o2 = []; out.forEach(function (p) { var q = o2[o2.length - 1]; if (!q || Math.hypot(p[0] - q[0], p[1] - q[1]) > 0.05) o2.push(p); });
+    return {r: o2.length >= 3 ? donGian(o2, Math.min(1, tol / 10)) : r, n: n};
+  }
+  function doanThang(lines) {                   // đường (mảng toạ độ mét) -> đoạn [x0, y0, x1, y1, xmin, xmax, ymin, ymax]
+    var o = []; lines.forEach(function (l) { for (var i = 0; i + 1 < l.length; i++) { var a = l[i], b = l[i + 1];
+      o.push([a[0], a[1], b[0], b[1], Math.min(a[0], b[0]), Math.max(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[1], b[1])]); } });
+    return o;
+  }
+  function manhVun(pg, minA, minW) {            // một đa giác (vòng ngoài + lỗ, mét): null nếu là mảnh vụn; bỏ lỗ nhỏ
+    var A = Math.abs(dienTichVong(pg[0])), P = chuViVong(pg[0]);
+    if (A < minA || (P > 0 && 2 * A / P < minW)) return null;           // 2A/P ≈ bề rộng của dải hẹp
+    return [pg[0]].concat(pg.slice(1).filter(function (h) { return Math.abs(dienTichVong(h)) >= minA; }));
+  }
   function khongDau(s) {                        // chữ thường, bỏ dấu tiếng Việt: tìm "thuy nguyen" ra "Thuỷ Nguyên"
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().trim();
   }
@@ -1682,7 +1808,8 @@ var CORE = (function () {
   return {links: links, quant: quant, seasonStats: seasonStats, tr: tr,
           osmThe: osmThe, osmLoc: osmLoc, osmLopMacDinh: osmLopMacDinh, osmLop: osmLop, geomMP: geomMP, bbMP: bbMP, distBien: distBien,
           rdTrongDaGiac: rdTrongDaGiac, overpassQL: overpassQL,
-          distSelMulti: distSelMulti, distSelZoned: distSelZoned, chan: chan, KHOA: KHOA, circlePix: circlePix, khongDau: khongDau, bieuThuc: bieuThuc, tenBang: tenBang, khoangMau: khoangMau, phanVi: phanVi, S2_BANDS: S2_BANDS, IDX_NAMES: IDX_NAMES, indices: indices, ctxPoint: ctxPoint,
+          distSelMulti: distSelMulti, distSelZoned: distSelZoned, chan: chan, KHOA: KHOA, circlePix: circlePix, khongDau: khongDau, hinhMet: hinhMet, dienTichVong: dienTichVong, chuViVong: chuViVong,
+          chaikin: chaikin, lamTron: lamTron, huongChinh: huongChinh, vuongGoc: vuongGoc, bamDuong: bamDuong, doanThang: doanThang, manhVun: manhVun, bieuThuc: bieuThuc, tenBang: tenBang, khoangMau: khoangMau, phanVi: phanVi, S2_BANDS: S2_BANDS, IDX_NAMES: IDX_NAMES, indices: indices, ctxPoint: ctxPoint,
           boxImage: boxImage, rnd: rnd, pip: pip, gridPts: gridPts, thinPts: thinPts, randPts: randPts, stratPick: stratPick,
           UTM: UTM, GRID: GRID, lut: lut, CMAP: CMAP, toUTM: toUTM, toLL: toLL, snap: snap, squareLL: squareLL, to3857: to3857,
           tileBbox: tileBbox, inter: inter, parseCSV: parseCSV, toCSV: toCSV, dataUrl: dataUrl,
@@ -1708,7 +1835,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.4";
+const VERSION = "2.5";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -1863,10 +1990,11 @@ function phongNote() {                     // ô được phóng to từ mức t
 map.on("zoomstart", () => { PHONG.n = 0; PHONG.z = null; phongNote(); });
 
 /* lớp COG đọc thẳng từ Hugging Face bằng geotiff.js */
-const TIFF = new Map();
-function tiffOf(url) {                      // mở COG một lần: hộp bao + danh sách ảnh (gốc và overview)
+const TIFF = new Map(), TIFF_PT = new Map(), TIFF_BD = TIFF;  // bản 2.5: TIFF_PT mở riêng cho phân tích (chọn vùng, so sánh năm), không chung bộ đệm với lớp bản đồ
+function tiffOf(url, rieng) {               // mở COG một lần: hộp bao + danh sách ảnh (gốc và overview)
+  const TIFF = rieng ? TIFF_PT : TIFF_BD;
   if (!TIFF.has(url)) {
-    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: 400}).then(async t => {
+    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: rieng ? 1500 : 400}).then(async t => {
       const im0 = await t.getImage(), bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
       for (let i = 0; i < n; i++) {
         const im = i ? await t.getImage(i) : im0, fd = im.fileDirectory;
@@ -1909,8 +2037,8 @@ function paint(canvas, data, n, L0) {
   }
   ctx.putImageData(img, 0, 0);
 }
-async function readBox(url, bb, w, h) {
-  const t = await tiffOf(url);
+async function readBox(url, bb, w, h, rieng) {
+  const t = await tiffOf(url, rieng);
   if (!CORE.inter(bb, t._bb)) return null;
   const I = CORE.pickImage(t._imgs, (bb[2] - bb[0]) / w);
   const win = CORE.windowFor(bb, t._bb[0], t._bb[3], I.rx, I.ry, I.w, I.h);
@@ -2130,6 +2258,25 @@ function hud() {
 
 /* ---------------- dải ảnh theo năm ---------------- */
 let stripTok = 0;
+/* bản 2.5: khoảng quanh điểm (nửa cạnh, m) và cỡ ảnh chọn được; ô điểm ảnh 10 m (đỏ) và khối 3 × 3 (vàng) vẽ đúng tỉ lệ */
+const STRIP_R = [[50, "100 m"], [100, "200 m"], [150, "300 m"], [250, "500 m"], [485, "≈ 1 km"], [1000, "2 km"]];
+function stripNua() { const v = +(ls("laymau_hp_strip_r_v1") || 485); return STRIP_R.some(q => q[0] === v) ? v : 485; }
+function stripCo() { return Math.max(97, Math.min(200, Math.round(2 * stripNua() / 10))); }   // cạnh ảnh (điểm ảnh canvas)
+function stripDanh(cv, W, half) {
+  const g = cv.getContext && cv.getContext("2d"); if (!g) return;
+  const k = W / (2 * half), s = Math.max(2, 10 * k), m = W / 2;
+  g.lineWidth = 1; g.strokeStyle = "#ff2d2d"; g.strokeRect(Math.round(m - s / 2) + 0.5, Math.round(m - s / 2) + 0.5, Math.max(2, Math.round(s) - 1), Math.max(2, Math.round(s) - 1));
+  if (30 * k >= 5) { g.strokeStyle = "rgba(255,212,0,.9)"; g.strokeRect(Math.round(m - 1.5 * s) + 0.5, Math.round(m - 1.5 * s) + 0.5, Math.round(3 * s), Math.round(3 * s)); }
+}
+function stripTieuDe() {
+  const n = stripNua(), t = (STRIP_R.find(q => q[0] === n) || [0, ""])[1];
+  $("stripH").textContent = T("Dải ảnh theo năm quanh điểm ({k})", {k: t});
+  const sr = $("selStripR");
+  if (sr.options.length !== STRIP_R.length) sr.innerHTML = STRIP_R.map(q => `<option value="${q[0]}">${q[1]}</option>`).join("");
+  sr.value = String(n);
+  const co = ls("laymau_hp_strip_co_v1") || "0"; $("selStripCo").value = co;
+  $("strip").style.gridTemplateColumns = +co ? `repeat(${co},1fr)` : "";
+}
 function buildStripSelect() {
   const s = $("selStrip"); s.innerHTML = "";
   (MAN ? (MAN.s2d ? [s2dL0()] : []).concat(MAN.layers.filter(L0 => L0.kieu === "rgb" || L0.kieu === "xam")) : []).forEach(L0 => { const o = document.createElement("option"); o.value = L0.id; o.textContent = L0.kieu === "s2d" ? lname(L0) + " " + T("(như đang đặt ở bảng lớp)") : lname(L0); s.appendChild(o); });
@@ -2138,26 +2285,25 @@ function buildStripSelect() {
 }
 async function renderStrip() {
   const box = $("strip"), p = vizPt(), tok = ++stripTok;
+  stripTieuDe();
   box.innerHTML = ""; $("stripmsg").textContent = "";
   if (typeof vzNguon === "function") vzNguon();
   if (!p || !MAN) return;
   const L0 = $("selStrip").value === "s2d" && MAN.s2d ? s2dL0() : MAN.layers.find(l => l.id === $("selStrip").value); if (!L0) return;
-  const c = CORE.to3857(p.lon, p.lat), half = 485, bb = [c[0] - half, c[1] - half, c[0] + half, c[1] + half];
+  const c = CORE.to3857(p.lon, p.lat), half = stripNua(), bb = [c[0] - half, c[1] - half, c[0] + half, c[1] + half], WS = stripCo();
   const ys = Array.from(new Set(L0.nam.concat(years()))).sort();
   if (L0.kieu === "s2d") { renderStripS2D(L0, p, bb, ys, tok); return; }
   for (const y of ys) {
     const it = document.createElement("div"); it.className = "it" + (y === ST.nam ? " cur" : "");
-    const cv = document.createElement("canvas"); cv.width = cv.height = 97;
+    const cv = document.createElement("canvas"); cv.width = cv.height = WS;
     it.appendChild(cv);
     it.insertAdjacentHTML("beforeend", `<span class="lb">${y}</span>` + (p.nhan[y] ? `<span class="lc" style="background:${color(p.nhan[y])}"></span>` : ""));
     it.onclick = () => setYear(y);
     box.appendChild(it);
-    if (!L0.nam.includes(y)) { const g = cv.getContext("2d"); g.fillStyle = "#555"; g.fillText(T("không có"), 26, 50); continue; }
-    readBox(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), bb, 97, 97).then(r => {
+    if (!L0.nam.includes(y)) { const g = cv.getContext("2d"); g.fillStyle = "#555"; g.fillText(T("không có"), WS / 2 - 22, WS / 2); continue; }
+    readBox(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), bb, WS, WS).then(r => {
       if (tok !== stripTok || !r) return;
-      paint(cv, r.data, r.n, L0);
-      const g = cv.getContext("2d"); g.strokeStyle = "#ff2d2d"; g.lineWidth = 1; g.strokeRect(47.5, 47.5, 2, 2);
-      g.strokeStyle = "rgba(255,212,0,.9)"; g.strokeRect(45.5, 45.5, 5, 5);
+      paint(cv, r.data, r.n, L0); stripDanh(cv, WS, half);
     }).catch(e => { if (tok === stripTok) $("stripmsg").textContent = T("không đọc được: ") + (e.message || e); });
   }
 }
@@ -2576,6 +2722,7 @@ $("fileIn").onchange = async e => {
       const n0 = Object.keys(ST.diem).length;
       CORE.merge(ST.diem, j.st.diem || {}); if (j.st.vung && typeof vungGop === "function") vungGop(j.st.vung);
       if (j.st.chiso && typeof csGop === "function") csGop(j.st.chiso);
+      if (typeof phienNhap === "function") phienNhap(j);                 // bản 2.5: khu, nhóm xã, sửa OSM, cả phiên làm việc
       Object.entries(j.st.bo_cfg || {}).forEach(([k, c]) => { if (!ST.bo_cfg[k]) ST.bo_cfg[k] = c; }); if (j.st.scheme) { SCHEME = ST.scheme = j.st.scheme; IDX = CORE.schemeIndex(SCHEME); }
       save(); buildSetSelect(); render(); msg(T("đã gộp tiến độ: {n} điểm mới, nhãn mới hơn được giữ", {n: Object.keys(ST.diem).length - n0}), "ok");
     } else if (j.lop && j.nhom) { SCHEME = ST.scheme = j; IDX = CORE.schemeIndex(SCHEME); save(); render(); msg("đã nạp hệ thống lớp", "ok"); }
@@ -2619,6 +2766,8 @@ $("note").oninput = () => { const p = cur(); if (p) { p.ghi_chu = $("note").valu
 $("selBase").onchange = () => { ls("laymau_hp_base_v1", $("selBase").value); setBase(); };
 $("selRel").onchange = () => { relIdx = +$("selRel").value; $("selBase").value = "fixed"; setBase(); };
 $("selStrip").onchange = () => { ls("laymau_hp_strip_v1", $("selStrip").value); renderStrip(); };
+$("selStripR").onchange = () => { ls("laymau_hp_strip_r_v1", +$("selStripR").value); renderStrip(); };
+$("selStripCo").onchange = () => { ls("laymau_hp_strip_co_v1", $("selStripCo").value); renderStrip(); };
 document.addEventListener("keydown", e => {
   const t = e.target.tagName; if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
   if ($("dlgSet").open || $("dlgExp").open || $("dlgHelp").open) return;
@@ -2691,6 +2840,7 @@ function setLang(l) {
 /*__VUNG__*/
 /*__V23__*/
 /*__V24__*/
+/*__V25__*/
 </script>
 </body>
 </html>

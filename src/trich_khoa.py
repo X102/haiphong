@@ -1,6 +1,10 @@
 # Trích mọi câu tiếng Việt cần dịch: chữ tĩnh trong <body>, thuộc tính title/placeholder, và đối số chuỗi của T()/msg()/vgTrang()/confirm()
 import re, json, html as H
-VI = re.compile(r"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", re.I)
+VI_ = re.compile(r"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", re.I)
+KT = re.compile(r"^(?:[?@!~=|/:.#\\w-]*[=/:.|@][?@!~=|/:.#\\w -]*|English|Backspace|Enter|Esc|Shift|GeoJSON|OpenStreetMap|Overpass ?|km|building|x|no clipboard|CTX |python -m http\\.server|vd \\(B11 - B12\\) / \\(B11 \\+ B12\\)|⠿ OpenStreetMap)$")
+class _VI:                                   # có dấu tiếng Việt, hoặc chữ thường không dấu không phải chuỗi kỹ thuật
+    def search(self, k): return VI_.search(k) or (re.search(r"[a-z]{2,}", k) and not KT.match(k.strip()) and not k.startswith("?lang"))
+VI = _VI()
 t = open("tpl.html", encoding="utf-8").read()
 body = t[t.index("<body>"):t.index('<script id="core">')]
 # bỏ các khối data-i18n-html (dịch nguyên khối, xử lý riêng)
@@ -20,7 +24,7 @@ for x in re.findall(r">([^<>]+)<", body2):
     k = re.sub(r"\s+", " ", H.unescape(x)).strip()
     if k and VI.search(k): static.append(k)
 attrs = [H.unescape(a) for a in re.findall(r'(?:title|placeholder)="([^"]+)"', body2) if VI.search(a)]
-src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("wayback_core.js", encoding="utf-8").read()
+src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("wayback_core.js", encoding="utf-8").read()
 dyn = []
 for m in re.finditer(r'\b(?:T|msg|vgTrang|confirm|Error)\(\s*(["\'])((?:\\.|(?!\1).)*)\1', src):
     k = m.group(2).replace('\\"', '"').replace("\\'", "'")

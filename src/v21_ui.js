@@ -35,8 +35,8 @@ let s2MsgT = 0;
 function s2Msg(t) { const e = document.querySelector("[data-s2v] [data-msg]"); if (e) e.textContent = t; clearTimeout(s2MsgT); if (t) s2MsgT = setTimeout(() => { if (e) e.textContent = ""; }, 6000); }
 /* đọc cửa sổ ảnh UTM phủ một ô 3857 (bb), trả chỉ số điểm ảnh nguồn cho từng điểm ảnh đích (láng giềng gần nhất);
    toạ độ UTM của từng điểm đích nội suy song tuyến từ 4 góc (sai số dưới 1 m trên một ô bản đồ) */
-async function readUTM(url, bb, w, h, pad, samples, tong) {   // tong: vẫn chọn ảnh overview khi có đệm (DEM thu nhỏ)
-  const t = await tiffOf(url), ox = t._bb[0], oy = t._bb[3];
+async function readUTM(url, bb, w, h, pad, samples, tong, rieng) {   // tong: vẫn chọn ảnh overview khi có đệm; rieng: bản COG riêng cho phân tích
+  const t = await tiffOf(url, rieng), ox = t._bb[0], oy = t._bb[3];
   const cor = [[bb[0], bb[3]], [bb[2], bb[3]], [bb[0], bb[1]], [bb[2], bb[1]]].map(m => { const ll = CORE.m2ll(m[0], m[1]); return CORE.toUTM(ll[0], ll[1]); });
   const xs = cor.map(c => c[0]), ys = cor.map(c => c[1]), ub = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
   if (!CORE.inter(ub, t._bb)) return null;
@@ -145,20 +145,18 @@ function s2vUI(div) {
   upd();
 }
 async function renderStripS2D(L0, p, bb, ys, tok) {
-  const box = $("strip");
+  const box = $("strip"), WS = typeof stripCo === "function" ? stripCo() : 97, half = (bb[2] - bb[0]) / 2;
   for (const y of ys) {
     const it = document.createElement("div"); it.className = "it" + (y === ST.nam ? " cur" : "");
-    const cv = document.createElement("canvas"); cv.width = cv.height = 97;
+    const cv = document.createElement("canvas"); cv.width = cv.height = WS;
     it.appendChild(cv);
     it.insertAdjacentHTML("beforeend", `<span class="lb">${y}</span>` + (p.nhan[y] ? `<span class="lc" style="background:${color(p.nhan[y])}"></span>` : ""));
     it.onclick = () => setYear(y);
     box.appendChild(it);
-    if (!L0.nam.includes(y)) { const g = cv.getContext && cv.getContext("2d"); if (g) { g.fillStyle = "#555"; g.fillText(T("không có"), 26, 50); } continue; }
-    s2dVe(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), bb, 97, 97, 18, cv).then(() => {
+    if (!L0.nam.includes(y)) { const g = cv.getContext && cv.getContext("2d"); if (g) { g.fillStyle = "#555"; g.fillText(T("không có"), WS / 2 - 22, WS / 2); } continue; }
+    s2dVe(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), bb, WS, WS, 18, cv).then(() => {
       if (tok !== stripTok) return;
-      const g = cv.getContext && cv.getContext("2d"); if (!g) return;
-      g.strokeStyle = "#ff2d2d"; g.lineWidth = 1; g.strokeRect(47.5, 47.5, 2, 2);
-      g.strokeStyle = "rgba(255,212,0,.9)"; g.strokeRect(45.5, 45.5, 5, 5);
+      if (typeof stripDanh === "function") stripDanh(cv, WS, half);
     }).catch(e => { if (tok === stripTok) $("stripmsg").textContent = T("không đọc được: ") + (e.message || e); });
   }
 }

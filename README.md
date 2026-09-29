@@ -18,6 +18,7 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 - So sánh các năm: bảng, biểu đồ diện tích từng lớp theo năm, bản đồ vùng từng năm, được / mất, số năm thuộc lớp, năm bắt đầu thuộc lớp.
 - Tìm xã, phường theo tên (không dấu cũng được); ẩn bảng điều khiển để rộng bản đồ; ẩn, hiện vùng đã lưu.
 - Chỉ số: thư viện 248 chỉ số Sentinel-2 (Index DataBase) và công thức tự nhập, dùng cho lớp S2, đồ thị, đường mùa vụ, giá trị tại điểm, chọn vùng.
+- Chuẩn hoá đa giác (làm trơn, vuông góc hoá, bám đường kênh OSM, xoá mảnh vụn), gán lại lớp, sửa vùng đã lưu ngay trên bản đồ; tự lưu điểm mẫu chọn vùng thành bộ điểm, gộp bộ; tệp tiến độ chứa cả phiên làm việc.
 - DEM Copernicus GLO-30: độ cao, độ dốc, bóng địa hình; giá trị các lớp tại điểm khi nhấp bản đồ; đặc trưng chọn vùng gồm S2, chỉ số, CTX, PC, DEM.
 - OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
 - Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
@@ -43,6 +44,7 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 | `hf_repo`, `hf_rev` | bộ dữ liệu **Hugging Face** và nhánh mặc định (không phải kho GitHub; người dùng vẫn đổi được trong Cài đặt) |
 | `nam_can_gan` | các năm cần gán mặc định |
 | `bao_loi.email` | địa chỉ nhận báo lỗi; để trống thì nút báo lỗi chỉ cho chép nội dung |
+| `gioi_thieu` | tác giả (vi, ru, en), email liên hệ, đơn vị, hiện trong hộp Giới thiệu |
 | `bao_loi.github` | `tài-khoản/kho` để hiện thêm nút tạo issue trên GitHub (tuỳ chọn) |
 | `overpass` | máy chủ Overpass cho OSM trực tiếp |
 
