@@ -17,6 +17,8 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 - Chọn vùng nhiều lớp (điểm mẫu gắn lớp, các lớp cạnh tranh), xoá hoặc giữ mảng, sửa ranh giới; phạm vi theo xã có điểm mẫu hoặc xã chọn ở danh sách (nhóm xã đặt tên); điểm mẫu chỉ có hiệu lực trong xã của nó hoặc trong bán kính R; trừ chỗ đã lưu; chốt khu rồi làm khu khác.
 - So sánh các năm: bảng, biểu đồ diện tích từng lớp theo năm, bản đồ vùng từng năm, được / mất, số năm thuộc lớp, năm bắt đầu thuộc lớp.
 - Tìm xã, phường theo tên (không dấu cũng được); ẩn bảng điều khiển để rộng bản đồ; ẩn, hiện vùng đã lưu.
+- Chỉ số: thư viện 248 chỉ số Sentinel-2 (Index DataBase) và công thức tự nhập, dùng cho lớp S2, đồ thị, đường mùa vụ, giá trị tại điểm, chọn vùng.
+- DEM Copernicus GLO-30: độ cao, độ dốc, bóng địa hình; giá trị các lớp tại điểm khi nhấp bản đồ; đặc trưng chọn vùng gồm S2, chỉ số, CTX, PC, DEM.
 - OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
 - Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
 - Tiến độ lưu tự động trong trình duyệt; xuất CSV, GeoJSON, tệp tiến độ JSON (nhập lại, gộp nhiều người).
@@ -38,7 +40,7 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 
 | khoá | ý nghĩa |
 |---|---|
-| `hf_repo`, `hf_rev` | bộ dữ liệu Hugging Face và nhánh mặc định (người dùng vẫn đổi được trong Cài đặt) |
+| `hf_repo`, `hf_rev` | bộ dữ liệu **Hugging Face** và nhánh mặc định (không phải kho GitHub; người dùng vẫn đổi được trong Cài đặt) |
 | `nam_can_gan` | các năm cần gán mặc định |
 | `bao_loi.email` | địa chỉ nhận báo lỗi; để trống thì nút báo lỗi chỉ cho chép nội dung |
 | `bao_loi.github` | `tài-khoản/kho` để hiện thêm nút tạo issue trên GitHub (tuỳ chọn) |
@@ -48,8 +50,9 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 
 ## Đăng lên GitHub Pages
 
-Xem `docs/TRIEN_KHAI.md`. Tóm tắt: tạo kho, đẩy thư mục này lên nhánh `main`, vào Settings, Pages, chọn Source: GitHub Actions.
-Quy trình `.github/workflows/trang-web.yml` đăng `index.html` và `cau_hinh.json` sau mỗi lần đẩy.
+Xem `docs/TRIEN_KHAI.md`. Tóm tắt: tạo kho, đẩy thư mục này lên nhánh `main`, vào Settings, Pages, chọn
+Source: Deploy from a branch, `main`, `/ (root)`. Quy trình `.github/workflows/trang-web.yml` (chỉ đăng `index.html` và
+`cau_hinh.json`) là cách thay thế, mặc định chỉ chạy khi bấm tay.
 
 ## Phát triển
 
@@ -64,6 +67,9 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.
+- DEM: © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+  The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30.
+- Danh sách chỉ số: Index DataBase (IDB), theo tệp tổng hợp của tác giả.
 - Hệ thống lớp, điểm kiểm định và các lớp dẫn xuất: luận án của Phạm Đăng Hiển (MIIGAiK).
 
 ## Giấy phép

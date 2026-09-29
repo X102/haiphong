@@ -1,11 +1,21 @@
 {
   "ten_web": "Geoportal lớp phủ Hải Phòng",
-  "hf_repo": "X102/haiphong",
+  "hf_repo": "lopmaybay/haiphong-lop-tham-chieu",
   "hf_rev": "main",
-  "nam_can_gan": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+  "nam_can_gan": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
   "bao_loi": {
     "email": "toan.ly.code@gmail.com",
-    "github": ""
+    "github": "X102/haiphong"
   },
   "overpass": "https://overpass-api.de/api/interpreter"
 }

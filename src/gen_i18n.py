@@ -490,12 +490,17 @@ HTML = {
 from gen_i18n_v21 import R21, LAYER21
 from gen_i18n_v22 import R22
 from gen_i18n_v23 import R23, HTML23, HELP23
-R = R + R21 + R22 + R23
+from gen_i18n_v24 import R24, LAYER24, RE24, HELP24
+R = R + R21 + R22 + R23 + R24
 for L_ in LAYER21: LAYER[L_].update(LAYER21[L_])
+for L_ in LAYER24: LAYER[L_].update(LAYER24[L_])
+for L_ in RE24: RE[L_] = RE[L_] + RE24[L_]
 for L_ in HTML23: HTML[L_].update(HTML23[L_])
 for L_, (moc, them, phim, phim_them) in HELP23.items():     # bản 2.3: mục Trợ giúp mới sau mục báo lỗi, phím [
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5
     h = h[:j] + them + h[j:]; assert h.count(phim) == 1; HTML[L_]["helpBody"] = h.replace(phim, phim + phim_them)
+for L_, (moc, them, _a, _b) in HELP24.items():            # bản 2.4: chỉ số, DEM, giá trị tại điểm, đặc trưng
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

@@ -120,6 +120,21 @@ json.dump(dict(hf_repo="x/khong-dung", bao_loi=dict(email="baoloi@example.org", 
 man_osm = dict(ngay="2026-09-29", nguon="© OpenStreetMap contributors, ODbL 1.0", lop=osm_lop)
 man["s2d"] = dict(duong_dan="s2d/s2d_{y}.tif", nam=[2023, 2025], bang=ns["S2_BANDS"], crs="EPSG:32648", keo_gian=KG)
 man["osm"] = man_osm
+# bản 2.4: DEM giả dựng bằng đúng hàm của ô Colab HF_DEM_cell.py: nền 2 m + một đồi Gauss cao 120 m ở nửa đông bắc
+nd = {}; exec(open(os.path.join(GOC, "HF_DEM_cell.py"), encoding="utf-8").read().split("# ---------------- CHẠY (Colab)")[0], nd)
+from rasterio.warp import transform_bounds
+lb = transform_bounds("EPSG:32648", "EPSG:4326", x0, y0 - Hh * 10, x0 + W * 10, y0)
+lb = (lb[0] - 0.01, lb[1] - 0.01, lb[2] + 0.01, lb[3] + 0.01); st = 1 / 3600
+ln, lt = np.arange(lb[0], lb[2], st), np.arange(lb[3], lb[1], -st)
+LO, LA = np.meshgrid(ln, lt); hc = Transformer.from_crs(32648, 4326, always_xy=True).transform(x0 + 1200 * 10, y0 - 300 * 10)
+z = (2 + 120 * np.exp(-((LO - hc[0]) ** 2 + (LA - hc[1]) ** 2) / (2 * 0.008 ** 2))).astype(np.float32)
+with rasterio.open(f"{FX}/dem4326.tif", "w", driver="GTiff", width=z.shape[1], height=z.shape[0], count=1, dtype="float32", crs="EPSG:4326",
+                   transform=from_origin(lb[0], lb[3], st, st)) as o: o.write(z, 1)
+os.makedirs(f"{R}/dem", exist_ok=True)
+nd["dem_utm"]([f"{FX}/dem4326.tif"], f"{R}/dem/dem_cop30.tif", lb)
+man["dem"] = dict(duong_dan="dem/dem_cop30.tif", ten="DEM: độ cao, độ dốc, bóng địa hình", nguon="DEM test (Gauss hill)", crs="EPSG:32648",
+                  buoc_m=30, he_so=0.1, nodata=-32768, keo_gian=nd["dem_keo_gian"](f"{R}/dem/dem_cop30.tif"))
+REF_DEM = dict(dinh=list(hc), cao=122.0, nen=2.0)
 json.dump(man, open(f"{R}/manifest.json", "w"), ensure_ascii=False)
 T3 = Transformer.from_crs(32648, 3857, always_xy=True)
 mx, my = T3.transform(xs, ys)
@@ -151,3 +166,4 @@ json.dump(ref, open(f"{FX}/ref.json", "w"))
 json.dump({"lang": [list(T.transform(x0 + c * 10 + 5, y0 - r * 10 - 5)) for r, c in lang], "ha_lang": float(np.pi * 900 * 100 / 1e4),
            "dai": [list(T.transform(x0 + (c + 45) * 10, y0 - (r + 2.5) * 10)) for r, c in dai]}, open(f"{FX}/ref_vung.json", "w"))
 print("dữ liệu giả xong:", sorted(os.listdir(R)))
+json.dump(REF_DEM, open(f"{FX}/ref_dem.json", "w"))

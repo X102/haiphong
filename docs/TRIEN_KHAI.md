@@ -14,16 +14,20 @@ git remote add origin https://github.com/<tài-khoản>/<kho>.git
 git push -u origin main
 ```
 
-3. Vào kho, Settings, Pages, mục Build and deployment, Source: chọn **GitHub Actions**.
-4. Thẻ Actions sẽ chạy quy trình "Trang web"; xong, trang ở `https://<tài-khoản>.github.io/<kho>/`.
+3. Vào kho, Settings, Pages, mục Build and deployment, Source: chọn **Deploy from a branch**, nhánh `main`, thư mục `/ (root)`, Save.
+   Sau khoảng một phút trang ở `https://<tài-khoản>.github.io/<kho>/` (ví dụ `https://x102.github.io/haiphong/`).
+4. Cách khác (chỉ đăng `index.html` và `cau_hinh.json`): Source chọn **GitHub Actions**, rồi trong `.github/workflows/trang-web.yml`
+   bỏ dấu `#` ở hai dòng `push`. Nếu Source vẫn là "Deploy from a branch" mà quy trình này tự chạy thì nó báo lỗi đỏ
+   (bước configure-pages không thấy Pages dùng Actions); trang vẫn chạy bình thường vì đã đăng từ nhánh.
 
 ## 2. Cấu hình
 
 Sửa `cau_hinh.json` (có thể sửa ngay trên GitHub), đẩy lên là trang cập nhật:
 
 - `bao_loi.email`: địa chỉ nhận báo lỗi (công khai trong trang).
-- `bao_loi.github`: `<tài-khoản>/<kho>` nếu muốn nút tạo issue.
-- `hf_repo`: đổi nếu dùng bộ dữ liệu khác.
+- `bao_loi.github`: `<tài-khoản>/<kho>` trên GitHub nếu muốn nút tạo issue, ví dụ `X102/haiphong`.
+- `hf_repo`: tên **bộ dữ liệu trên Hugging Face** (mặc định `lopmaybay/haiphong-lop-tham-chieu`), không phải tên kho GitHub.
+  Điền nhầm tên kho GitHub vào đây thì trang báo "không nạp được manifest.json (401)".
 
 ## 3. Dữ liệu trên Hugging Face
 
@@ -36,6 +40,7 @@ Trang đọc `manifest.json` của bộ dữ liệu. Các ô trong `colab/` dự
 | `HF_RANH_GIOI_XA_cell.py` | ranh giới xã |
 | `HF_S2D_CTX_cell.py` | ảnh S2 10 băng (CTX, tổ hợp màu, chỉ số) |
 | `HF_OSM_cell.py` | OpenStreetMap (7 chủ đề, FlatGeobuf, GeoPackage) |
+| `HF_DEM_cell.py` | DEM Copernicus GLO-30 (độ cao; trang tự tính độ dốc, bóng địa hình) |
 
 Các ô cần `LAY_MAU_DA_NAM.html` trong thư mục `HP_modules` trên Drive: chép `index.html` thành tên đó.
 

@@ -2,7 +2,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
 (async () => {
   const {w, $, E, sleep, key, until, errs, puts, blobs, docBlob} = moTrang({olPref: {s2tc: {on: true, op: 0.9}, lulc_ctx: {on: true, op: 0.5}, pc1: {on: true, op: 0.9}}});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("MAN.layers.length") === 5 && $("ols").querySelectorAll(".ol > label > input[type=checkbox]").length === 6, "5 lớp đối chiếu + lớp S2 10 băng");
+  ok(E("MAN.layers.length") === 5 && $("ols").querySelectorAll(".ol > label > input[type=checkbox]").length === 5 + 1 + (E("MAN.dem") ? 1 : 0), "5 lớp đối chiếu + lớp S2 10 băng (+ DEM)");
   ok([...$("selStrip").options].some(o => o.value === "pc1"), "dải ảnh chọn được lớp xám");
   ok($("cls").querySelectorAll("button").length === 17 && $("selRel").options.length > 100, "17 nút lớp, bản Wayback");
   key("n"); await sleep(50); ok(E("ST.cur") === "E0000", "n chọn điểm đầu");

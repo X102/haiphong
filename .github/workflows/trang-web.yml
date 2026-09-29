@@ -1,9 +1,11 @@
-# Đăng trang lên GitHub Pages mỗi khi đẩy lên nhánh main. Chỉ đăng index.html và cau_hinh.json,
-# không đăng mã nguồn, bài thử hay ô Colab. Bật một lần: Settings -> Pages -> Source: GitHub Actions.
+# Đăng trang lên GitHub Pages bằng GitHub Actions, chỉ đăng index.html và cau_hinh.json.
+# Mặc định chỉ chạy khi bấm tay (Actions -> Trang web -> Run workflow), vì cách đơn giản nhất là
+# Settings -> Pages -> Deploy from a branch: main, / (root); khi đó quy trình này không cần và nếu tự chạy sẽ báo lỗi.
+# Muốn dùng quy trình này: Settings -> Pages -> Source: GitHub Actions, rồi bỏ dấu # ở hai dòng push bên dưới.
 name: Trang web
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

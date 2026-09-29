@@ -23,7 +23,11 @@ function s2Keo() {                         // kéo giãn CỐ ĐỊNH (mọi nă
 }
 function s2Need() {                        // các băng cần đọc và phần đệm (CTX cần ô quanh điểm ảnh)
   const m = S2V.mode;
-  if (m === "idx") return {bands: [0, 1, 2, 6, 8], pad: 0};           // B2, B3, B4, B8, B11 đủ cho mọi chỉ số
+  if (m === "idx") {                                                   // bản 2.4: chỉ đọc các băng chỉ số đang chọn cần
+    const c = typeof csLay === "function" ? (csLay(S2V.chi) || csLay("NDVI")) : null;
+    const bs = c && c.f && c.f.chi.length ? c.f.chi.slice().sort((a, b) => a - b) : [0, 1, 2, 6, 8];
+    return {bands: bs, pad: 0};
+  }
   const bs = m === "ctx" && S2V.mot ? [+S2V.bd] : [+S2V.r, +S2V.g, +S2V.b];
   return {bands: bs, pad: m === "ctx" ? (+S2V.cs - 1) / 2 : 0};
 }
@@ -31,12 +35,12 @@ let s2MsgT = 0;
 function s2Msg(t) { const e = document.querySelector("[data-s2v] [data-msg]"); if (e) e.textContent = t; clearTimeout(s2MsgT); if (t) s2MsgT = setTimeout(() => { if (e) e.textContent = ""; }, 6000); }
 /* đọc cửa sổ ảnh UTM phủ một ô 3857 (bb), trả chỉ số điểm ảnh nguồn cho từng điểm ảnh đích (láng giềng gần nhất);
    toạ độ UTM của từng điểm đích nội suy song tuyến từ 4 góc (sai số dưới 1 m trên một ô bản đồ) */
-async function readUTM(url, bb, w, h, pad, samples) {
+async function readUTM(url, bb, w, h, pad, samples, tong) {   // tong: vẫn chọn ảnh overview khi có đệm (DEM thu nhỏ)
   const t = await tiffOf(url), ox = t._bb[0], oy = t._bb[3];
   const cor = [[bb[0], bb[3]], [bb[2], bb[3]], [bb[0], bb[1]], [bb[2], bb[1]]].map(m => { const ll = CORE.m2ll(m[0], m[1]); return CORE.toUTM(ll[0], ll[1]); });
   const xs = cor.map(c => c[0]), ys = cor.map(c => c[1]), ub = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
   if (!CORE.inter(ub, t._bb)) return null;
-  const I = pad ? t._imgs[0] : CORE.pickImage(t._imgs, (ub[2] - ub[0]) / w);
+  const I = pad && !tong ? t._imgs[0] : CORE.pickImage(t._imgs, (ub[2] - ub[0]) / w);
   const c0 = Math.max(0, Math.floor((ub[0] - ox) / I.rx) - pad - 1), c1 = Math.min(I.w, Math.ceil((ub[2] - ox) / I.rx) + pad + 1);
   const r0 = Math.max(0, Math.floor((oy - ub[3]) / I.ry) - pad - 1), r1 = Math.min(I.h, Math.ceil((oy - ub[1]) / I.ry) + pad + 1);
   if (c1 <= c0 || r1 <= r0) return null;
@@ -61,16 +65,17 @@ function s2dRGBA(R, w, h, need) {
   let box = null;
   if (S2V.mode === "ctx") box = bs.map((b, q) => CORE.boxImage(R.src, R.sw, R.sh, nb, q, need.pad));
   const st = S2V.tk === "m" ? "m" : "s", sHi = +S2V.cs === 5 ? K.s5 : K.s15;
-  const chi = S2_CHI[S2V.chi] || S2_CHI.NDVI, lt = lut2(S2V.mode === "idx" ? chi[2] : "magma");
+  const cs = S2V.mode === "idx" && typeof csLay === "function" ? (csLay(S2V.chi) || csLay("NDVI")) : null;
+  const lt = lut2(S2V.mode === "idx" ? (cs ? cs.mau : "ndvi") : "magma");
   for (let k = 0; k < w * h; k++) {
     const j = R.idx[k]; if (j < 0) continue;
     let z = true; for (let q = 0; q < nb; q++) if (R.src[j * nb + q]) { z = false; break; }
     if (z) continue;
     const o = k * 4;
     if (S2V.mode === "idx") {
-      const v = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; bs.forEach((b, q) => { v[b] = R.src[j * nb + q]; });
-      const x = CORE.indices(v)[CORE.IDX_NAMES.indexOf(S2V.chi) < 0 ? 0 : CORE.IDX_NAMES.indexOf(S2V.chi)];
-      const t = Math.max(0, Math.min(1, (x - chi[0]) / (chi[1] - chi[0]))), c = lt[1 + Math.round(t * 254)];
+      const v = new Array(s2Bang().length).fill(0); bs.forEach((b, q) => { v[b] = R.src[j * nb + q] / 10000; });
+      const x = cs && cs.f ? cs.f(v) : null; if (x == null) continue;
+      const t = Math.max(0, Math.min(1, (x - cs.lo) / (cs.hi - cs.lo))), c = lt[1 + Math.round(t * 254)];
       out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; continue;
     }
     const val = q => box ? box[q][st][j] : R.src[j * nb + q];
@@ -113,7 +118,7 @@ function s2vUI(div) {
   div.setAttribute("data-noi18n", "");
   div.innerHTML = `<div class="row sm"><select data-k="mode">${opt([["rgb", T("tổ hợp màu")], ["idx", T("chỉ số")], ["ctx", "CTX"]], S2V.mode)}</select>
     <select data-k="pre" data-show="rgb ctx3">${opt(Object.keys(S2_PRE_TEN).map(k => [k, T(S2_PRE_TEN[k])]), S2V.pre)}</select>
-    <select data-k="chi" data-show="idx">${opt(CORE.IDX_NAMES.map(n => [n, n]), S2V.chi)}</select>
+    <select data-k="chi" data-show="idx">${opt((typeof csDS === "function" ? csDS().map(c => [c.id, c.ten]) : CORE.IDX_NAMES.map(n => [n, n])).concat([["__them", T("＋ chỉ số khác…")]]), S2V.chi)}</select>
     <select data-k="tk" data-show="ctx">${opt([["m", T("trung bình")], ["s", T("độ lệch chuẩn")]], S2V.tk)}</select>
     <select data-k="cs" data-show="ctx">${opt([[5, "5 × 5"], [15, "15 × 15"]], S2V.cs)}</select>
     <label data-show="ctx"><input type="checkbox" data-k="mot"${S2V.mot ? " checked" : ""}> ${T("1 băng")}</label></div>
@@ -129,6 +134,7 @@ function s2vUI(div) {
   div.querySelectorAll("[data-k]").forEach(e => {
     const f = () => {
       const k = e.dataset.k;
+      if (k === "chi" && e.value === "__them") { e.value = S2V.chi; if (typeof csMo === "function") csMo(); return; }
       S2V[k] = e.type === "checkbox" ? e.checked : (e.type === "range" ? +e.value : (/^(r|g|b|bd|cs)$/.test(k) ? +e.value : e.value));
       if (k === "pre" && S2_PRE[S2V.pre]) { [S2V.r, S2V.g, S2V.b] = S2_PRE[S2V.pre]; }
       if (/^(r|g|b)$/.test(k)) { S2V.pre = "tu"; const sp = div.querySelector('[data-k="pre"]'); if (sp) sp.value = "tu"; }
@@ -188,7 +194,7 @@ const NHOM_NAM = [
   {id: "pc", ten: "PC1-5 của PCA chuỗi năm", co: () => !!(MAN && (MAN.pc || pcLayers().length))},
   {id: "emb", ten: "Embedding: các thành phần chính", co: () => embLayers().length > 0},
   {id: "s2", ten: "S2: 10 băng (DN, ảnh mùa khô)", co: coS2},
-  {id: "idx", ten: "Chỉ số NDVI, NDWI, MNDWI, NDBI, BSI", co: coS2},
+  {id: "idx", ten: "Chỉ số (danh sách đang dùng, ∑ để thêm)", co: coS2},
   {id: "m5", ten: "CTX trung bình 5 × 5", co: coS2},
   {id: "s5", ten: "CTX độ lệch chuẩn 5 × 5", co: coS2},
   {id: "m15", ten: "CTX trung bình 15 × 15", co: coS2},
@@ -216,7 +222,7 @@ async function lopAt(p) {                  // giá trị các bản đồ lớp 
   return (LOP_PT[key] = out);
 }
 async function annualFor(p, grp) {
-  const key = p.x + "," + p.y + "|" + grp;
+  const key = p.x + "," + p.y + "|" + grp + (grp === "idx" && typeof ST !== "undefined" && ST.chiso ? "|" + ST.chiso.dung.join() + "|" + ST.chiso.tu.map(t => t.bt).join() : "");
   if (AN_CACHE[key]) return AN_CACHE[key];
   let names = [], ys = {}, don_vi = "", nguon = "";
   if (grp === "pc") {
@@ -250,8 +256,9 @@ async function annualFor(p, grp) {
     don_vi = "đơn vị phép chiếu";
   } else if (["s2", "idx", "m5", "s5", "m15", "s15"].includes(grp)) {
     const sv = await s2dAt(p), bs = s2Bang();
-    names = grp === "s2" ? bs.slice() : grp === "idx" ? CORE.IDX_NAMES.slice() : bs.map(b => b + "_" + grp);
-    Object.entries(sv).forEach(([y, d]) => { ys[y] = grp === "s2" ? d.v : d[grp]; });
+    const DS = grp === "idx" && typeof csDS === "function" ? csDS() : null;          // bản 2.4: danh sách chỉ số đang dùng
+    names = grp === "s2" ? bs.slice() : grp === "idx" ? (DS ? DS.map(c => c.ten) : CORE.IDX_NAMES.slice()) : bs.map(b => b + "_" + grp);
+    Object.entries(sv).forEach(([y, d]) => { ys[y] = grp === "s2" ? d.v : grp === "idx" ? (DS ? DS.map(c => csTinh(c, d.v)) : d.idx) : d[grp]; });
     nguon = grp === "s2" ? "ảnh S2 10 băng, giá trị gốc" : grp === "idx" ? "tính từ 10 băng như bộ phân loại" : "CTX tính từ ảnh 10 băng như bộ phân loại (biên kiểu nearest)";
     don_vi = grp === "idx" ? "không thứ nguyên" : "DN";
   } else if (grp === "rgb") {
