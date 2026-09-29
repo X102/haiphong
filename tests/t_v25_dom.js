@@ -126,7 +126,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   // ---------- giới thiệu
   $("bGT").click(); await sleep(30);
   ok($("dlgGT").open && /Phạm Đăng Hiển/.test($("gtTacGia").textContent) && /Фам Данг Хиен/.test($("gtTacGia").textContent) &&
-     $("gtTacGia").querySelector('a[href="mailto:lopmaybay@gmail.com"]') && /2\.5/.test($("gtTacGia").textContent), "Giới thiệu: tác giả (vi, ru, en), email liên hệ, phiên bản");
+     $("gtTacGia").querySelector('a[href="mailto:lopmaybay@gmail.com"]') && $("gtTacGia").textContent.includes(E("VERSION")), "Giới thiệu: tác giả (vi, ru, en), email liên hệ, phiên bản");
   E("SITE.gioi_thieu = {don_vi: 'Đơn vị thử'}; gtMo()");
   ok(/Đơn vị thử/.test($("gtTacGia").textContent), "cau_hinh.json đặt được đơn vị, tác giả, email (mục gioi_thieu)");
   E("delete SITE.gioi_thieu"); $("gtDong").click();

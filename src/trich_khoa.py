@@ -24,7 +24,7 @@ for x in re.findall(r">([^<>]+)<", body2):
     k = re.sub(r"\s+", " ", H.unescape(x)).strip()
     if k and VI.search(k): static.append(k)
 attrs = [H.unescape(a) for a in re.findall(r'(?:title|placeholder)="([^"]+)"', body2) if VI.search(a)]
-src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("wayback_core.js", encoding="utf-8").read()
+src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + open("wayback_core.js", encoding="utf-8").read()
 dyn = []
 for m in re.finditer(r'\b(?:T|msg|vgTrang|confirm|Error)\(\s*(["\'])((?:\\.|(?!\1).)*)\1', src):
     k = m.group(2).replace('\\"', '"').replace("\\'", "'")
@@ -39,6 +39,11 @@ dyn += ["thực vật", "nước", "xây dựng", "đất trống", "thấp", "v
         "điểm mẫu lấy đặc trưng ở năm {y}, áp cho mọi năm; mảng đã xoá cũng bị bỏ ở mọi năm. Nhấp một dòng để xem vùng của năm đó.",
         "chưa chọn xã nào trong danh sách (hoặc Ctrl + nhấp lên bản đồ để chọn xã)",
         "CTX TB 5 × 5 (10 băng)", "CTX ĐLC 5 × 5 (10 băng)", "CTX TB 15 × 15 (10 băng)", "CTX ĐLC 15 × 15 (10 băng)"]
+# bản 2.6: tên loại thay đổi (CORE.LOAI_TD), lớp sơ bộ, tên nhà cung cấp AI
+m = re.search(r"var LOAI_TD = \[(.*?)\];", t, re.S); dyn += re.findall(r'"([^"]+)"', m.group(1))
+m = re.search(r"const CD_SOBO = \[(.*?)\];", src, re.S); dyn += re.findall(r'"([^"]+)"', m.group(1))
+m = re.search(r"const AI_NCC = \{(.*?)\n\};", src, re.S); dyn += [v for v in re.findall(r'ten: "([^"]+)"', m.group(1)) if VI.search(v)]
+dyn += ["đổi lớp", "thay đổi trong cùng lớp"]
 m = re.search(r"VG_NHOM = \[(.*?)\];", src, re.S)
 dyn += [v for v in re.findall(r'"([^"]+)"\]', m.group(1)) if VI.search(v)]
 out = []

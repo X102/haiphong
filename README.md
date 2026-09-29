@@ -20,6 +20,8 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 - Chỉ số: thư viện 248 chỉ số Sentinel-2 (Index DataBase) và công thức tự nhập, dùng cho lớp S2, đồ thị, đường mùa vụ, giá trị tại điểm, chọn vùng.
 - Chuẩn hoá đa giác (làm trơn, vuông góc hoá, bám đường kênh OSM, xoá mảnh vụn), gán lại lớp, sửa vùng đã lưu ngay trên bản đồ; tự lưu điểm mẫu chọn vùng thành bộ điểm, gộp bộ; tệp tiến độ chứa cả phiên làm việc.
 - DEM Copernicus GLO-30: độ cao, độ dốc, bóng địa hình; giá trị các lớp tại điểm khi nhấp bản đồ; đặc trưng chọn vùng gồm S2, chỉ số, CTX, PC, DEM.
+- Phát hiện thay đổi giữa hai năm (khung nhìn, các xã, một vùng đã lưu): chuẩn hoá bức xạ theo điểm ảnh ổn định, độ lớn thay đổi gộp 10 băng, chỉ số, CTX, PC, embedding; ngưỡng Otsu, theo điểm mẫu (tối ưu F1) hoặc tự đặt; loại thay đổi không cần mẫu (lớp sơ bộ từ chỉ số), theo điểm mẫu hoặc theo bản đồ lớp; nhận định, bảng, ma trận từ-đến, biểu đồ, CSV, GeoJSON, rải điểm kiểm tra.
+- Trợ lý AI: DeepSeek, Yandex AI Studio, ProxyAPI, ChatGPT, Gemini, Claude, Grok, Ollama, LM Studio hoặc máy chủ tương thích OpenAI; khoá lưu mã hoá trong trình duyệt; gửi số liệu và ảnh của điểm để nhận mô tả, gợi ý nhãn, gán một chạm hoặc hàng loạt; nhận định kết quả phát hiện thay đổi; relay riêng trên Hugging Face Space để khỏi dùng VPN (xem `docs/AI_RELAY.md`).
 - OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
 - Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
 - Tiến độ lưu tự động trong trình duyệt; xuất CSV, GeoJSON, tệp tiến độ JSON (nhập lại, gộp nhiều người).
@@ -32,10 +34,12 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 | `cau_hinh.json` | cấu hình web (xem dưới) |
 | `src/` | mã nguồn trang: `tpl.html` (khung, CSS, lõi), `*_ui.js`, từ điển `i18n.json` và các tệp sinh từ điển |
 | `tools/dung_trang.py` | dựng `index.html` từ `src/` |
+| `tools/ai_relay/` | relay AI (Python chuẩn, Docker cho Hugging Face Space); `tools/tao_o_relay.py` sinh ô Colab `colab/HF_AI_RELAY_cell.py` |
 | `tools/phuc_vu_cuc_bo.py` | máy chủ tĩnh cục bộ có HTTP Range, để thử trang với dữ liệu trên máy |
 | `tests/` | bài thử jsdom trên dữ liệu giả (`mk_fixtures.py` tạo dữ liệu, `chay_het.sh` chạy tất cả) |
 | `colab/` | ô và notebook Colab dựng dữ liệu rồi đẩy lên Hugging Face |
 | `docs/TRIEN_KHAI.md` | hướng dẫn đưa lên GitHub Pages và cập nhật |
+| `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
 ## Cấu hình web (`cau_hinh.json`)
 

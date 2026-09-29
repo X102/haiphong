@@ -1,6 +1,6 @@
 # Dựng chiso_s2.json (thư viện chỉ số của geoportal) từ tệp GEE 248-INDEX-S2.txt của tác giả
 # (danh sách 248 chỉ số Sentinel-2 theo Index DataBase, biểu thức GEE trên phản xạ 0..1, hằng số trong "kihieu").
-# Chạy: python tao_chiso.py <đường dẫn tệp 248-INDEX-S2.txt> (tệp gốc không kèm trong kho; chiso_s2.json đã dựng sẵn)
+# Chạy: python tao_chiso.py [đường dẫn tệp 248-INDEX-S2.txt]
 import json, re, sys, pathlib
 D = pathlib.Path(__file__).parent
 NGUON = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else D / "248-INDEX-S2.txt"

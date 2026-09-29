@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Relay AI riêng cho Geoportal lớp phủ Hải Phòng (chỉ thư viện chuẩn của Python).
+
+Trình duyệt gọi  https://<relay>/p/<nhà cung cấp>/<đường dẫn API>  kèm tiêu đề X-Relay-Token;
+relay kiểm tra nguồn gọi (Origin), mã relay, giới hạn tần suất, rồi chuyển tiếp tới nhà cung cấp,
+gắn khoá API lấy từ biến môi trường (Secrets của Hugging Face Space). Khoá không bao giờ về trình duyệt,
+không được ghi vào nhật ký.
+
+Biến môi trường
+  RELAY_TOKEN       bắt buộc; trình duyệt gửi ở tiêu đề X-Relay-Token
+  ALLOWED_ORIGINS   các trang được gọi, cách nhau dấu phẩy (mặc định https://x102.github.io)
+  DEEPSEEK_API_KEY  OPENAI_API_KEY  ANTHROPIC_API_KEY  GEMINI_API_KEY  XAI_API_KEY  YANDEX_API_KEY  PROXYAPI_API_KEY
+  YANDEX_FOLDER     thư mục Yandex Cloud (model "yandexgpt/latest" được đổi thành "gpt://<thư mục>/yandexgpt/latest")
+  RATE_PER_MIN      số yêu cầu mỗi phút cho mỗi địa chỉ IP (mặc định 30)
+  MAX_BODY_MB       cỡ thân yêu cầu lớn nhất (mặc định 20)
+  PORT              cổng (mặc định 7860, như Hugging Face Space)
+Không có khoá của một nhà cung cấp trên relay thì relay dùng khoá trình duyệt gửi kèm (nếu có).
+"""
+import hmac, json, os, re, sys, threading, time, urllib.error, urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+PHIEN_BAN = "1.0"
+NCC = {   # tên: (gốc API, biến khoá, kiểu gắn khoá, các đường dẫn được phép)
+    "deepseek":  ("https://api.deepseek.com", "DEEPSEEK_API_KEY", "bearer", r"/(v1/)?(chat/completions|models)"),
+    "openai":    ("https://api.openai.com", "OPENAI_API_KEY", "bearer", r"/v1/(chat/completions|models)"),
+    "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY", "x-api-key", r"/v1/(messages|models)"),
+    "gemini":    ("https://generativelanguage.googleapis.com", "GEMINI_API_KEY", "x-goog-api-key", r"/v1beta/models(/[A-Za-z0-9._-]+:generateContent)?"),
+    "xai":       ("https://api.x.ai", "XAI_API_KEY", "bearer", r"/v1/(chat/completions|models)"),
+    "yandex":    ("https://llm.api.cloud.yandex.net", "YANDEX_API_KEY", "bearer", r"/v1/(chat/completions|models)"),
+    "proxyapi":  ("https://api.proxyapi.ru", "PROXYAPI_API_KEY", "bearer", r"/v1/(chat/completions|models)"),
+}
+if os.environ.get("RELAY_UPSTREAM_JSON"):          # chỉ để kiểm thử: đổi gốc API sang máy chủ giả
+    for k, v in json.loads(os.environ["RELAY_UPSTREAM_JSON"]).items():
+        NCC[k] = (v,) + NCC[k][1:]
+CHO_PHEP_TIEU_DE = {"content-type", "authorization", "x-api-key", "x-goog-api-key", "anthropic-version", "anthropic-beta",
+                    "anthropic-dangerous-direct-browser-access", "openai-project", "x-relay-token"}
+QUERY_OK = {"limit", "pageSize", "pageToken", "after_id", "before_id"}
+
+
+def cfg():
+    return {"token": os.environ.get("RELAY_TOKEN", ""),
+            "origins": [o.strip().rstrip("/") for o in os.environ.get("ALLOWED_ORIGINS", "https://x102.github.io").split(",") if o.strip()],
+            "rate": int(os.environ.get("RATE_PER_MIN", "30")), "max_body": int(float(os.environ.get("MAX_BODY_MB", "20")) * 1024 * 1024)}
+
+
+class Han:                                          # giới hạn tần suất: cửa sổ trượt 60 s cho mỗi IP
+    def __init__(self):
+        self.d, self.k = {}, threading.Lock()
+
+    def cho(self, ip, n):
+        now = time.time()
+        with self.k:
+            q = [t for t in self.d.get(ip, []) if now - t < 60]
+            if len(q) >= n:
+                self.d[ip] = q
+                return False
+            q.append(now); self.d[ip] = q
+            if len(self.d) > 5000:
+                self.d = {a: b for a, b in self.d.items() if b and now - b[-1] < 60}
+            return True
+
+
+HAN = Han()
+
+
+class Relay(BaseHTTPRequestHandler):
+    server_version = "ai-relay/" + PHIEN_BAN
+    sys_version = ""
+
+    def log_message(self, fmt, *args):              # chỉ phương thức, đường dẫn (không query), mã trả về; không tiêu đề, không thân
+        try:
+            sys.stderr.write("%s %s %s %s\n" % (time.strftime("%H:%M:%S"), self.command, self.path.split("?")[0][:120], args[1] if len(args) > 1 else ""))
+        except Exception:
+            pass
+
+    # ---------- tiện ích
+    def _origin_ok(self):
+        o = (self.headers.get("Origin") or "").rstrip("/")
+        return (not o) or o in cfg()["origins"], o
+
+    def _cors(self, o):
+        if o and o in cfg()["origins"]:
+            self.send_header("Access-Control-Allow-Origin", o)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Expose-Headers", "Content-Type")
+
+    def _tra(self, st, obj, o="", ctype="application/json; charset=utf-8", raw=None):
+        b = raw if raw is not None else json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(st)
+        self._cors(o)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(b)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(b)
+
+    def _loi(self, st, m, o=""):
+        self._tra(st, {"error": {"message": m, "relay": True}}, o)
+
+    def _ip(self):
+        x = self.headers.get("X-Forwarded-For")
+        return x.split(",")[0].strip() if x else self.client_address[0]
+
+    # ---------- CORS
+    def do_OPTIONS(self):
+        ok, o = self._origin_ok()
+        if not ok or not o:
+            self._loi(403, "origin not allowed", "")
+            return
+        xin = [h.strip() for h in (self.headers.get("Access-Control-Request-Headers") or "").split(",") if h.strip()]
+        self.send_response(204)
+        self._cors(o)
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", ", ".join(h for h in xin if h.lower() in CHO_PHEP_TIEU_DE) or "content-type")
+        self.send_header("Access-Control-Max-Age", "600")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def do_GET(self):
+        self._xu_ly()
+
+    def do_POST(self):
+        self._xu_ly()
+
+    # ---------- chuyển tiếp
+    def _xu_ly(self):
+        ok, o = self._origin_ok()
+        if not ok:
+            self._loi(403, "origin not allowed")
+            return
+        duong = self.path.split("?")[0]
+        if duong in ("/", "/health") and self.command == "GET":
+            self._tra(200, {"ok": True, "relay": PHIEN_BAN, "providers": sorted(k for k, v in NCC.items() if os.environ.get(v[1])),
+                            "token_set": bool(cfg()["token"])}, o)
+            return
+        m = re.match(r"^/p/([a-z]+)(/.*)$", duong)
+        if not m or m.group(1) not in NCC:
+            self._loi(404, "unknown path", o)
+            return
+        ncc, sau = m.group(1), m.group(2)
+        goc, bien, kieu, mau = NCC[ncc]
+        if not re.fullmatch(mau, sau):
+            self._loi(404, "path not allowed for " + ncc, o)
+            return
+        C = cfg()
+        if not C["token"]:
+            self._loi(500, "RELAY_TOKEN is not set on the relay", o)
+            return
+        if not hmac.compare_digest((self.headers.get("X-Relay-Token") or "").encode(), C["token"].encode()):
+            self._loi(401, "wrong or missing relay token", o)
+            return
+        if not HAN.cho(self._ip(), C["rate"]):
+            self._loi(429, "too many requests to the relay, wait a minute", o)
+            return
+        n = int(self.headers.get("Content-Length") or 0)
+        if n > C["max_body"]:
+            self._loi(413, "request too large", o)
+            return
+        body = self.rfile.read(n) if n else None
+        h = {"Content-Type": self.headers.get("Content-Type") or "application/json", "User-Agent": "ai-relay/" + PHIEN_BAN}
+        khoa = os.environ.get(bien, "")
+        if khoa:
+            h[{"bearer": "Authorization", "x-api-key": "x-api-key", "x-goog-api-key": "x-goog-api-key"}[kieu]] = ("Bearer " + khoa) if kieu == "bearer" else khoa
+        else:                                        # relay không có khoá: dùng khoá trình duyệt gửi kèm
+            for t in ("Authorization", "x-api-key", "x-goog-api-key"):
+                if self.headers.get(t):
+                    h[t] = self.headers.get(t)
+            if not any(t in h for t in ("Authorization", "x-api-key", "x-goog-api-key")):
+                self._loi(401, "the relay has no key for " + ncc + " (set " + bien + " in the Space secrets)", o)
+                return
+        if ncc == "anthropic":
+            h["anthropic-version"] = self.headers.get("anthropic-version") or "2023-06-01"
+            if self.headers.get("anthropic-beta"):
+                h["anthropic-beta"] = self.headers.get("anthropic-beta")
+        if ncc == "yandex":
+            thu_muc = os.environ.get("YANDEX_FOLDER") or self.headers.get("OpenAI-Project") or ""
+            if thu_muc:
+                h["OpenAI-Project"] = thu_muc
+                if body and self.command == "POST":
+                    try:
+                        j = json.loads(body)
+                        if isinstance(j.get("model"), str) and not re.match(r"^(gpt|emb|ds)://", j["model"]):
+                            j["model"] = "gpt://%s/%s" % (thu_muc, j["model"]); body = json.dumps(j).encode("utf-8")
+                    except ValueError:
+                        pass
+        q = ""
+        if "?" in self.path:
+            cap = [p for p in self.path.split("?", 1)[1].split("&") if p.split("=")[0] in QUERY_OK]
+            q = ("?" + "&".join(cap)) if cap else ""
+        if body is not None:
+            h["Content-Length"] = str(len(body))
+        rq = urllib.request.Request(goc + sau + q, data=body, headers=h, method=self.command)
+        try:
+            with urllib.request.urlopen(rq, timeout=180) as r:
+                self._tra(r.status, None, o, r.headers.get("Content-Type") or "application/json", r.read())
+        except urllib.error.HTTPError as e:
+            self._tra(e.code, None, o, e.headers.get("Content-Type") or "application/json", e.read())
+        except Exception as e:                       # mạng, DNS, hết giờ: không lộ tiêu đề, không lộ khoá
+            self._loi(502, "upstream unreachable: " + type(e).__name__, o)
+
+
+def main():
+    cong = int(os.environ.get("PORT", "7860"))
+    if not cfg()["token"]:
+        sys.stderr.write("CANH BAO: RELAY_TOKEN chua dat, moi yeu cau se bi tu choi\n")
+    sys.stderr.write("ai-relay %s cong %d, nguon duoc phep: %s, nha cung cap co khoa: %s\n" % (
+        PHIEN_BAN, cong, ",".join(cfg()["origins"]), ",".join(k for k, v in NCC.items() if os.environ.get(v[1])) or "(chua co)"))
+    ThreadingHTTPServer(("0.0.0.0", cong), Relay).serve_forever()
+
+
+if __name__ == "__main__":
+    main()

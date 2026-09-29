@@ -50,6 +50,11 @@ function moTrang(opt = {}) {
       Object.defineProperty(w.HTMLElement.prototype, "clientWidth", {get() { return 900; }});
       Object.defineProperty(w.HTMLElement.prototype, "clientHeight", {get() { return 700; }});
       w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+      w.HTMLDialogElement.prototype.show = function () { this.open = true; };
+      // bản 2.6: WebCrypto của node cho phần mã hoá khoá API (jsdom chưa có crypto.subtle); trang thử chạy như trang https
+      if (!w.crypto.subtle) Object.defineProperty(w.crypto, "subtle", {value: require("crypto").webcrypto.subtle});
+      Object.defineProperty(w, "isSecureContext", {value: true});
+      if (!w.AbortController) w.AbortController = AbortController;
       w.HTMLDialogElement.prototype.close = function () { this.open = false; };
       w.URL.createObjectURL = b => { blobs.push(b); return "blob:x"; }; w.URL.revokeObjectURL = noop;
       w.confirm = () => true;

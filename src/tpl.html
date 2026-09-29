@@ -253,6 +253,24 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
 .gt-tai td:first-child{color:var(--mu);white-space:nowrap}
 .gt-tai .sw{width:10px;height:10px}
 #vgDT details{margin:2px 0}
+/* ---- bản 2.6: phát hiện thay đổi, trợ lý AI ---- */
+#cdP{position:absolute;top:10px;left:60px;z-index:1002;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:430px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
+#cdP details{border-top:1px solid #eef0f3;margin-top:4px;padding-top:3px}
+#cdP summary{cursor:pointer;font-weight:600}
+#cdKQ table,#aiKQ table{border-collapse:collapse;font-size:11.5px;width:100%}
+#cdKQ td,#cdKQ th,#aiKQ td,#aiKQ th{border-bottom:1px solid #f2f4f7;padding:2px 4px;text-align:left}
+#cdMT td.dg{background:#f2f4f7;font-weight:600}
+#cdKQ svg{width:100%;height:auto;display:block;background:#fbfcfd;border:1px solid var(--ln);border-radius:6px;margin:3px 0}
+#cdLeg i,.ai-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:3px;border:1px solid rgba(0,0,0,.2)}
+#cdLeg .leg{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;margin:3px 0}
+#dlgAI{max-width:760px}
+#dlgAI[open]{position:fixed;top:56px;right:12px;left:auto;margin:0;z-index:1500;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 76px);overflow:auto;box-shadow:0 4px 18px rgba(0,0,0,.2)}
+#dlgAI .vg-o{grid-template-columns:auto 1fr}
+#dlgAI [data-atab].on{background:#eef4ff;border-color:#84adff;color:#1d4ed8}
+#dlgAI .vg-o input[type=text],#dlgAI .vg-o input[type=password]{width:100%}
+.ai-kq{border-left:3px solid #7c3aed;background:#faf5ff;border-radius:4px;padding:4px 6px;margin:4px 0;font-size:12px}
+.ai-kq .mu{font-size:11px}
+@media (max-width: 760px){ #dlgAI[open]{left:4px;right:4px;top:48px;width:auto} #cdP{left:6px!important;right:64px;top:6px!important;width:auto;max-height:50%} }
 #vgDT summary{font-weight:400}
 </style>
 </head>
@@ -271,6 +289,8 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <button id="bVung" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)">Chọn vùng <kbd>o</kbd></button>
     <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang">🐞 Báo lỗi</button>
     <button id="bGT" type="button" title="Giới thiệu geoportal, tác giả, liên hệ">ⓘ Giới thiệu</button>
+    <button id="bCD" type="button" title="Phát hiện thay đổi giữa hai năm: bản đồ, bảng, ma trận, nhận định">Δ Thay đổi</button>
+    <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt">🤖 AI</button>
     <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
       <option value="trai">▤ trong bảng này</option>
       <option value="phai">▥ cột bên phải</option>
@@ -390,6 +410,42 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
         <div class="row">năm gợi ý <select id="osmNam" data-noi18n></select><label><input type="checkbox" id="osmGanSan"> gán sẵn nhãn gợi ý (tin cậy thấp)</label></div>
         <div class="row"><input id="osmTenBo" type="text" placeholder="tên bộ, vd mẫu OSM Thuỷ Nguyên" style="flex:1"><button id="osmTaoBo" type="button" class="on">Tạo bộ điểm</button></div>
         <div class="mu sm" id="osmMauTT"></div>
+      </div>
+    </div>
+  </div>
+  <div id="cdP" hidden>
+    <div class="vg-dau"><b title="kéo thanh này để dời bảng">⠿ Phát hiện thay đổi</b><span class="mu" id="cdTrang" data-noi18n></span>
+      <span style="margin-left:auto"></span><button id="cdThu" type="button" title="thu gọn / mở rộng bảng">–</button><button id="cdDong" type="button" title="đóng">×</button></div>
+    <div id="cdBody">
+      <div class="vg-o"><span>Năm trước</span><select id="cdA" data-noi18n></select><span>Năm sau</span><select id="cdB" data-noi18n></select>
+        <span>Phạm vi</span><select id="cdPV"><option value="nhin">khung nhìn hiện tại</option><option value="xa">các xã chọn dưới đây</option><option value="vung">một vùng đã lưu</option></select></div>
+      <div class="row" id="cdXaW" hidden><select id="cdXa" multiple size="4" style="width:100%" data-noi18n></select></div>
+      <div class="row" id="cdVungW" hidden><select id="cdVung" style="width:100%" data-noi18n></select></div>
+      <details open><summary>Dữ liệu so sánh</summary>
+        <label style="display:block"><input type="checkbox" data-cd="s2" checked> S2 10 băng (phản xạ)</label>
+        <label style="display:block"><input type="checkbox" data-cd="cs" checked> các chỉ số (NDVI, MNDWI, NDBI, BSI và danh sách đang dùng)</label>
+        <label style="display:block"><input type="checkbox" data-cd="ctx"> CTX trung bình 15 × 15 (10 băng)</label>
+        <label style="display:block"><input type="checkbox" data-cd="pc"> PC chuỗi năm</label>
+        <label style="display:block"><input type="checkbox" data-cd="emb"> embedding (ảnh chiếu 8 bit)</label>
+        <label style="display:block"><input type="checkbox" id="cdChuan" checked> chuẩn hoá bức xạ tương đối theo điểm ảnh ổn định</label></details>
+      <details open><summary>Cách phát hiện</summary>
+        <div class="vg-o"><span>Ngưỡng</span><select id="cdNguong"><option value="otsu">tự động (Otsu)</option><option value="mau">theo điểm đã gán nhãn cả hai năm (tối ưu F1)</option><option value="tay">tự đặt</option></select>
+          <span>độ lớn</span><span><input id="cdT" type="range" min="0.5" max="8" step="0.05" value="2.5" style="width:130px"> <b id="cdTV" data-noi18n>2.50</b></span>
+          <span>Mảng nhỏ nhất</span><span><input id="cdMin" type="number" value="0.05" step="0.01" min="0" style="width:64px"> ha</span>
+          <span>Loại thay đổi</span><select id="cdPL"><option value="sobo">theo lớp sơ bộ từ chỉ số (không cần mẫu)</option><option value="mau">theo điểm mẫu (lớp của hệ thống, cần mẫu cả hai năm)</option><option value="bando">theo bản đồ lớp có sẵn</option></select>
+          <span>Bộ điểm mẫu</span><select id="cdBo" data-noi18n></select></div></details>
+      <div class="row"><button id="cdChay" type="button" class="on">Phát hiện thay đổi</button><button id="cdAI" type="button" title="gửi bảng số liệu và bản đồ loại thay đổi cho AI để nhận định">🤖 Nhờ AI nhận định</button></div>
+      <div id="cdKQ" hidden>
+        <div class="vg-tab"><button data-ctab="tom" class="on">Nhận định</button><button data-ctab="bang">Bảng</button><button data-ctab="mt">Ma trận</button><button data-ctab="bd">Biểu đồ</button></div>
+        <div data-cpane="tom"><div id="cdTom" data-noi18n></div><div id="cdAIKQ" data-noi18n></div></div>
+        <div data-cpane="bang" hidden><div id="cdBang" data-noi18n></div></div>
+        <div data-cpane="mt" hidden><div id="cdMT" data-noi18n></div></div>
+        <div data-cpane="bd" hidden><div id="cdBD" data-noi18n></div></div>
+        <div class="row">bản đồ <select id="cdXem"><option value="loai">loại thay đổi</option><option value="doi">thay đổi / không đổi</option><option value="do">độ lớn thay đổi</option>
+          <option value="ndvi">hiệu NDVI</option><option value="tu">lớp năm sau ở chỗ thay đổi</option><option value="tat">tắt</option></select></div>
+        <div id="cdLeg" data-noi18n></div>
+        <div class="row"><button id="cdCSV" type="button">CSV</button><button id="cdGeo" type="button">GeoJSON mảng thay đổi</button>
+          rải <input id="cdNDiem" type="number" value="10" min="1" style="width:46px"> điểm mỗi loại <button id="cdRai" type="button">để kiểm tra</button></div>
       </div>
     </div>
   </div>
@@ -547,7 +603,7 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
   <div data-i18n-html="gtBody">
   <p><b>Geoportal lớp phủ Hải Phòng</b> là công cụ web mở để xem, gán nhãn và thống kê lớp phủ mặt đất nhiều năm (2017-2026) của thành phố Hải Phòng mới. Trang phục vụ luận án tiến sĩ của tác giả và dùng chung cho mọi người quan tâm đến biến động đất đai, đô thị hoá, mặt nước và nông nghiệp ở Hải Phòng.</p>
   <p><b>Dữ liệu</b>: ảnh tổng hợp Sentinel-2 mùa khô từng năm (10 băng), PCA chuỗi năm và đường mùa vụ 6 kỳ, embedding, đặc trưng ngữ cảnh CTX, bản đồ lớp phủ, DEM Copernicus GLO-30, OpenStreetMap, ranh giới xã; ảnh nền Esri Wayback theo năm. Dữ liệu lưu trên Hugging Face và được đọc thẳng từng đoạn, trang không cần máy chủ riêng; nhãn người dùng lưu trong trình duyệt của họ và xuất được thành tệp.</p>
-  <p><b>Chức năng chính</b>: gán nhãn điểm theo năm, tra cứu nhanh một điểm bất kỳ, chọn vùng giống điểm mẫu và chuẩn hoá ranh giới, so sánh các năm, thư viện 248 chỉ số Sentinel-2 và công thức tự nhập, thống kê theo xã, xuất CSV, GeoJSON, tệp tiến độ.</p>
+  <p><b>Chức năng chính</b>: gán nhãn điểm theo năm, tra cứu nhanh một điểm bất kỳ, chọn vùng giống điểm mẫu và chuẩn hoá ranh giới, so sánh các năm, phát hiện thay đổi giữa hai năm, trợ lý AI gợi ý nhãn, thư viện 248 chỉ số Sentinel-2 và công thức tự nhập, thống kê theo xã, xuất CSV, GeoJSON, tệp tiến độ.</p>
   <p class="mu sm">Mã nguồn mở theo giấy phép MIT. Dữ liệu theo giấy phép của từng nguồn: Copernicus Sentinel-2, Copernicus DEM (© DLR e.V., © Airbus Defence and Space, qua chương trình Copernicus), © OpenStreetMap contributors (ODbL), Esri World Imagery.</p>
   </div>
   <div id="gtTacGia" data-noi18n></div>
@@ -643,6 +699,8 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
     <li><b>Dải ảnh theo năm</b>: chọn khoảng quanh điểm từ 100 m đến 2 km (nhỏ để thấy rõ từng điểm ảnh 10 m) và cỡ ảnh.</li>
     <li><b>Chuẩn hoá đa giác</b> (công cụ ④): làm trơn cạnh, vuông góc hoá đường viền nhà, bám đường và kênh OSM, xoá mảnh vụn; nhấp để chọn đa giác, gán lớp khác hoặc xoá chúng; Z để hoàn tác. Nhấp một vùng đã lưu trên bản đồ (khi không ở chế độ chọn vùng): đổi lớp, sửa ranh giới, xoá.</li>
     <li><b>Điểm mẫu vào bộ</b>: điểm mẫu có lớp tự lưu vào bộ "Mẫu chọn vùng"; "⊕ Gộp" gộp các bộ thành một bộ mới. Tệp tiến độ JSON chứa đủ mọi thứ: các bộ điểm, vùng, khu, công thức chỉ số, sửa đổi OSM và cả phiên làm việc (điểm mẫu, đa giác đang sửa, cài đặt, vị trí bản đồ), tải lại là khôi phục.</li>
+    <li><b>Phát hiện thay đổi</b> (nút Δ Thay đổi): so hai năm trên khung nhìn, các xã hoặc một vùng đã lưu; chuẩn hoá bức xạ theo điểm ảnh ổn định, độ lớn thay đổi gộp 10 băng, chỉ số, CTX, PC, embedding; ngưỡng Otsu, theo điểm mẫu (tối ưu F1) hoặc tự đặt; loại thay đổi theo lớp sơ bộ từ chỉ số (không cần mẫu), theo điểm mẫu hoặc theo bản đồ lớp; cho nhận định, bảng, ma trận từ-đến, biểu đồ, bản đồ, CSV, GeoJSON và rải điểm kiểm tra.</li>
+    <li><b>Trợ lý AI</b> (nút 🤖 AI): chọn nhà cung cấp (DeepSeek, Yandex, ProxyAPI, ChatGPT, Gemini, Claude, Grok, Ollama...), model và khoá (lưu mã hoá, nhập một lần); gửi số liệu và ảnh của điểm để nhận mô tả và gợi ý nhãn, gán một chạm hoặc gán hàng loạt theo ngưỡng tin cậy; nhờ AI nhận định kết quả phát hiện thay đổi. Relay riêng trên Hugging Face giúp khỏi dùng VPN.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
     <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mở thẳng bằng <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
   </ol>
@@ -698,6 +756,56 @@ body.dk-phai #viz .vz-ng{margin-top:4px}
   <div class="row"><button id="loiGui" type="button" class="on">Gửi qua email</button><button id="loiGH" type="button" hidden>Tạo issue trên GitHub</button>
     <button id="loiChep" type="button">Chép nội dung</button><button id="loiDong" type="button">Đóng</button></div>
   <div class="mu sm" id="loiTT" data-noi18n></div>
+</dialog>
+<dialog id="dlgAI">
+  <div class="row" style="margin:0"><h3 style="margin:0 8px 0 0">🤖 Trợ lý AI</h3><button type="button" data-atab="kn" class="on">Kết nối</button><button type="button" data-atab="diem">Hỏi về điểm</button><button type="button" data-atab="loat">Gán hàng loạt</button>
+    <span style="margin-left:auto"></span><button id="aiDong" type="button" title="đóng">×</button></div>
+  <div class="mu sm" id="aiTT" data-noi18n></div>
+  <div data-apane="kn">
+    <div class="vg-o"><span>Nhà cung cấp</span><select id="aiNCC" data-noi18n></select>
+      <span>Địa chỉ API</span><input id="aiURL" type="text" spellcheck="false">
+      <span>Model</span><span class="row" style="margin:0;flex-wrap:nowrap"><input id="aiModel" type="text" list="aiModelDS" spellcheck="false" style="flex:1;min-width:0"><datalist id="aiModelDS"></datalist><button id="aiLayDS" type="button" title="hỏi nhà cung cấp danh sách model hiện có">Lấy danh sách</button></span>
+      <span>Khoá API</span><span class="row" style="margin:0;flex-wrap:nowrap"><input id="aiKhoa" type="password" autocomplete="off" spellcheck="false" style="flex:1;min-width:0"><button id="aiKhoaXoa" type="button" title="xoá khoá của nhà cung cấp này">×</button></span>
+      <span id="aiThuMucL">Thư mục (folder ID)</span><input id="aiThuMuc" type="text" spellcheck="false" placeholder="b1g…">
+      <span>Ảnh</span><label><input type="checkbox" id="aiAnh"> model nhận ảnh (bỏ chọn nếu model chỉ đọc chữ)</label></div>
+    <details><summary>Relay riêng (không cần VPN)</summary>
+      <div class="vg-o"><span>Địa chỉ relay</span><input id="aiRelay" type="text" spellcheck="false" placeholder="https://ten-ban-ai-relay.hf.space">
+        <span>Mã relay</span><input id="aiRelayMa" type="password" autocomplete="off" spellcheck="false">
+        <span>Đi qua relay</span><label><input type="checkbox" id="aiQuaRelay"> với nhà cung cấp đang chọn</label></div>
+      <div class="mu sm">Relay là máy chủ nhỏ của riêng bạn trên Hugging Face Space (ô Colab HF_AI_RELAY_cell.py dựng tự động): giữ khoá API làm bí mật ở máy chủ, chỉ nhận yêu cầu có mã relay và đến từ trang này, rồi chuyển tiếp tới nhà cung cấp. Có khoá trên relay thì ở đây không cần nhập khoá.</div></details>
+    <details><summary>Lưu khoá</summary>
+      <div class="vg-o"><span>Cách lưu</span><select id="aiLuu"><option value="thiet_bi">mã hoá, gắn với trình duyệt này (khuyên dùng)</option><option value="mat_khau">mã hoá bằng mật khẩu riêng</option><option value="phien">chỉ đến khi đóng thẻ</option><option value="khong">không lưu</option></select>
+        <span id="aiMKW">Mật khẩu</span><input id="aiMK" type="password" autocomplete="off" placeholder="ít nhất 6 ký tự"></div>
+      <div class="mu sm" id="aiLuuTT" data-noi18n></div>
+      <div class="row"><button id="aiQuen" type="button">Quên mọi khoá trên trình duyệt này</button></div></details>
+    <div class="row"><button id="aiLuuB" type="button" class="on">Lưu</button><button id="aiThu" type="button">Thử kết nối</button></div>
+    <div class="mu sm" data-i18n-html="aiVPN">
+      <p><b>Không cần VPN</b> (dấu ✓ trong danh sách): DeepSeek, Yandex AI Studio và ProxyAPI (trả bằng rúp, một khoá cho GPT, Claude, Gemini, Grok, DeepSeek) phục vụ người dùng ở Nga; Ollama và LM Studio chạy model ngay trên máy của bạn (cần cho phép trang này: <code>OLLAMA_ORIGINS=https://x102.github.io</code>). Với các nhà cung cấp khác, hãy dùng relay riêng, và tuân thủ điều khoản của từng nhà cung cấp về vùng được phục vụ.</p>
+      <p><b>Khoá API</b> được mã hoá trong trình duyệt này, không nằm trong tệp tiến độ xuất ra, không hiện lại trên màn hình, và chỉ gửi tới nhà cung cấp (hoặc relay) đã chọn. Số liệu và ảnh của điểm được gửi cho nhà cung cấp đó; nhãn đã gán của bạn chỉ gửi kèm khi thuộc điểm đang hỏi.</p>
+    </div>
+  </div>
+  <div data-apane="diem" hidden>
+    <div class="mu sm" id="aiDiemTT" data-noi18n></div>
+    <div class="vg-o"><span>Năm cần gợi ý</span><select id="aiNamPV"><option value="chua">các năm chưa gán</option><option value="nay">năm đang chọn</option><option value="het">mọi năm (để AI xem lại)</option></select>
+      <span>Gửi kèm</span><span><label><input type="checkbox" data-ag="dai" checked> dải ảnh theo năm</label> <label><input type="checkbox" data-ag="mua" checked> đường mùa vụ 6 kỳ</label>
+        <label><input type="checkbox" data-ag="gt" checked> giá trị tại điểm</label> <label><input type="checkbox" data-ag="s2" checked> 10 băng và chỉ số theo năm</label></span>
+      <span>Ghi chú cho AI</span><input id="aiGhi" type="text" placeholder="vd: gần đê biển, nghi ao nuôi tôm"></div>
+    <div class="row"><button id="aiHoi" type="button" class="on">Hỏi AI</button><button id="aiXemGui" type="button" title="xem đúng số liệu và ảnh sẽ gửi đi, không gọi AI">Xem nội dung sẽ gửi</button></div>
+    <div id="aiKQ" data-noi18n></div>
+  </div>
+  <div data-apane="loat" hidden>
+    <div class="mu sm" id="aiBoTT" data-noi18n></div>
+    <div class="vg-o"><span>Điểm</span><select id="aiLPham"><option value="hien">đang hiện trong danh sách (theo bộ lọc)</option><option value="bo">cả bộ điểm đang chọn</option></select>
+      <span>Năm</span><select id="aiLNam"><option value="chua">các năm chưa gán của mỗi điểm</option><option value="nay">chỉ năm đang chọn</option></select>
+      <span>Số điểm tối đa</span><input id="aiLN" type="number" value="20" min="1" style="width:80px">
+      <span>Tự gán khi tin cậy ≥</span><span><input id="aiLNg" type="number" value="0.8" min="0" max="1" step="0.05" style="width:64px"> <label><input type="checkbox" id="aiLChiGoiY"> chỉ gợi ý, không gán</label></span>
+      <span>Đánh dấu</span><label><input type="checkbox" id="aiLXL" checked> "cần xem lại" cho nhãn do AI gán</label>
+      <span>Nghỉ giữa hai lần gọi</span><span><input id="aiLNghi" type="number" value="1.5" min="0" step="0.5" style="width:64px"> s</span></div>
+    <div class="mu sm">Mỗi điểm một lần gọi với cùng nội dung như "Hỏi về điểm" (các ô "Gửi kèm" ở thẻ đó). Nhãn U, M không tự gán. Nhãn do AI gán ghi tên model và độ tin cậy vào điểm (có trong tệp tiến độ), độ tin cậy của người gán đặt là thấp hoặc vừa.</div>
+    <div class="row"><button id="aiLChay" type="button" class="on">Bắt đầu</button><button id="aiLDung" type="button" disabled>Dừng</button><button id="aiLCSV" type="button">CSV kết quả</button></div>
+    <div class="mu sm" id="aiLTT" data-noi18n></div>
+    <div id="aiLKQ" data-noi18n style="max-height:40vh;overflow:auto"></div>
+  </div>
 </dialog>
 <input type="file" id="fileIn" hidden accept=".csv,.json,.geojson">
 
@@ -1536,6 +1644,66 @@ var CORE = (function () {
     if (A < minA || (P > 0 && 2 * A / P < minW)) return null;           // 2A/P ≈ bề rộng của dải hẹp
     return [pg[0]].concat(pg.slice(1).filter(function (h) { return Math.abs(dienTichVong(h)) >= minA; }));
   }
+  /* ---- bản 2.6: phát hiện thay đổi giữa hai năm ---- */
+  function otsu(v, lo, hi, nb) {                // ngưỡng Otsu trên các giá trị hữu hạn trong [lo, hi]
+    nb = nb || 256; var h = new Float64Array(nb), n = 0, i, k;
+    for (i = 0; i < v.length; i++) { var x = v[i]; if (!(x >= lo && x <= hi)) continue; k = Math.min(nb - 1, Math.floor((x - lo) / (hi - lo) * nb)); h[k]++; n++; }
+    if (!n) return (lo + hi) / 2;
+    var tong = 0; for (k = 0; k < nb; k++) tong += k * h[k];
+    var w0 = 0, s0 = 0, best = -1, bk = 0;
+    for (k = 0; k < nb; k++) { w0 += h[k]; if (!w0) continue; var w1 = n - w0; if (!w1) break; s0 += k * h[k];
+      var m0 = s0 / w0, m1 = (tong - s0) / w1, b = w0 * w1 * (m0 - m1) * (m0 - m1); if (b > best) { best = b; bk = k; } }
+    return lo + (bk + 1) / nb * (hi - lo);
+  }
+  function lechBen(v, buoc) {                   // độ lệch chuẩn bền = 1.4826 × MAD (lấy mẫu thưa)
+    buoc = buoc || 1; var a = []; for (var i = 0; i < v.length; i += buoc) if (isFinite(v[i])) a.push(v[i]);
+    if (a.length < 3) return 0;
+    var m = phanVi(a, 0.5); for (i = 0; i < a.length; i++) a[i] = Math.abs(a[i] - m);
+    return 1.4826 * phanVi(a, 0.5);
+  }
+  function hoiQuy(x, y) {                       // bình phương nhỏ nhất y = a·x + b
+    var n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (var i = 0; i < x.length; i++) { if (!isFinite(x[i]) || !isFinite(y[i])) continue; n++; sx += x[i]; sy += y[i]; sxx += x[i] * x[i]; sxy += x[i] * y[i]; }
+    var d = n * sxx - sx * sx; if (n < 3 || !d) return {a: 1, b: 0, n: n};
+    var a = (n * sxy - sx * sy) / d; return {a: a, b: (sy - a * sx) / n, n: n};
+  }
+  /* lớp sơ bộ từ chỉ số (chỉ để gợi ý loại thay đổi): 1 nước, 2 thực vật, 3 xây dựng hoặc đất trống */
+  function lopSoBo(ndvi, mndwi, nguong) {
+    nguong = nguong || {nuoc: 0.1, tv: 0.35};
+    if (!isFinite(ndvi) || !isFinite(mndwi)) return 0;
+    if (mndwi > nguong.nuoc && ndvi < 0.3) return 1;
+    if (ndvi >= nguong.tv) return 2;
+    return 3;
+  }
+  var LOAI_TD = [null, "thực vật → xây dựng, đất trống", "thực vật → nước", "nước → thực vật", "nước → xây dựng, đất trống",
+                 "xây dựng, đất trống → thực vật", "xây dựng, đất trống → nước", "thực vật suy giảm", "thực vật tăng", "thay đổi phổ khác"];
+  function loaiThayDoi(ca, cb, dNdvi, doi) {    // 0 không đổi; 1-9 theo LOAI_TD
+    if (!doi || !ca || !cb) return 0;
+    if (ca !== cb) return ({"2,3": 1, "2,1": 2, "1,2": 3, "1,3": 4, "3,2": 5, "3,1": 6})[ca + "," + cb] || 9;
+    if (ca === 2 && dNdvi <= -0.15) return 7;
+    if (ca === 2 && dNdvi >= 0.15) return 8;
+    return 9;
+  }
+  function kMeans(X, nf, k, lap, seed) {        // X: mảng vector; tâm k-means (khởi tạo k-means++ lặp lại được)
+    var n = X.length; if (!n) return []; k = Math.min(k, n);
+    var r = rnd(seed || 7), C = [X[Math.floor(r() * n)].slice()], d = new Float64Array(n), i, j, c;
+    var kc = function (a, b) { var s = 0; for (var q = 0; q < nf; q++) { var e = a[q] - b[q]; s += e * e; } return s; };
+    while (C.length < k) { var t = 0; for (i = 0; i < n; i++) { var m = Infinity; for (c = 0; c < C.length; c++) m = Math.min(m, kc(X[i], C[c])); d[i] = m; t += m; }
+      var u = r() * t; for (i = 0; i < n && (u -= d[i]) > 0; i++); C.push(X[Math.min(i, n - 1)].slice()); }
+    for (var it = 0; it < (lap || 15); it++) {
+      var S = C.map(function () { return new Float64Array(nf); }), cnt = new Array(C.length).fill(0);
+      for (i = 0; i < n; i++) { var bc = 0, bd = Infinity; for (c = 0; c < C.length; c++) { var dd = kc(X[i], C[c]); if (dd < bd) { bd = dd; bc = c; } } cnt[bc]++; for (j = 0; j < nf; j++) S[bc][j] += X[i][j]; }
+      for (c = 0; c < C.length; c++) if (cnt[c]) for (j = 0; j < nf; j++) C[c][j] = S[c][j] / cnt[c];
+    }
+    return C;
+  }
+  function phanLoaiNguyenMau(F, nf, N, valid, protos) {   // mỗi điểm ảnh về lớp của nguyên mẫu gần nhất; trả chỉ số lớp + 1
+    var out = new Uint8Array(N), i, p, c;
+    for (i = 0; i < N; i++) { if (!valid[i]) continue; var bd = Infinity, bl = 0, o = i * nf;
+      for (p = 0; p < protos.length; p++) { var v = protos[p].v, s = 0; for (c = 0; c < nf; c++) { var e = F[o + c] - v[c]; s += e * e; } if (s < bd) { bd = s; bl = protos[p].lop + 1; } }
+      out[i] = bl; }
+    return out;
+  }
   function khongDau(s) {                        // chữ thường, bỏ dấu tiếng Việt: tìm "thuy nguyen" ra "Thuỷ Nguyên"
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().trim();
   }
@@ -1808,7 +1976,8 @@ var CORE = (function () {
   return {links: links, quant: quant, seasonStats: seasonStats, tr: tr,
           osmThe: osmThe, osmLoc: osmLoc, osmLopMacDinh: osmLopMacDinh, osmLop: osmLop, geomMP: geomMP, bbMP: bbMP, distBien: distBien,
           rdTrongDaGiac: rdTrongDaGiac, overpassQL: overpassQL,
-          distSelMulti: distSelMulti, distSelZoned: distSelZoned, chan: chan, KHOA: KHOA, circlePix: circlePix, khongDau: khongDau, hinhMet: hinhMet, dienTichVong: dienTichVong, chuViVong: chuViVong,
+          distSelMulti: distSelMulti, distSelZoned: distSelZoned, chan: chan, KHOA: KHOA, circlePix: circlePix, khongDau: khongDau, hinhMet: hinhMet, otsu: otsu, lechBen: lechBen, hoiQuy: hoiQuy, lopSoBo: lopSoBo,
+          LOAI_TD: LOAI_TD, loaiThayDoi: loaiThayDoi, kMeans: kMeans, phanLoaiNguyenMau: phanLoaiNguyenMau, dienTichVong: dienTichVong, chuViVong: chuViVong,
           chaikin: chaikin, lamTron: lamTron, huongChinh: huongChinh, vuongGoc: vuongGoc, bamDuong: bamDuong, doanThang: doanThang, manhVun: manhVun, bieuThuc: bieuThuc, tenBang: tenBang, khoangMau: khoangMau, phanVi: phanVi, S2_BANDS: S2_BANDS, IDX_NAMES: IDX_NAMES, indices: indices, ctxPoint: ctxPoint,
           boxImage: boxImage, rnd: rnd, pip: pip, gridPts: gridPts, thinPts: thinPts, randPts: randPts, stratPick: stratPick,
           UTM: UTM, GRID: GRID, lut: lut, CMAP: CMAP, toUTM: toUTM, toLL: toLL, snap: snap, squareLL: squareLL, to3857: to3857,
@@ -1835,7 +2004,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.5";
+const VERSION = "2.6";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2841,6 +3010,8 @@ function setLang(l) {
 /*__V23__*/
 /*__V24__*/
 /*__V25__*/
+/*__V26__*/
+/*__AI__*/
 </script>
 </body>
 </html>
