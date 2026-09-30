@@ -453,7 +453,7 @@ HTML = {
     <li><b>Планирование</b>: во внешних ссылках добавлен портал планирования Хайфона, открывается в точке.</li>
     <li><b>Сообщение об ошибке</b> (🐞): опишите проблему; страница прикладывает техническую информацию (версия, данные, последние ошибки, без ваших меток) и открывает письмо администратору страницы, либо копирует текст.</li>
     <li><b>Телефон</b>: панель управления представляет собой выдвижную шторку внизу экрана; касание верхней полосы сворачивает, открывает наполовину или полностью, её можно тянуть. Кнопка 🗂 открывает подложку и опорные слои, ⓘ включает информацию о точке, ☰ меняет размер шторки. В выборе области кнопка «− Исключение» заменяет Shift+клик; долгое нажатие на фрагмент быстро удаляет его.</li>
-    <li><b>Язык</b>: выбирается вверху панели (Tiếng Việt, Русский, English); можно открыть сразу с <code>?lang=ru</code> или <code>?lang=en</code>.</li>
+    <li><b>Язык</b>: выбирается вверху панели (Tiếng Việt, Русский, English); по умолчанию английский; можно открыть сразу с <code>?lang=vi</code>, <code>?lang=ru</code> или <code>?lang=en</code>.</li>
   </ol>
   <p class="sm"><b>Клавиши:</b> <kbd>n</kbd>/<kbd>p</kbd> следующая/предыдущая точка, <kbd>←</kbd>/<kbd>→</kbd> год, <kbd>c</kbd> как в прошлом году, <kbd>v</kbd> заполнить далее, <kbd>f</kbd> на проверку, <kbd>g</kbd> к точке, <kbd>b</kbd> мигание опорных слоёв, <kbd>m</kbd> режим добавления точек, <kbd>Shift</kbd>+1/2/3 уверенность, <kbd>Backspace</kbd> удалить метку этого года.</p>"""},
  "en": {
@@ -482,7 +482,7 @@ HTML = {
     <li><b>Planning</b>: the external links include the Hai Phong planning portal, opened at the point.</li>
     <li><b>Report a problem</b> (🐞): describe the problem; the page attaches technical information (version, data, recent errors, not your labels) and opens an email to the page owner, or copies the text.</li>
     <li><b>Phone</b>: the control panel is a bottom sheet; tap its top bar to collapse, half-open or fully open it, or drag it. 🗂 opens basemap and reference layers, ⓘ toggles point info, ☰ changes the sheet size. In the region tool, the "− Exclude" button replaces Shift+click; a long press on a patch deletes it quickly.</li>
-    <li><b>Language</b>: choose at the top of the panel (Tiếng Việt, Русский, English); open directly with <code>?lang=ru</code> or <code>?lang=en</code>.</li>
+    <li><b>Language</b>: choose at the top of the panel (Tiếng Việt, Русский, English); English by default; open directly with <code>?lang=vi</code>, <code>?lang=ru</code> or <code>?lang=en</code>.</li>
   </ol>
   <p class="sm"><b>Keys:</b> <kbd>n</kbd>/<kbd>p</kbd> next/previous point, <kbd>←</kbd>/<kbd>→</kbd> year, <kbd>c</kbd> copy previous year, <kbd>v</kbd> fill forward, <kbd>f</kbd> flag for review, <kbd>g</kbd> go to point, <kbd>b</kbd> blink reference layers, <kbd>m</kbd> add-point mode, <kbd>Shift</kbd>+1/2/3 confidence, <kbd>Backspace</kbd> delete this year's label.</p>"""},
 }

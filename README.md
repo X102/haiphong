@@ -5,7 +5,7 @@ Trang web một tệp (`index.html`) để xem và gán nhãn lớp phủ đa n�
 Dữ liệu đọc thẳng từ bộ dữ liệu Hugging Face [`lopmaybay/haiphong-lop-tham-chieu`](https://huggingface.co/datasets/lopmaybay/haiphong-lop-tham-chieu)
 theo từng đoạn (COG, FlatGeobuf), nên trang không cần máy chủ riêng.
 
-Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), dùng được trên điện thoại.
+Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`, `?lang=vi`, `?lang=ru`), dùng được trên điện thoại.
 
 ## Tính năng chính
 

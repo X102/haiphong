@@ -98,7 +98,7 @@ const VI = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềế
   E("setLang('vi')"); await sleep(30);
   const sau = [...w.document.querySelectorAll("#side h2, #panel b, #dlgSet td, #dlgExp button")].map(e => e.textContent);
   ok(JSON.stringify(goc) === JSON.stringify(sau) && $("bExport").textContent.trim() === "Xuất…" && /Rừng ngập mặn/.test($("cls").textContent), "về tiếng Việt: chữ tĩnh trả về đúng nguyên bản");
-  ok(w.localStorage.getItem("laymau_hp_lang_v1") === '"vi"', "nhớ lựa chọn ngôn ngữ");
+  ok(w.localStorage.getItem("laymau_hp_lang_v2") === '"vi"', "nhớ lựa chọn ngôn ngữ");
 
   // ---------- giao diện di động (logic; CSS không kiểm được trong jsdom)
   E("sheet('min')"); ok(w.document.body.dataset.sheet === "min", "ngăn kéo: thu gọn");

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Geoportal lớp phủ Hải Phòng: gán nhãn đa năm trên ảnh Wayback, Sentinel-2, PCA chuỗi năm, embedding, CTX và OpenStreetMap">
-<title>Geoportal lớp phủ Hải Phòng</title>
+<meta name="description" content="Hai Phong land-cover geoportal: multi-year labelling on Wayback and Sentinel-2 imagery, annual-series PCA, embedding, CTX and OpenStreetMap">
+<title>Hai Phong Land Cover Geoportal</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.2/proj4.js"></script>
@@ -860,7 +860,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
-    <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mở thẳng bằng <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
+    <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mặc định là tiếng Anh; mở thẳng bằng <code>?lang=vi</code>, <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
   </ol>
   <p class="sm"><b>Phím:</b> <kbd>n</kbd>/<kbd>p</kbd> điểm sau/trước, <kbd>←</kbd>/<kbd>→</kbd> năm, <kbd>c</kbd> chép năm trước, <kbd>v</kbd> điền về sau, <kbd>f</kbd> cần xem lại, <kbd>g</kbd> về điểm, <kbd>b</kbd> nháy lớp đối chiếu, <kbd>m</kbd> chế độ thêm điểm, <kbd>Shift</kbd>+1/2/3 độ tin cậy, <kbd>Backspace</kbd> xoá nhãn năm này, <kbd>[</kbd> ẩn / hiện bảng điều khiển.</p>
   </div>
@@ -2166,7 +2166,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.8.1";
+const VERSION = "2.8.2";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2178,8 +2178,8 @@ const VI_RE = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêề
 let LANG = (function () {
   let q = null; try { q = new URLSearchParams(location.search).get("lang"); } catch (e) { /* bỏ qua */ }
   if (q && LANGS.includes(q)) return q;
-  const s = ls("laymau_hp_lang_v1"); if (s && LANGS.includes(s)) return s;
-  return /^ru/i.test(navigator.language || "") && LANGS.includes("ru") ? "ru" : "vi";
+  const s = ls("laymau_hp_lang_v2"); if (s && LANGS.includes(s)) return s;   // v2: lựa chọn cũ (v1) bỏ qua, mọi người bắt đầu bằng tiếng Anh
+  return LANGS.includes("en") ? "en" : "vi";                                  // bản 2.8.2: tiếng Anh là ngôn ngữ mặc định
 })();
 const LOCALE = {vi: "vi-VN", ru: "ru-RU", en: "en-GB"};
 const T_MISS = new Set();                 // câu chưa có bản dịch (xem trong bảng điều khiển: T_MISS)
@@ -3133,8 +3133,8 @@ function openHelp() {
   $("dlgHelp").showModal();
 }
 function setLang(l) {
-  if (!LANGS.includes(l)) l = "vi";
-  LANG = l; ls("laymau_hp_lang_v1", l);
+  if (!LANGS.includes(l)) l = LANGS.includes("en") ? "en" : "vi";
+  LANG = l; ls("laymau_hp_lang_v2", l);
   document.documentElement.lang = l; document.title = T("Geoportal lớp phủ Hải Phòng");
   if ($("selLang")) $("selLang").value = l;
   buildOverlays(); buildSetSelect(); buildStripSelect(); updRelNote(); render();      // phần động vẽ lại trước
