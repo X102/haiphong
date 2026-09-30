@@ -89,10 +89,8 @@ function xhDoc(v, lo, hi, mau) {               // nội suy dải màu nhiều m
   const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo || 1))) * (mau.length - 1), k = Math.min(mau.length - 2, Math.floor(t)), f = t - k;
   const a = v28Rgb(mau[k]), b = v28Rgb(mau[k + 1]); return [0, 1, 2].map(q => Math.round(a[q] + (b[q] - a[q]) * f));
 }
-function xhVe() {
-  const K = CD.kq; if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; }
-  if (!K || K.kieu !== "xh") return; const mode = cd$("cdXem").value; if (mode === "tat") { cd$("cdLeg").innerHTML = ""; return; }
-  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return;
+function xhCanvas(K, mode) {                   // bản 2.9: vẽ xu hướng lên canvas (bản đồ và xuất bản đồ)
+  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return null;
   const img = ctx.createImageData(g.w, g.h), d = img.data, mk = K.cach === "mk", pal5 = XH_MAU.slice(1), lm = XH_MAU.map(h => h && v28Rgb(h));
   const nMax = Math.max(1, K.nam.length);
   for (let i = 0; i < K.N; i++) { if (!K.lop[i]) continue; let o = null, al = 200;
@@ -101,7 +99,12 @@ function xhVe() {
     else if (mode === "xr2") o = mk ? xhDoc(K.z[i], -3, 3, ["#d7191c", "#ffffbf", "#1a9641"]) : xhDoc(K.r2[i], 0, 1, ["#ffffff", "#8e44ad"]);
     else if (mode === "xn") { const v = Math.round(255 * K.n[i] / nMax); o = [v, v, v]; }
     if (o) { d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2]; d[i * 4 + 3] = al; } }
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(img, 0, 0); c._mode = mode; return c;
+}
+function xhVe() {
+  const K = CD.kq; if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; }
+  if (!K || K.kieu !== "xh") return; const mode = cd$("cdXem").value; if (mode === "tat") { cd$("cdLeg").innerHTML = ""; return; }
+  const c = xhCanvas(K, mode); if (!c) return; const g = K.g, nMax = Math.max(1, K.nam.length), mk = K.cach === "mk", pal5 = XH_MAU.slice(1);
   const A0 = CORE.m2ll(g.bb[0], g.bb[1]), B0 = CORE.m2ll(g.bb[2], g.bb[3]);
   CD.hien = L.imageOverlay(c.toDataURL(), [[A0[1], A0[0]], [B0[1], B0[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 460}).addTo(map);
   const el = CD.hien.getElement && CD.hien.getElement(); if (el) el.style.imageRendering = "pixelated";

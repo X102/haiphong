@@ -331,15 +331,18 @@ function tkQuyDoi() {
         return `<tr><td><i class="sw" style="background:${l.mau}"></i> ${v} ${esc(paLopTen(c.pa, v))}</td><td>${l.chung ? esc(T(CHUNG27[l.chung])) : "<span class='mu'>-</span>"}</td><td>${l.n3 ? esc(T(TEN3[l.n3])) : "<span class='mu'>-</span>"}</td></tr>`; }).join("") + `</table>`).join("");
 }
 function tkTab(t) { document.querySelectorAll("#tkP [data-ttab]").forEach(b => b.classList.toggle("on", b.dataset.ttab === t)); document.querySelectorAll("#tkP [data-tpane]").forEach(p => { p.hidden = p.dataset.tpane !== t; }); TK.tab = t; }
-function tkVe(k, kieu) {                         // hiện một bản đồ (hoặc bản đồ trùng / khác của A, B) lên bản đồ
-  const K = TK.kq; if (TK.hien) { map.removeLayer(TK.hien); TK.hien = null; } if (!K || kieu === "tat") return; TK._xem = kieu; TK._k = k;
-  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return;
+function tkCanvas(K, k, kieu) {                 // bản 2.9: vẽ bản đồ lớp phủ (hoặc trùng / khác A, B) lên canvas
+  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return null;
   const img = ctx.createImageData(g.w, g.h), d = img.data, rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   if (kieu === "dt") { const A = K.cot[+tk$("tkCotA").value || 0], B = K.cot[+tk$("tkCotB").value || 1];
     for (let i = 0; i < g.w * g.h; i++) { if (!A.ma[i] || !B.ma[i]) continue; const o = A.ma[i] === B.ma[i] ? [34, 197, 94] : [239, 68, 68]; d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2]; d[i * 4 + 3] = 170; } }
   else { const C = K.cot[k], m = {}; C.cg.forEach(l => { m[l.ma] = rgb(l.mau); });
     for (let i = 0; i < g.w * g.h; i++) { const o = m[C.ma[i]]; if (!o) continue; d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2]; d[i * 4 + 3] = 200; } }
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(img, 0, 0); c._mode = kieu; c._k = k; c._A = +tk$("tkCotA").value || 0; c._B = +tk$("tkCotB").value || 1; return c;
+}
+function tkVe(k, kieu) {                         // hiện một bản đồ (hoặc bản đồ trùng / khác của A, B) lên bản đồ
+  const K = TK.kq; if (TK.hien) { map.removeLayer(TK.hien); TK.hien = null; } if (!K || kieu === "tat") return; TK._xem = kieu; TK._k = k;
+  const c = tkCanvas(K, k, kieu); if (!c) return; const g = K.g;
   const A0 = CORE.m2ll(g.bb[0], g.bb[1]), B0 = CORE.m2ll(g.bb[2], g.bb[3]);
   TK.canvas = c;
   TK.hien = L.imageOverlay(c.toDataURL(), [[A0[1], A0[0]], [B0[1], B0[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 455}).addTo(map);

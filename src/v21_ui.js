@@ -44,7 +44,7 @@ async function readUTM(url, bb, w, h, pad, samples, tong, rieng) {   // tong: vá
   const c0 = Math.max(0, Math.floor((ub[0] - ox) / I.rx) - pad - 1), c1 = Math.min(I.w, Math.ceil((ub[2] - ox) / I.rx) + pad + 1);
   const r0 = Math.max(0, Math.floor((oy - ub[3]) / I.ry) - pad - 1), r1 = Math.min(I.h, Math.ceil((oy - ub[1]) / I.ry) + pad + 1);
   if (c1 <= c0 || r1 <= r0) return null;
-  const src = await I.im.readRasters({window: [c0, r0, c1, r1], samples: samples, interleave: true});
+  const src = await docCua(I.im, [c0, r0, c1, r1], samples);
   const sw = c1 - c0, sh = r1 - r0, idx = new Int32Array(w * h).fill(-1);
   for (let j = 0; j < h; j++) {
     const v = (j + 0.5) / h;

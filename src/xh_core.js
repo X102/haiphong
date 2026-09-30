@@ -3,7 +3,9 @@
    ③ IR-MAD (Nielsen A.A., 2007, IEEE Trans. Image Process. 16(2): 463-478): tương quan chính tắc giữa hai thời điểm, biến MAD,
       thống kê χ², trọng số = xác suất không đổi, lặp đến khi hệ số tương quan chính tắc hội tụ;
    ④ xu hướng theo năm từng điểm ảnh: OLS (hệ số góc, R²) hoặc Theil–Sen + Mann–Kendall (Z, p), 5 cấp như công cụ GEE ChuyenDoiXanh;
-   ⑤ ghi GeoTIFF (Uint8 có bảng màu, Float32; GDAL_NODATA), kiểu QGIS (.qml); ⑥ ghi dpi vào JPEG (JFIF) và PNG (pHYs). */
+   ⑤ ghi GeoTIFF (Uint8 có bảng màu, Float32; GDAL_NODATA), kiểu QGIS (.qml); ⑥ ghi dpi vào JPEG (JFIF) và PNG (pHYs).
+   Bản 2.9: GeoTIFF RGB(A) cho bản đồ đã trình bày, ZIP (lưu, không nén) để gộp ảnh + tệp toạ độ, PDF có toạ độ theo ISO 32000
+   (từ điển /VP /Measure /GEO, như GDAL, QGIS, Avenza đọc), tệp world file và .prj cho Web Mercator. */
 var XH = (function () {
   "use strict";
   /* ---------- ① phân phối ---------- */
@@ -197,10 +199,11 @@ var XH = (function () {
   function tifGhi(o) {
     var nb = o.bands.length, f32 = o.bands[0] instanceof Float32Array, bps = f32 ? 32 : 8, B = bps / 8, N = o.w * o.h, dl = N * nb * B;
     var dia = o.epsg === 4326 ? [1, 1, 0, 3, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326] : [1, 1, 0, 3, 1024, 0, 1, 1, 1025, 0, 1, 1, 3072, 0, 1, o.epsg || 3857];
-    var the = [[256, 4, [o.w]], [257, 4, [o.h]], [258, 3, rep(bps, nb)], [259, 3, [1]], [262, 3, [o.mau ? 3 : 1]], [273, 4, [0]], [277, 3, [nb]],
+    var the = [[256, 4, [o.w]], [257, 4, [o.h]], [258, 3, rep(bps, nb)], [259, 3, [1]], [262, 3, [o.rgb ? 2 : o.mau ? 3 : 1]], [273, 4, [0]], [277, 3, [nb]],
       [278, 4, [o.h]], [279, 4, [dl]], [284, 3, [1]]];
     if (o.mau) { var cm = new Array(768).fill(0); o.mau.forEach(function (c, i) { if (c && i < 256) { cm[i] = c[0] * 257; cm[256 + i] = c[1] * 257; cm[512 + i] = c[2] * 257; } }); the.push([320, 3, cm]); }
-    if (nb > 1) the.push([338, 3, rep(0, nb - 1)]);
+    if (o.rgb) { if (nb > 3) the.push([338, 3, rep(2, nb - 3)]); }            // băng thứ tư: alpha không nhân trước
+    else if (nb > 1) the.push([338, 3, rep(0, nb - 1)]);
     the.push([339, 3, rep(f32 ? 3 : 1, nb)], [33550, 12, [o.res, o.res, 0]], [33922, 12, [0, 0, 0, o.x0, o.y1, 0]], [34735, 3, dia]);
     if (o.nodata != null) the.push([42113, 2, (isNaN(o.nodata) ? "nan" : String(o.nodata)) + "\u0000"]);
     var nT = the.length, ifd = 8, tran = ifd + 2 + 12 * nT + 4, lon = 0;
@@ -266,6 +269,69 @@ var XH = (function () {
     r.set(u8.subarray(0, dIHDR), 0); r.set(ch, dIHDR); r.set(u8.subarray(dIHDR), dIHDR + 21); return r;
   }
 
+  /* ---------- bản 2.9: ZIP (lưu), PDF có toạ độ, world file ---------- */
+  function utf8(t) { return typeof TextEncoder !== "undefined" ? new TextEncoder().encode(t) : new Uint8Array(Buffer.from(t, "utf8")); }
+  function zip(tep) {                                     // tep: [{ten, du: Uint8Array | chuỗi}] -> Uint8Array (phương thức 0: lưu)
+    var ds = tep.map(function (f) { var d = typeof f.du === "string" ? utf8(f.du) : f.du, n = utf8(f.ten); return {n: n, d: d, c: crc32(d)}; });
+    var tong = 22; ds.forEach(function (f) { tong += 30 + f.n.length + f.d.length + 46 + f.n.length; });
+    var out = new Uint8Array(tong), dv = new DataView(out.buffer), p = 0, cd = [];
+    var now = new Date(), t = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1), dd = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+    ds.forEach(function (f) {
+      cd.push(p);
+      dv.setUint32(p, 0x04034b50, true); dv.setUint16(p + 4, 20, true); dv.setUint16(p + 6, 0x0800, true); dv.setUint16(p + 8, 0, true);
+      dv.setUint16(p + 10, t, true); dv.setUint16(p + 12, dd, true); dv.setUint32(p + 14, f.c, true); dv.setUint32(p + 18, f.d.length, true); dv.setUint32(p + 22, f.d.length, true);
+      dv.setUint16(p + 26, f.n.length, true); dv.setUint16(p + 28, 0, true); out.set(f.n, p + 30); out.set(f.d, p + 30 + f.n.length); p += 30 + f.n.length + f.d.length;
+    });
+    var c0 = p;
+    ds.forEach(function (f, i) {
+      dv.setUint32(p, 0x02014b50, true); dv.setUint16(p + 4, 20, true); dv.setUint16(p + 6, 20, true); dv.setUint16(p + 8, 0x0800, true); dv.setUint16(p + 10, 0, true);
+      dv.setUint16(p + 12, t, true); dv.setUint16(p + 14, dd, true); dv.setUint32(p + 16, f.c, true); dv.setUint32(p + 20, f.d.length, true); dv.setUint32(p + 24, f.d.length, true);
+      dv.setUint16(p + 28, f.n.length, true); dv.setUint16(p + 30, 0, true); dv.setUint16(p + 32, 0, true); dv.setUint16(p + 34, 0, true); dv.setUint16(p + 36, 0, true);
+      dv.setUint32(p + 38, 0, true); dv.setUint32(p + 42, cd[i], true); out.set(f.n, p + 46); p += 46 + f.n.length;
+    });
+    dv.setUint32(p, 0x06054b50, true); dv.setUint16(p + 8, ds.length, true); dv.setUint16(p + 10, ds.length, true);
+    dv.setUint32(p + 12, p - c0, true); dv.setUint32(p + 16, c0, true);
+    return out;
+  }
+  var WKT_3857 = 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],' +
+    'PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],' +
+    'PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],' +
+    'AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]';
+  function auxXml(wkt) { return '<PAMDataset>\n  <SRS dataAxisToSRSAxisMapping="1,2">' + String(wkt || WKT_3857).replace(/&/g, "&amp;").replace(/</g, "&lt;") + '</SRS>\n</PAMDataset>\n'; }
+  function worldFile(r, xTam, yTam) {                     // ảnh không xoay: cỡ điểm ảnh r (m), tâm điểm ảnh góc trên trái (xTam, yTam)
+    return [r, 0, 0, -r, xTam, yTam].map(function (v) { return String(+v.toFixed(10)); }).join("\r\n") + "\r\n";
+  }
+  function pdfSo(v) { return String(+(+v).toFixed(6)); }
+  function pdfChuoi(t) { return "(" + String(t).replace(/[\\()]/g, function (c) { return "\\" + c; }).replace(/[^\x20-\x7e]/g, "?") + ")"; }
+  /* o: {jpeg: Uint8Array, wPx, hPx, wPt, hPt, vp: [x0, y0, x1, y1] (điểm, gốc dưới trái), ll: {w, s, e, n} (độ WGS 84 của 4 góc khung),
+        wkt, epsg, ten} -> Uint8Array. Khung bản đồ Web Mercator là hình chữ nhật trong hệ phẳng nên 4 góc đủ xác định phép biến đổi affine. */
+  function pdfGeo(o) {
+    var obj = [], vp = o.vp, ll = o.ll;
+    var nd = "q " + pdfSo(o.wPt) + " 0 0 " + pdfSo(o.hPt) + " 0 0 cm /Im0 Do Q";
+    obj[1] = "<< /Type /Catalog /Pages 2 0 R /Extensions << /ADBE << /BaseVersion /1.7 /ExtensionLevel 3 >> >> >>";   // mở rộng địa lý của Adobe cho PDF 1.7
+    obj[2] = "<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
+    obj[3] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pdfSo(o.wPt) + " " + pdfSo(o.hPt) + "] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R" +
+      " /VP [<< /Type /Viewport /BBox [" + vp.map(pdfSo).join(" ") + "] /Name " + pdfChuoi(o.ten || "map") + " /Measure 6 0 R >>] >>";
+    obj[4] = null;                                        // ảnh: ghi riêng (nhị phân)
+    obj[5] = "<< /Length " + nd.length + " >>\nstream\n" + nd + "\nendstream";
+    obj[6] = "<< /Type /Measure /Subtype /GEO /Bounds [0 0 0 1 1 1 1 0] /GPTS [" +
+      [ll.s, ll.w, ll.n, ll.w, ll.n, ll.e, ll.s, ll.e].map(function (v) { return String(+(+v).toFixed(10)); }).join(" ") + "] /LPTS [0 0 0 1 1 1 1 0] /GCS 7 0 R >>";
+    obj[7] = "<< /Type /PROJCS /WKT " + pdfChuoi(o.wkt || WKT_3857) + " /EPSG " + (o.epsg || 3857) + " >>";
+    var phan = [], dai = 0, xref = [], them = function (u) { phan.push(u); dai += u.length; };
+    them(utf8("%PDF-1.7\n%\xe2\xe3\xcf\xd3\n".replace(/[\xe2\xe3\xcf\xd3]/g, "A")));
+    for (var i = 1; i <= 7; i++) {
+      xref[i] = dai;
+      if (i === 4) {
+        them(utf8("4 0 obj\n<< /Type /XObject /Subtype /Image /Width " + o.wPx + " /Height " + o.hPx + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + o.jpeg.length + " >>\nstream\n"));
+        them(o.jpeg); them(utf8("\nendstream\nendobj\n"));
+      } else them(utf8(i + " 0 obj\n" + obj[i] + "\nendobj\n"));
+    }
+    var xo = dai, x = "xref\n0 8\n0000000000 65535 f \n";
+    for (var j = 1; j <= 7; j++) x += ("0000000000" + xref[j]).slice(-10) + " 00000 n \n";
+    them(utf8(x + "trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n" + xo + "\n%%EOF\n"));
+    var out = new Uint8Array(dai), p = 0; phan.forEach(function (u) { out.set(u, p); p += u.length; }); return out;
+  }
+
   /* ---------- lưới toạ độ, thước tỉ lệ ---------- */
   function buocDep(span, n) {                             // bước "tròn" 1, 2, 2.5, 5 × 10^k cho khoảng span chia khoảng n phần
     var raw = span / Math.max(n, 1), m = Math.pow(10, Math.floor(Math.log10(raw))), c = [1, 2, 2.5, 5, 10];
@@ -289,7 +355,7 @@ var XH = (function () {
   return {lnGamma: lnGamma, gammaQ: gammaQ, chi2sf: chi2sf, chi2inv: chi2inv, erfc: erfc, pHaiPhia: pHaiPhia,
           chol: chol, jacobi: jacobi, irmad: irmad, irmadZ: irmadZ, zTai: zTai,
           olsMot: olsMot, theilSen: theilSen, mannKendall: mannKendall, xuHuong: xuHuong, lopXuHuong: lopXuHuong,
-          tifGhi: tifGhi, qmlLop: qmlLop, qmlLienTuc: qmlLienTuc, crc32: crc32, jpegDpi: jpegDpi, pngDpi: pngDpi,
+          tifGhi: tifGhi, zip: zip, pdfGeo: pdfGeo, worldFile: worldFile, auxXml: auxXml, WKT_3857: WKT_3857, qmlLop: qmlLop, qmlLienTuc: qmlLienTuc, crc32: crc32, jpegDpi: jpegDpi, pngDpi: pngDpi,
           buocDep: buocDep, buocDo: buocDo, dms: dms, thuocTiLe: thuocTiLe};
 })();
 if (typeof module !== "undefined") module.exports = {XH: XH};

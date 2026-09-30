@@ -69,11 +69,29 @@ function cdTiepCS(B, c) {                      // chỉ số đang dùng (công 
 }
 async function cdDocPC(g, y) {
   if (!MAN.pc || !MAN.pc.nam.includes(y)) return null;
+  const gr = cdPCXam(g, y); if (gr) return gr;               // bản 2.9: lưới thô (vd. cả tỉnh) đọc lớp PC 8 bit có overview
   const k = MAN.pc.k, url = CORE.dataUrl(CFG, MAN.pc.duong_dan.replace("{y}", y)), s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, N = g.w * g.h;
   const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, Array.from({length: k}, (_, i) => i), false, true), url);
   const out = Array.from({length: k}, () => new Float32Array(N).fill(NaN));
   if (R) for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0 || R.src[j * k] === -32768) continue; for (let q = 0; q < k; q++) out[q][i] = R.src[j * k + q] / s; }
   return out;
+}
+/* PC gốc (pc5d) không có overview: cả tỉnh ở 10 m là hàng chục triệu điểm ảnh × k băng. Khi ô lưới phân tích thô hơn 30 m,
+   đọc các lớp xám PC1..PCk (EPSG:3857, có overview) rồi đổi ngược 8 bit -> giá trị: x = lo + (v - 1) / 254 × (hi - lo), chia hệ số nhân. */
+function cdPCXam(g, y) {
+  const k = MAN.pc.k, s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, lat = CORE.m2ll((g.bb[0] + g.bb[2]) / 2, (g.bb[1] + g.bb[3]) / 2)[1];
+  if (g.res * Math.cos(lat * Math.PI / 180) <= 30) return null;
+  const ds = []; for (let q = 1; q <= k; q++) { const L0 = MAN.layers.find(l => l.id === "pc" + q); if (!L0 || !L0.keo_gian || !L0.nam.includes(y)) return null; ds.push(L0); }
+  return (async () => {
+    const N = g.w * g.h, out = [];
+    for (const L0 of ds) {
+      const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url);
+      const [lo, hi] = L0.keo_gian, o = new Float32Array(N).fill(NaN);
+      if (r) for (let i = 0; i < N; i++) { const v = r.data[i * r.n]; if (v) o[i] = (lo + (v - 1) / 254 * (hi - lo)) / s; }
+      out.push(o);
+    }
+    return out;
+  })();
 }
 async function cdDocEmb(g, y) {                // các thành phần embedding (đổi từ 8 bit theo phép chiếu)
   const out = [], N = g.w * g.h;
@@ -224,12 +242,9 @@ async function cdChay() {
   } catch (e) { if (tok === CD.tok) tt.textContent = T("lỗi: ") + (typeof vgLoiDoc === "function" ? vgLoiDoc(e) : (e.message || e)); }
   TIFF_PT.clear();
 }
-function cdVe() {                              // lớp bản đồ kết quả
-  if (CD.kq && CD.kq.kieu === "xh") return xhVe();
-  const K = CD.kq; if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; }
-  if (!K) return; const mode = cd$("cdXem").value; if (mode === "tat") { cd$("cdLeg").innerHTML = ""; return; }
+function cdCanvas(K, mode) {                   // bản 2.9: vẽ kết quả thay đổi lên canvas (bản đồ và xuất bản đồ)
   const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h;
-  const ctx = c.getContext("2d"); if (!ctx) return;
+  const ctx = c.getContext && c.getContext("2d"); if (!ctx) return null;
   const img = ctx.createImageData(g.w, g.h), d = img.data, rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   const lm = lut2("magma"), lr = lut2("rdbu"), mau = CD_MAU.map(h => h && rgb(h)), lmau = K.lopMau.map(rgb);
   for (let i = 0; i < K.N; i++) {
@@ -241,7 +256,13 @@ function cdVe() {                              // lớp bản đồ kết quả
     else if (mode === "tu") { if (K.doi[i] && K.cB[i]) c3 = lmau[K.cB[i] - 1]; }
     if (c3) { d[i * 4] = c3[0]; d[i * 4 + 1] = c3[1]; d[i * 4 + 2] = c3[2]; d[i * 4 + 3] = a; }
   }
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(img, 0, 0); c._mode = mode; return c;
+}
+function cdVe() {                              // lớp bản đồ kết quả
+  if (CD.kq && CD.kq.kieu === "xh") return xhVe();
+  const K = CD.kq; if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; }
+  if (!K) return; const mode = cd$("cdXem").value; if (mode === "tat") { cd$("cdLeg").innerHTML = ""; return; }
+  const c = cdCanvas(K, mode); if (!c) return; const g = K.g;
   const A = CORE.m2ll(g.bb[0], g.bb[1]), B = CORE.m2ll(g.bb[2], g.bb[3]);
   CD.hien = L.imageOverlay(c.toDataURL(), [[A[1], A[0]], [B[1], B[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 460}).addTo(map);
   const el = CD.hien.getElement && CD.hien.getElement(); if (el) el.style.imageRendering = "pixelated";

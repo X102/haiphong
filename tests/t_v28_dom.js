@@ -63,7 +63,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   ok(tf.nd === 255 && tf.d.every(v => v === 255 || (v >= 1 && v <= 5)) && /Giảm mạnh|giảm mạnh/.test(await docBlob(blobs[nb + 1])), "GeoTIFF 5 cấp xu hướng, QML có tên cấp");
   nb = blobs.length; $("cdCSV").click(); await sleep(30); const csv = await docBlob(blobs[nb]);
   ok(csv.split("\n").filter(l => /^xu_huong,/.test(l)).length === 5 && csv.split("\n").filter(l => /^cap_nam,/.test(l)).length === 10, "CSV: 5 cấp + 2 cặp × 5 cấp");
-  nb = blobs.length; E("bcThayDoi()"); await sleep(30); const h = await docBlob(blobs[nb]);
+  nb = blobs.length; await E("bcThayDoi()"); const h = await docBlob(blobs[nb]);
   ok(/<title>Xu hướng NDVI 2023-2025<\/title>/.test(h) && /<h2>Cặp năm<\/h2>/.test(h) && /OLS/.test(h), "báo cáo HTML xu hướng");
   // Mann–Kendall: với 3 năm |Z| lớn nhất là 1.04 < 1.96 nên không điểm ảnh nào có ý nghĩa: tính là ổn định
   doi("xhCach", "mk"); ok(!$("xhZW").hidden, "Mann–Kendall: hiện độ tin cậy");

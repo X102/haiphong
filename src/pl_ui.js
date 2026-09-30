@@ -217,10 +217,8 @@ function plVeKQ() {
   pl$("plTen").value = pl$("plTen").value || `${T("Phân loại")} ${K.y} · ${v27TenPV(K.PV)}`.slice(0, 80);
   plVe();
 }
-function plVe() {
-  const K = PL.kq; if (PL.hien) { map.removeLayer(PL.hien); PL.hien = null; } if (!K) return;
-  const mode = pl$("plXem").value; if (mode === "tat") { pl$("plLeg").innerHTML = ""; return; }
-  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return;
+function plCanvas(K, mode) {                      // bản 2.9: vẽ kết quả phân loại lên canvas (dùng cho bản đồ và cho xuất bản đồ)
+  const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return null;
   const img = ctx.createImageData(g.w, g.h), d = img.data, rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)], mau = K.lop.map(l => rgb(l.mau));
   for (let i = 0; i < g.w * g.h; i++) {
     if (!K.cls[i]) continue; let o = null, al = 205;
@@ -229,7 +227,12 @@ function plVe() {
     else if (mode === "cb") { if (K.xa[i]) o = [236, 72, 153]; else if (K.lan[i]) o = [245, 158, 11]; }
     if (o) { d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2]; d[i * 4 + 3] = al; }
   }
-  ctx.putImageData(img, 0, 0);
+  ctx.putImageData(img, 0, 0); c._mode = mode; return c;
+}
+function plVe() {
+  const K = PL.kq; if (PL.hien) { map.removeLayer(PL.hien); PL.hien = null; } if (!K) return;
+  const mode = pl$("plXem").value; if (mode === "tat") { pl$("plLeg").innerHTML = ""; return; }
+  const c = plCanvas(K, mode); if (!c) return; const g = K.g;
   const A = CORE.m2ll(g.bb[0], g.bb[1]), B = CORE.m2ll(g.bb[2], g.bb[3]);
   PL.canvas = c;
   PL.hien = L.imageOverlay(c.toDataURL(), [[A[1], A[0]], [B[1], B[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 458}).addTo(map);

@@ -29,9 +29,10 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 - OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
 - Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
 - Tiến độ lưu tự động trong trình duyệt; xuất CSV, GeoJSON, tệp tiến độ JSON (nhập lại, gộp nhiều người).
-- Xuất bản đồ thành ảnh JPEG, PNG 150 đến 600 dpi cho bài báo, trình chiếu: lưới toạ độ (độ phút giây, độ thập phân, UTM 48N), chú giải, thước tỉ lệ, mũi tên bắc, tiêu đề, dòng nguồn.
+- Xuất bản đồ in ấn: chọn bản đồ cần xuất (phân loại, thay đổi, xu hướng, lớp phủ, vùng, một lớp dữ liệu hoặc như màn hình), quản lý lớp ngay trong hộp thoại, khung theo kết quả, tỉnh hoặc vùng (cắt theo ranh giới), chú giải kèm diện tích ha, km² và %; JPEG, PNG 150 đến 600 dpi (kèm world file), PDF có toạ độ, GeoTIFF khung bản đồ; lưới toạ độ, thước tỉ lệ, mũi tên bắc, tiêu đề, dòng nguồn.
 - GeoTIFF bản đồ lớp có nodata 255, bảng màu và tệp kiểu QGIS .qml; độ trong suốt cho mọi lớp đang hiện; kéo giãn cột, dải dưới bản đồ, các bảng nổi.
-- Lưu kết quả thành tệp HTML tự chứa (phát hiện thay đổi, thống kê lớp phủ, phân loại, câu trả lời của trợ lý AI): số liệu, bảng, biểu đồ, bản đồ, nhận định.
+- Lưu kết quả thành tệp HTML tự chứa (phát hiện thay đổi, thống kê lớp phủ, phân loại, vùng chọn, câu trả lời của trợ lý AI): số liệu, bảng, biểu đồ, bản đồ có khung, lưới toạ độ và chú giải, nhận định; vùng chọn còn xuất được GeoTIFF, GeoJSON; biểu đồ lưu SVG, PNG; dải ảnh theo năm lưu PNG.
+- Gộp nhiều tệp tiến độ JSON (nhiều người, nhiều lần làm) một lần; nhãn khác nhau được giải theo cách chọn, đánh dấu xem lại, liệt kê CSV.
 
 ## Cấu trúc kho
 
@@ -48,6 +49,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/TRIEN_KHAI.md` | hướng dẫn đưa lên GitHub Pages và cập nhật |
 | `docs/DU_LIEU_2_7.md` | ranh giới Việt Nam, bản đồ lớp phủ toàn cầu (ô Colab, dùng lại ảnh GL_* trên Drive không cần GEE), thống kê, phân loại, ảnh nền mới, thay đổi 2.7.1 |
 | `docs/BAN_2_8.md` | GeoTIFF có nodata, hồi quy xu hướng, IR-MAD, xuất bản đồ in ấn, độ trong suốt, kéo giãn bảng |
+| `docs/BAN_2_9.md` | sửa lỗi 'offset' khi phát hiện thay đổi cả tỉnh; xuất bản đồ có quản lý lớp, chú giải kèm diện tích, PDF có toạ độ, GeoTIFF; báo cáo HTML có bản đồ đầy đủ; xuất vùng, biểu đồ, dải ảnh; gộp nhiều tệp tiến độ |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
 ## Cấu hình web (`cau_hinh.json`)

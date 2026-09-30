@@ -532,6 +532,11 @@ for G_ in (GT28, GT28_2):                                  # bản 2.8
         assert HTML[L_]["gtBody"].count(cu) == 1, (L_, cu); HTML[L_]["gtBody"] = HTML[L_]["gtBody"].replace(cu, moi)
 for L_, (moc, them, _a, _b) in HELP28.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v29 import R29, HELP29
+_co = {r[0] for r in R}
+R = R + [r for r in R29 if r[0] not in _co]              # bản 2.9
+for L_, (moc, moi) in HELP29.items():                    # bản 2.9: thay mục xuất bản đồ
+    h = HTML[L_]["helpBody"]; i = h.index(moc); j = h.index("</li>", i) + 5; HTML[L_]["helpBody"] = h[:i] + moi + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

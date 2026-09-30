@@ -30,7 +30,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   $("tkPV").value = "tinh"; $("tkPV").onchange(); $("tkCG").value = "3"; $("tkChay").click();
   await until(() => /xong/.test($("tkTT").textContent), 30000, "thống kê");
   E("tkVe(0, 'dt')");
-  let nb = blobs.length; $("tkHTML").click(); await sleep(50);
+  let nb = blobs.length; $("tkHTML").click(); await until(() => blobs.length > nb, 30000, "HTML thống kê");
   const h1 = await docBlob(blobs[nb]);
   ok(blobs[nb].type === "text/html" && /^<!doctype html>/.test(h1) && /<title>Thống kê lớp phủ<\/title>/.test(h1) && /<h2>Diện tích<\/h2>/.test(h1) && /<h2>Đồng thuận<\/h2>/.test(h1) &&
      /<svg/.test(h1) && /kappa/.test(h1) && !/<button/.test(h1) && !/<select/.test(h1) && /Phạm Đăng Hiển/.test(h1) && h1.includes("v" + E("VERSION")),
@@ -40,10 +40,11 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   w.document.querySelectorAll('#cdP [data-cd]').forEach(c => { c.checked = ["s2", "cs"].includes(c.dataset.cd); });
   $("cdChay").click(); await until(() => E("CD.kq") && /xong/.test($("cdTrang").textContent), 30000, "phát hiện thay đổi");
   $("cdAIKQ").innerHTML = `<div class="ai-kq"><b>model-thu</b><p>Nhận định thử của AI.</p></div>`;
-  nb = blobs.length; $("cdHTML").click(); await sleep(50);
+  nb = blobs.length; $("cdHTML").click(); await until(() => blobs.length > nb, 30000, "HTML thay đổi");
   const h2 = await docBlob(blobs[nb]);
   ok(/Phát hiện thay đổi 2023 → 2025/.test(h2) && /Nhận định thử của AI/.test(h2) && /<h2>Ma trận<\/h2>/.test(h2) && /Ngưỡng độ lớn/.test(h2) && /thay đổi phổ khác/.test(h2),
      "HTML phát hiện thay đổi: nhận định, nhận định của AI, bảng, ma trận, thông số");
+  ok(/<img class="bd2" src="data:image\/(png|jpeg);base64,/.test(h2) && /EPSG:3857/.test(h2) && /<img class="bd2"/.test(h1), "bản 2.9: bản đồ trong HTML dựng như bản in (khung, lưới toạ độ, mũi tên bắc, thước tỉ lệ, chú giải kèm diện tích)");
   E("cdMo(false)");
   E(`AI.diem = {p: ST.diem.E0001, gy: [], j: {mo_ta: "x"}, r: {model: "gpt-thu", ms: 1200, text: "{}"}, nam: [2024, 2025], J: {diem: {id: "E0001"}, he_lop: []}, anh: []};
      ai$("aiKQ").innerHTML = '<div class="ai-kq"><b>gpt-thu</b><p>Ruộng lúa thử.</p></div>'`);

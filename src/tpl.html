@@ -312,6 +312,14 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 #dlgXB textarea{width:100%;min-height:38px;font-size:12px}
 #xbXem{max-width:100%;border:1px solid var(--ln);background:#fff;display:block;margin:6px auto}
 #xbCG label{display:block;font-size:12px}
+#xbLop .xbR{display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;border-bottom:1px solid #eaecf0}
+#xbLop .xbR label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#xbLop .xbR input[type=range]{width:90px}
+#xbLop .xbR select{max-width:150px;font-size:12px}
+#xbLop .xbR button{padding:0 5px;font-size:11px}
+#bdTai{position:fixed;z-index:3000;display:flex;gap:2px}#bdTai[hidden]{display:none}#bdTai button{font-size:11px;padding:1px 6px;opacity:.92}
+#dlgGopTep{width:min(720px,96vw);max-height:92vh;overflow:auto}#dlgGopTep table{font-size:12px;border-collapse:collapse}#dlgGopTep td,#dlgGopTep th{border:1px solid #e4e7ec;padding:2px 6px}
+#vgDS select[data-vx]{font-size:11px;max-width:84px}
 @media (max-width: 760px){ #dlgXB .vg-o{grid-template-columns:auto minmax(0,1fr)} }
 </style>
 </head>
@@ -334,7 +342,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt">🤖 AI</button>
     <button id="bPL" type="button" title="Tạo bản đồ lớp phủ từ các điểm mẫu, kèm kiểm định và cảnh báo chỗ cần thêm mẫu">🧭 Phân loại</button>
     <button id="bTK" type="button" title="Thống kê, so sánh các bản đồ lớp phủ: bộ dữ liệu, toàn cầu, bản đồ riêng">📊 Lớp phủ</button>
-    <button id="bXB" type="button" title="Xuất bản đồ đang xem thành ảnh JPEG hoặc PNG độ phân giải cao (300 dpi) có lưới toạ độ, chú giải, thước tỉ lệ, mũi tên bắc">🖨 Xuất bản đồ</button>
+    <button id="bXB" type="button" title="Xuất bản đồ in ấn (JPEG, PNG, PDF có toạ độ, GeoTIFF): chọn bản đồ phân loại, thay đổi, lớp phủ hay như màn hình, quản lý lớp, chú giải kèm diện tích">🖨 Xuất bản đồ</button>
     <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
       <option value="trai">▤ trong bảng này</option>
       <option value="phai">▥ cột bên phải</option>
@@ -397,6 +405,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div class="row"><select id="selStrip"></select>
     <select id="selStripR" title="khoảng quanh điểm: nhỏ để xem rõ từng điểm ảnh 10 m" data-noi18n></select>
     <select id="selStripCo" title="cỡ ảnh trong dải"><option value="0">cỡ vừa</option><option value="5">nhỏ (5 cột)</option><option value="2">lớn (2 cột)</option><option value="1">rất lớn (1 cột)</option></select>
+    <button id="stripPNG" type="button" title="lưu cả dải ảnh thành một ảnh PNG có nhãn năm">PNG</button>
     <span class="mu sm" id="stripmsg"></span></div>
   <div id="strip"></div>
   </div>
@@ -686,6 +695,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
       </div>
       <div data-pane="luu" hidden>
         <div id="vgTK"></div>
+        <div class="row" id="vgXuatW"><span>Xuất vùng này:</span><button type="button" data-vx="html" title="báo cáo HTML: thống kê, theo xã, thành phần lớp phủ, bản đồ có khung và chú giải">HTML</button><button type="button" data-vx="tif" title="mặt nạ GeoTIFF EPSG:3857: 1 = vùng, 255 = ngoài vùng, kèm tệp kiểu QGIS">GeoTIFF</button><button type="button" data-vx="geo">GeoJSON</button><button type="button" data-vx="bd" title="xuất bản đồ (JPEG, PNG, PDF có toạ độ, GeoTIFF): khung theo vùng, cắt dữ liệu theo ranh giới">Bản đồ…</button></div>
         <div class="row"><button id="vgCapNhat">Thống kê theo ranh giới</button><span class="mu">(sau khi sửa ở công cụ <kbd>4</kbd>)</span></div>
         <div class="row">Lớp <select id="vgLop" style="max-width:170px"></select> năm <b id="vgNam"></b></div>
         <div class="row"><input id="vgTen" type="text" placeholder="ghi chú" style="flex:1"><button id="vgLuu" class="on">Lưu vùng</button>
@@ -723,28 +733,35 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 </div>
 
 <dialog id="dlgXB">
-  <h3>Xuất bản đồ thành ảnh</h3>
+  <h3>Xuất bản đồ</h3>
+  <div class="vg-o">
+    <span>Bản đồ</span><select id="xbND" data-noi18n style="grid-column:span 3" title="chọn bản đồ cần xuất; các lớp khác tắt sẵn, sửa được ở danh sách lớp dưới đây"></select>
+    <span>Khung</span><select id="xbPham" data-noi18n style="grid-column:span 2"></select><label title="chỉ vẽ dữ liệu và kết quả bên trong ranh giới tỉnh hoặc vùng; diện tích trong chú giải cũng đếm trong ranh giới"><input type="checkbox" id="xbCat"> cắt theo ranh giới</label>
+  </div>
+  <details open><summary>Các lớp <span class="mu sm">(trên cùng vẽ sau cùng; không đổi bản đồ đang xem)</span></summary><div id="xbLop" data-noi18n></div></details>
   <div class="vg-o">
     <span>Tiêu đề</span><input id="xbTieuDe" type="text" data-noi18n style="grid-column:span 3" placeholder="ví dụ: Xu hướng NDVI 2017-2025, Thủy Nguyên">
     <span>Phụ đề</span><input id="xbPhuDe" type="text" data-noi18n style="grid-column:span 3">
     <span>Khổ</span><select id="xbKho" data-noi18n></select>
     <span>Rộng × cao</span><span><input id="xbW" type="number" step="0.1" min="3" max="120"> × <input id="xbH" type="number" step="0.1" min="3" max="120"> cm</span>
     <span>Độ phân giải</span><select id="xbDpi"><option value="150">150 dpi</option><option value="300">300 dpi</option><option value="600">600 dpi</option></select>
-    <span>Định dạng</span><select id="xbDD"><option value="jpg">JPEG</option><option value="png">PNG</option></select>
+    <span>Định dạng</span><span><select id="xbDD"><option value="jpg">JPEG</option><option value="png">PNG</option><option value="pdf">PDF có toạ độ (GeoPDF)</option><option value="tif">GeoTIFF khung bản đồ</option></select>
+      <label title="ZIP gồm ảnh, world file (.jgw, .pgw), .prj và .aux.xml: QGIS, ArcGIS mở ảnh đúng vị trí"><input type="checkbox" id="xbWF"> kèm tệp toạ độ (ZIP)</label></span>
     <span>Lưới toạ độ</span><select id="xbLuoi"><option value="dms">độ, phút, giây (WGS 84)</option><option value="dd">độ thập phân (WGS 84)</option><option value="utm">UTM vùng 48N, mét</option><option value="tat">không</option></select>
     <span>Chú giải</span><select id="xbCGV"><option value="phai">bên phải khung bản đồ</option><option value="trong">trong khung, góc dưới phải</option><option value="tat">không</option></select>
+    <span>Số liệu chú giải</span><select id="xbCGSo"><option value="khong">không</option><option value="ha">diện tích, ha</option><option value="km2">diện tích, km²</option><option value="pct">tỉ lệ %</option><option value="ha_pct">ha và %</option></select>
     <span>Cỡ chữ</span><span><input id="xbChu" type="number" min="5" max="24" step="0.5"> pt</span>
     <span>Độ đậm nét</span><span><input id="xbNet" type="number" min="0.3" max="4" step="0.1"> ×</span>
   </div>
   <div class="row"><label><input type="checkbox" id="xbDuong"> đường lưới trên bản đồ</label><label><input type="checkbox" id="xbThuoc"> thước tỉ lệ</label>
     <label><input type="checkbox" id="xbBac"> mũi tên bắc</label><label><input type="checkbox" id="xbKhung"> khung</label></div>
   <details open><summary>Chú giải gồm</summary><div id="xbCG" data-noi18n></div></details>
-  <div class="row">Nguồn, ghi chú (in dưới bản đồ) <button id="xbNguonMac" type="button" title="viết lại dòng nguồn theo các lớp đang hiện">↺</button></div>
+  <div class="row">Nguồn, ghi chú (in dưới bản đồ) <button id="xbNguonMac" type="button" title="viết lại dòng nguồn theo các lớp đang bật">↺</button></div>
   <textarea id="xbNguon" data-noi18n></textarea>
-  <div class="row"><button id="xbXemBtn" type="button">Xem trước</button><button id="xbXuatBtn" type="button" class="on">Xuất ảnh</button><button id="xbDong" type="button">Đóng</button>
+  <div class="row"><button id="xbXemBtn" type="button">Xem trước</button><button id="xbXuatBtn" type="button" class="on">Xuất</button><button id="xbDong" type="button">Đóng</button>
     <span class="mu sm" id="xbTT" data-noi18n></span></div>
   <div><canvas id="xbXem" width="10" height="10"></canvas></div>
-  <div class="mu sm">Bản đồ lấy đúng khung nhìn hiện tại (nới theo tỉ lệ khổ ảnh) với các lớp đang hiện và độ trong suốt của chúng. Ảnh nền phải cho phép tải chéo (Esri, Wayback, OpenStreetMap, EOX thường cho phép); lớp nào không lấy được sẽ bị bỏ và được báo lại. Tệp ghi sẵn dpi nên Word, PowerPoint đặt đúng cỡ.</div>
+  <div class="mu sm">Diện tích trong chú giải đếm trên đúng các điểm ảnh của kết quả nằm trong khung (hoặc trong ranh giới cắt); lớp dữ liệu dạng lớp đọc lại ở độ phân giải khoảng 1/1200 cạnh khung. GeoTIFF: chỉ khung bản đồ, 4 băng RGBA, EPSG:3857, cỡ điểm ảnh theo khổ và dpi. PDF có toạ độ: cả trang là ảnh, khung bản đồ khai báo theo ISO 32000 (Viewport, Measure GEO) để QGIS, Avenza Maps, Adobe đọc toạ độ. Ảnh nền phải cho phép tải chéo (Esri, Wayback, OpenStreetMap, EOX thường cho phép); lớp nào không lấy được sẽ bị bỏ và được báo lại.</div>
 </dialog>
 <dialog id="dlgGT">
   <h3>Giới thiệu</h3>
@@ -756,6 +773,16 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   </div>
   <div id="gtTacGia" data-noi18n></div>
   <div class="row"><button id="gtDong" type="button">Đóng</button></div>
+</dialog>
+<dialog id="dlgGopTep">
+  <h3>Gộp nhiều tệp tiến độ</h3>
+  <p class="mu sm">Chọn cùng lúc nhiều tệp tiến độ JSON (của nhiều người, hoặc nhiều lần làm). Điểm, nhãn, vùng mẫu, bộ điểm, chỉ số tự nhập được gộp vào phiên đang mở; điểm trùng mã được coi là một điểm.</p>
+  <div class="row"><input type="file" id="gtTep" accept=".json" multiple></div>
+  <div id="gtDS" data-noi18n></div>
+  <div class="row">Khi các tệp gán nhãn khác nhau cho cùng điểm, cùng năm: <select id="gtKieu"><option value="moi">lấy nhãn gán sau cùng</option><option value="sau">tệp chọn sau thắng</option><option value="giu">giữ nhãn đang có</option></select></div>
+  <div class="row"><label><input type="checkbox" id="gtDanh" checked> đánh dấu "xem lại" các điểm có nhãn khác nhau</label></div>
+  <div class="row"><button id="gtOk" type="button" class="on" disabled>Gộp</button><button id="gtCSV" type="button" hidden>Bảng nhãn khác nhau (CSV)</button><button id="gtDong" type="button">Đóng</button></div>
+  <div id="gtKQ" data-noi18n></div>
 </dialog>
 <dialog id="dlgGop">
   <h3>Gộp bộ điểm</h3>
@@ -806,6 +833,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <button id="eWide">CSV dạng rộng (mỗi điểm một dòng)</button>
     <button id="eGeo">GeoJSON</button>
     <button id="eJson">Tệp tiến độ JSON (đầy đủ, nhập lại được)</button>
+    <button id="eGopTep" type="button" title="chọn cùng lúc nhiều tệp tiến độ của nhiều người hoặc nhiều lần làm, gộp tự động">Gộp nhiều tệp tiến độ…</button>
     <button id="eVung">Vùng mẫu (GeoJSON)</button>
     <button id="eVungCSV">Thống kê vùng mẫu (CSV)</button>
   </div>
@@ -856,7 +884,9 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>📊 Lớp phủ</b>: các phương án bản đồ lớp (bản đồ của bộ dữ liệu, toàn cầu DW, ESRI, WorldCover, GLC_FCS30D, bản đồ tạo từ điểm mẫu, GeoTIFF của bạn); diện tích theo năm theo chú giải gốc, chú giải chung 7 lớp hoặc 3 lớp, biểu đồ, theo xã, đồng thuận giữa hai bản đồ (tỉ lệ trùng khớp, kappa), CSV, GeoTIFF.</li>
     <li><b>🧭 Phân loại</b>: bản đồ lớp phủ từ điểm mẫu không cần học máy (cosine hoặc khoảng cách chuẩn hoá; mẫu gần nhất, nguyên mẫu, tâm lớp), kiểm định chéo, cảnh báo chỗ chưa có mẫu, cặp lớp lẫn nhau, lớp nên tách, nhãn nghi sai, xã chưa có mẫu; lưu thành phương án.</li>
     <li><b>Δ Thay đổi</b>: ba phương pháp: véc tơ thay đổi (CVA), IR-MAD (Nielsen 2007; không nhạy với khác biệt bức xạ tuyến tính giữa hai năm; ngưỡng Otsu, theo điểm mẫu hoặc theo phân phối χ²) và hồi quy tuyến tính chỉ số theo năm (OLS kèm R², hoặc Theil–Sen kèm Mann–Kendall; 5 cấp như công cụ GEE ChuyenDoiXanh; bảng từng cặp năm liền kề); GeoTIFF của bản đồ đang xem.</li>
-    <li><b>🖨 Xuất bản đồ</b>: ảnh JPEG hoặc PNG 150, 300, 600 dpi đúng khung nhìn, có lưới toạ độ (độ phút giây, độ thập phân, UTM 48N), chú giải, thước tỉ lệ kèm tỉ lệ số, mũi tên bắc, tiêu đề, dòng nguồn.</li>
+    <li><b>🖨 Xuất bản đồ</b>: chọn bản đồ cần xuất (phân loại, thay đổi, xu hướng, lớp phủ, vùng, một lớp dữ liệu, hoặc như màn hình); danh sách lớp ngay trong hộp thoại để bật tắt, đặt độ trong suốt, năm, thứ tự mà không đổi bản đồ đang xem; khung theo khung nhìn, phạm vi kết quả, cả tỉnh hoặc một vùng, cắt được theo ranh giới; chú giải kèm diện tích (ha, km²) và tỉ lệ %; JPEG, PNG 150, 300, 600 dpi (kèm world file trong ZIP), PDF có toạ độ, GeoTIFF khung bản đồ; lưới toạ độ (độ phút giây, độ thập phân, UTM 48N), thước tỉ lệ kèm tỉ lệ số, mũi tên bắc, tiêu đề, dòng nguồn.</li>
+    <li><b>Xuất sản phẩm</b>: báo cáo HTML có bản đồ đủ khung, lưới toạ độ, chú giải; vùng đang chọn hoặc vùng đã lưu xuất thành HTML, GeoTIFF, GeoJSON, bản đồ; rê chuột lên một biểu đồ để lưu SVG hoặc PNG; dải ảnh theo năm lưu thành PNG.</li>
+    <li><b>Gộp tiến độ</b>: "Tải tệp…" hoặc "Xuất và lưu → Gộp nhiều tệp tiến độ…" chọn cùng lúc nhiều tệp JSON; nhãn khác nhau giữa các tệp được giải theo cách chọn, đánh dấu xem lại và liệt kê thành CSV.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -965,7 +995,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <div id="aiLKQ" data-noi18n style="max-height:40vh;overflow:auto"></div>
   </div>
 </dialog>
-<input type="file" id="fileIn" hidden accept=".csv,.json,.geojson">
+<input type="file" id="fileIn" hidden accept=".csv,.json,.geojson" multiple>
 
 <script id="core">
 /* ======================= PHẦN LÕI (không dùng DOM, kiểm thử được bằng node) ======================= */
@@ -2166,7 +2196,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.8.2";
+const VERSION = "2.9";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2322,11 +2352,36 @@ function phongNote() {                     // ô được phóng to từ mức t
 map.on("zoomstart", () => { PHONG.n = 0; PHONG.z = null; phongNote(); });
 
 /* lớp COG đọc thẳng từ Hugging Face bằng geotiff.js */
+/* bản 2.9: vá lỗi của geotiff.js 2.1.3 (BlockedSource.readSliceData): khi đoạn byte của một ô kết thúc đúng biên khối 64 KiB,
+   hàm đòi thêm một khối không được tải -> "Cannot read properties of undefined (reading 'offset')". Lỗi hiếm với từng ô nhưng gần
+   như chắc gặp khi đọc hàng nghìn ô (phát hiện thay đổi cả tỉnh). Bản vá tính khối cuối là floor((top - 1) / blockSize).
+   (Hàm đặt ngay sau dòng khai báo bộ đệm TIFF để bài thử t_cog.js cắt đúng đoạn mã.) */
 const TIFF = new Map(), TIFF_PT = new Map(), TIFF_BD = TIFF;  // bản 2.5: TIFF_PT mở riêng cho phân tích (chọn vùng, so sánh năm), không chung bộ đệm với lớp bản đồ
+function vaGeoTIFF(t) {
+  const S = t && t.source;
+  if (!S || typeof S.readSliceData !== "function" || S._va29) return t;
+  S.readSliceData = function (slices, blocks) {
+    return slices.map(slice => {
+      let top = slice.offset + slice.length;
+      if (this.fileSize !== null) top = Math.min(this.fileSize, top);
+      const lo = Math.floor(slice.offset / this.blockSize), hi = Math.floor((top - 1) / this.blockSize);
+      const buf = new ArrayBuffer(slice.length), view = new Uint8Array(buf);
+      for (let id = lo; id <= hi; ++id) {
+        const b = blocks.get(id); if (!b) continue;
+        const delta = b.offset - slice.offset, inner = delta < 0 ? -delta : 0, at = delta > 0 ? delta : 0;
+        const used = Math.min(b.length - inner, top - b.offset - inner, slice.length - at);
+        if (used > 0) view.set(new Uint8Array(b.data, inner, used), at);
+      }
+      return buf;
+    });
+  };
+  S._va29 = true;
+  return t;
+}
 function tiffOf(url, rieng) {               // mở COG một lần: hộp bao + danh sách ảnh (gốc và overview)
   const TIFF = rieng ? TIFF_PT : TIFF_BD;
   if (!TIFF.has(url)) {
-    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: rieng ? 1500 : 400}).then(async t => {
+    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: rieng ? 1500 : 400}).then(vaGeoTIFF).then(async t => {
       const im0 = await t.getImage(), bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
       for (let i = 0; i < n; i++) {
         const im = i ? await t.getImage(i) : im0, fd = im.fileDirectory;
@@ -2369,13 +2424,29 @@ function paint(canvas, data, n, L0) {
   }
   ctx.putImageData(img, 0, 0);
 }
+/* bản 2.9: đọc cửa sổ lớn theo từng dải hàng ô. geotiff.js (BlockedSource) báo lỗi "reading 'offset'" khi một lần đọc cần
+   nhiều khối hơn bộ đệm (vd. PC gốc 10 m cho cả tỉnh); đọc theo dải giữ mỗi lần đọc nhỏ, rồi ghép lại đúng thứ tự. */
+let DOC_MAX_PX = 60e6, DOC_DAI_PX = 4e6;   // trần số giá trị một cửa sổ (không treo trình duyệt); cửa sổ lớn hơn DOC_DAI_PX đọc theo dải
+async function docCua(im, win, samples) {
+  const [c0, r0, c1, r1] = win, W = c1 - c0, H = r1 - r0, nb = samples ? samples.length : im.getSamplesPerPixel();
+  if (W * H * nb > DOC_MAX_PX) throw new Error(T("vùng đọc quá lớn ({m} triệu giá trị): thu hẹp phạm vi hoặc tắt dữ liệu gốc 10 m", {m: Math.round(W * H * nb / 1e6)}));
+  const th = (im.getTileHeight && im.getTileHeight()) || 256, buoc = W * H > DOC_DAI_PX ? th : H;
+  if (buoc >= H) return im.readRasters({window: win, samples, interleave: true});
+  let out = null;
+  for (let r = r0; r < r1; r += buoc) {
+    const rr = Math.min(r1, r + buoc), a = await im.readRasters({window: [c0, r, c1, rr], samples, interleave: true});
+    if (!out) out = new a.constructor(W * H * nb);
+    out.set(a, (r - r0) * W * nb);
+  }
+  return out;
+}
 async function readBox(url, bb, w, h, rieng) {
   const t = await tiffOf(url, rieng);
   if (!CORE.inter(bb, t._bb)) return null;
   const I = CORE.pickImage(t._imgs, (bb[2] - bb[0]) / w);
   const win = CORE.windowFor(bb, t._bb[0], t._bb[3], I.rx, I.ry, I.w, I.h);
   if (!win) return null;
-  const src = await I.im.readRasters({window: win, interleave: true});
+  const src = await docCua(I.im, win);
   return {data: CORE.resample(src, win, t._n, t._bb[0], t._bb[3], I.rx, I.ry, bb, w, h), n: t._n};
 }
 const COGLayer = L.GridLayer.extend({
@@ -3187,6 +3258,7 @@ function setLang(l) {
 /*__V28__*/
 /*__XH__*/
 /*__XB__*/
+/*__V29__*/
 </script>
 </body>
 </html>
