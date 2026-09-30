@@ -231,6 +231,7 @@ function plVe() {
   }
   ctx.putImageData(img, 0, 0);
   const A = CORE.m2ll(g.bb[0], g.bb[1]), B = CORE.m2ll(g.bb[2], g.bb[3]);
+  PL.canvas = c;
   PL.hien = L.imageOverlay(c.toDataURL(), [[A[1], A[0]], [B[1], B[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 458}).addTo(map);
   const el = PL.hien.getElement && PL.hien.getElement(); if (el) el.style.imageRendering = "pixelated";
   const sw = h => `<i style="background:${h}"></i>`;

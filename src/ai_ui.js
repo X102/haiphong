@@ -104,10 +104,12 @@ async function aiQuen() {
 /* ---------- gọi API ---------- */
 function aiModel(ncc) { ncc = ncc || AI.cfg.ncc; return (AI.cfg.m[ncc] != null ? AI.cfg.m[ncc] : AI_NCC[ncc].model) || ""; }
 function aiAnhBat(ncc) { ncc = ncc || AI.cfg.ncc; return AI.cfg.anh[ncc] != null ? !!AI.cfg.anh[ncc] : !!AI_NCC[ncc].anh; }
+function aiLaGAS(u) { return /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec\/?$/.test(String(u || "").trim()); }
 function aiDiaChi(ncc, duong) {
   const N = AI_NCC[ncc], base = String(AI.cfg.u[ncc] || N.url || "").replace(/\/+$/, "");
   if (AI.cfg.qr[ncc] && N.relay && AI.cfg.relay) {
     const pth = base ? new URL(base).pathname.replace(/\/+$/, "") : "";
+    if (aiLaGAS(AI.cfg.relay)) return {url: AI.cfg.relay.replace(/\/+$/, ""), qua: true, gas: pth + duong};   // Google Apps Script
     return {url: AI.cfg.relay.replace(/\/+$/, "") + "/p/" + ncc + pth + duong, qua: true};
   }
   if (!base) throw new Error(T("chưa có địa chỉ API"));
@@ -131,6 +133,23 @@ async function aiFetch(url, init, ms) {
   const s = await r.text(); let j = null; try { j = JSON.parse(s); } catch (e) { /* không phải JSON */ }
   if (!r.ok) {
     let m = j && ((j.error && (j.error.message || j.error)) || j.message || j.detail); m = m ? (typeof m === "string" ? m : JSON.stringify(m)) : s.slice(0, 300);
+    const er = new Error(`HTTP ${r.status}: ${aiAn(m)}`); er.status = r.status; er.raw = aiAn(m); throw er;
+  }
+  return j || {};
+}
+/* gửi một yêu cầu: thẳng tới nhà cung cấp, qua relay (máy chủ riêng) hoặc qua relay Google Apps Script. Apps Script không đọc
+   được tiêu đề HTTP nên mã relay, đường dẫn, tiêu đề, thân yêu cầu đi trong một phong bì JSON gửi dạng text/plain (không cần CORS
+   preflight); relay trả {status, body}. */
+async function aiGui(ncc, duong, method, body, ms) {
+  const {url, qua, gas} = aiDiaChi(ncc, duong), h = await aiTieuDe(ncc, qua, method === "GET");
+  if (!gas) return aiFetch(url, Object.assign({method, headers: h}, body != null ? {body: JSON.stringify(body)} : {}), ms);
+  const tok = h["X-Relay-Token"] || ""; delete h["X-Relay-Token"]; delete h["Content-Type"];
+  const r = await aiFetch(url, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, redirect: "follow",
+    body: JSON.stringify({token: tok, ncc, path: gas, method, headers: h, body: body == null ? null : body})}, ms);
+  if (!r || typeof r.status !== "number") throw new Error(T("relay Apps Script trả lời không đúng dạng (kiểm tra địa chỉ /exec và quyền truy cập \"Bất kỳ ai\")"));
+  let j = null; try { j = typeof r.body === "string" ? JSON.parse(r.body) : r.body; } catch (e) { /* không phải JSON */ }
+  if (r.status >= 400) {
+    let m = j && ((j.error && (j.error.message || j.error)) || j.message || j.detail); m = m ? (typeof m === "string" ? m : JSON.stringify(m)) : String(r.body || "").slice(0, 300);
     const er = new Error(`HTTP ${r.status}: ${aiAn(m)}`); er.status = r.status; er.raw = aiAn(m); throw er;
   }
   return j || {};
@@ -165,9 +184,8 @@ async function aiGoi(he, nd, anh, opt) {
       body = {model, messages: [{role: "system", content: he}, {role: "user", content: imgs.length ? [{type: "text", text: nd}].concat(imgs.map(a => ({type: "image_url", image_url: {url: `data:${a.mime};base64,${a.data}`}}))) : nd}]};
       body[maxKey] = MAX; if (nhiet) body.temperature = 0.2;
     }
-    const {url, qua} = aiDiaChi(ncc, duong);
     try {
-      const j = await aiFetch(url, {method: "POST", headers: await aiTieuDe(ncc, qua), body: JSON.stringify(body)}, opt.tg || 150000);
+      const j = await aiGui(ncc, duong, "POST", body, opt.tg || 150000);
       return {text: aiChuTraVe(N, j), model: model0, ms: Date.now() - t0, boAnh};
     } catch (e) {
       const m = String(e.raw || e.message || "");
@@ -182,7 +200,7 @@ async function aiGoi(he, nd, anh, opt) {
 async function aiLayDS() {
   const ncc = AI.cfg.ncc, N = AI_NCC[ncc];
   const duong = N.kieu === "gem" ? "/models?pageSize=200" : N.kieu === "ant" ? "/models?limit=100" : "/models";
-  const {url, qua} = aiDiaChi(ncc, duong), j = await aiFetch(url, {method: "GET", headers: await aiTieuDe(ncc, qua, true)}, 30000);
+  const j = await aiGui(ncc, duong, "GET", null, 30000);
   const ds = N.kieu === "gem" ? (j.models || []).filter(m => !m.supportedGenerationMethods || m.supportedGenerationMethods.includes("generateContent")).map(m => String(m.name).replace(/^models\//, ""))
     : (j.data || j.models || []).map(m => m.id || m.name).filter(Boolean);
   ds.sort();
@@ -318,7 +336,7 @@ function aiHienCfg() {
   ai$("aiThuMuc").value = c.tm || ""; ai$("aiThuMucL").hidden = ai$("aiThuMuc").hidden = !N.thuMuc;
   ai$("aiRelay").value = c.relay || ""; ai$("aiQuaRelay").checked = !!c.qr[c.ncc]; ai$("aiQuaRelay").disabled = !N.relay;
   ai$("aiLuu").value = c.luu; ai$("aiMKW").hidden = c.luu !== "mat_khau";
-  ai$("aiKhoa").value = ""; ai$("aiRelayMa").value = "";
+  ai$("aiKhoa").value = ""; ai$("aiRelayMa").value = ""; ai$("aiRelayMa").type = "password";
   const k = AI.kho || {}, r = aiLS(AI_KKHO);
   ai$("aiKhoa").placeholder = k[c.ncc] ? T("đã lưu: {k} (để trống để giữ)", {k: aiChe(k[c.ncc])}) : N.khongKhoa ? T("không cần khoá") : (r && !AI.kho ? T("có khoá đã lưu, chưa mở") : T("dán khoá API"));
   ai$("aiRelayMa").placeholder = k._relay ? T("đã lưu: {k} (để trống để giữ)", {k: aiChe(k._relay)}) : T("mã relay (RELAY_TOKEN)");
@@ -381,7 +399,7 @@ async function aiHoiDiem(chiXem) {
     }
     box.innerHTML = `<div class="mu sm">${T("đang hỏi {m}…", {m: aiModel()})}</div>`;
     const r = await aiGoi(he, nd, anh), j = aiJSON(r.text), gy = aiLocGoiY(j, nam);
-    AI.diem = {p, gy, j, r, nam};
+    AI.diem = {p, gy, j, r, nam, J, anh: anh.filter(a => a && aiAnhBat())};
     aiVeKQ();
   } catch (e) { box.innerHTML = `<div class="ai-kq">${T("lỗi: ")}${esc(aiAn(e.message || e))}</div>`; if (/mật khẩu/.test(e.message || "")) aiTab("kn"); }
 }
@@ -510,6 +528,8 @@ ai$("aiThu").onclick = aiThu;
 ai$("aiLayDS").onclick = async () => { aiTT(T("đang lấy danh sách model…")); try { await aiLuuTuForm(); const ds = await aiLayDS(); aiTT(T("{n} model: bấm vào ô Model để chọn", {n: ds.length})); } catch (e) { aiTT(T("lỗi: ") + aiAn(e.message || e)); } };
 ai$("aiKhoaXoa").onclick = async () => { try { await aiMoKho(); } catch (e) { /* bỏ */ } if (AI.kho) { delete AI.kho[AI.cfg.ncc]; await aiGhiKho().catch(() => {}); } aiHienCfg(); };
 ai$("aiQuen").onclick = aiQuen;
+ai$("aiTaoMa").onclick = () => { const b = crypto.getRandomValues(new Uint8Array(24)); const m = btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const o = ai$("aiRelayMa"); o.type = "text"; o.value = m; o.select(); aiTT(T("mã mới: chép vào thuộc tính RELAY_TOKEN của relay, rồi bấm Lưu")); };
 ai$("aiHoi").onclick = () => aiHoiDiem(false);
 ai$("aiXemGui").onclick = () => aiHoiDiem(true);
 ai$("aiLChay").onclick = aiLoat;

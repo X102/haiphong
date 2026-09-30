@@ -88,6 +88,22 @@ ok(str(pr["crs"]) == "EPSG:3857" and pr["nodata"] == 0 and set(np.unique(a)) == 
 ok(dem[10] > 0 and dem[80] > 0 and 1.6 < dem[10] / dem[80] < 2.4, f"cắt theo ranh giới: phần 80 chỉ còn nửa ({dem[10]} : {dem[80]} điểm ảnh)")
 with rasterio.open(T / "wc_2021.tif") as d:
     ok(len(d.overviews(1)) >= 0 and d.profile.get("blockxsize") == 256, "COG xếp ô 256")
+# dùng lại ảnh GL_*.tif đã quy về 3 lớp (không cần Earth Engine): 0 trong ranh giới -> 4 "ngoài ba lớp", ngoài ranh giới -> 0
+gd = T / "drive"; (gd / "HP_3class_v1" / "globallc").mkdir(parents=True)
+for ten, v in [("GL_DW_2017.tif", 1), ("GL_DW_2018.tif", 2), ("GL_ESRI_2020.tif", 3), ("GL_WC20_2020.tif", 1), ("GL_WC21_2021.tif", 2), ("GL_KHAC_2020.tif", 1)]:
+    a = np.full((200, 200), v, np.uint8); a[:, :50] = 0                # một phần tư bên trái: lớp không quy đổi
+    with rasterio.open(gd / "HP_3class_v1" / "globallc" / ten, "w", driver="GTiff", width=200, height=200, count=1, dtype="uint8", crs="EPSG:32648",
+                       transform=from_origin(x0, y0, 10, 10), nodata=0) as d:
+        d.write(a, 1)
+tm, GL = L["tim_gl"](str(gd))
+ok(tm.endswith("HP_3class_v1/globallc") and sorted(GL) == [("dw", 2017), ("dw", 2018), ("esri", 2020), ("wc", 2020), ("wc", 2021)], "tìm ảnh GL_* trong HP_3class_v1/globallc, bỏ tệp lạ; WC20, WC21 gộp thành một lớp")
+G2 = L["luoi_3857"]((x0, y0 - 2000, x0 + 2000, y0), "EPSG:32648")
+xb2, yb2 = tr.transform(x0 + 1500, y0)
+dem = L["lop_cog"](GL[("dw", 2017)], str(T / "dw_2017.tif"), G2, box(xa, ya, xb2, yb2), tmp_dir=str(T), ma_trong=4)
+ok(set(dem) == {1, 4} and 1.8 < dem[1] / dem[4] < 2.2, f"0 trong ranh giới thành 4 (tỉ lệ lớp 1 : lớp 4 = {dem[1] / dem[4]:.2f}, đúng 1000 : 500 m)")
+mg = L["muc_manifest_gl"]("WC20", {2020, 2021})
+ok(mg["id"] == "wc" and mg["nam"] == [2020, 2021] and mg["nhom3"] == {"1": 1, "2": 2, "3": 3, "4": 0} and mg["chung"]["2"] == 1 and mg["chung"]["3"] == 6 and mg["chung"]["1"] == 0 and "4" in mg["ten_lop"],
+   "manifest lớp dùng lại: 3 lớp + mã 4, quy đổi 3 lớp và chung")
 shutil.rmtree(T)
 print("TẤT CẢ ĐẠT" if not loi else f"{len(loi)} LỖI")
 sys.exit(1 if loi else 0)

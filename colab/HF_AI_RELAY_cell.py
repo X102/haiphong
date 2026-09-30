@@ -1,4 +1,5 @@
 # ==== Ô Colab: dựng RELAY AI riêng trên Hugging Face Space (geoportal gọi model AI không cần VPN) ====
+# LƯU Ý: Hugging Face nay yêu cầu gói PRO cho Space Docker; không có PRO thì dùng relay Google Apps Script (ai_relay_gas.gs), miễn phí.
 # Chạy một lần (chạy lại để thêm, đổi khoá: Space cũ được cập nhật, mã relay giữ nguyên nếu đã lưu trong Colab Secrets).
 # Cần token Hugging Face quyền "write": đặt trong Colab Secrets tên HF_TOKEN, hoặc nhập khi được hỏi (không in ra).
 # Khoá API của nhà cung cấp: lấy từ Colab Secrets cùng tên (DEEPSEEK_API_KEY, OPENAI_API_KEY...) hoặc nhập ẩn bằng getpass;
@@ -25,7 +26,17 @@ hf = bi_mat("HF_TOKEN") or getpass.getpass("Token Hugging Face (quyền write): 
 api = HfApi(token=hf)
 chu = api.whoami()["name"]
 repo = f"{chu}/{TEN_SPACE}"
-api.create_repo(repo, repo_type="space", space_sdk="docker", private=False, exist_ok=True)
+try:
+    api.create_repo(repo, repo_type="space", space_sdk="docker", private=False, exist_ok=True)
+except Exception as e:                         # từ 2026 Space Docker trên CPU miễn phí cần gói PRO (lỗi 402)
+    if "402" in str(e) or "PRO" in str(e):
+        print("Hugging Face báo: Space Docker trên CPU miễn phí cần gói PRO (402), không tạo được relay ở đây.")
+        print("Cách miễn phí thay thế: relay Google Apps Script (tệp ai_relay_gas.gs, hướng dẫn ở đầu tệp và trong AI_RELAY.md):")
+        print("  1. mở https://script.new, dán ai_relay_gas.gs, Lưu;")
+        print("  2. Cài đặt dự án > Thuộc tính tập lệnh: RELAY_TOKEN và các khoá API;")
+        print("  3. Triển khai > Ứng dụng web, thực thi với tư cách Tôi, quyền truy cập Bất kỳ ai; chép URL /exec vào trang.")
+        raise SystemExit(0)
+    raise
 
 TEP = {
     'ai_relay.py': r'''#!/usr/bin/env python3

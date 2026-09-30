@@ -347,6 +347,7 @@ function tkVe(k, kieu) {                         // hiện một bản đồ (ho
     for (let i = 0; i < g.w * g.h; i++) { const o = m[C.ma[i]]; if (!o) continue; d[i * 4] = o[0]; d[i * 4 + 1] = o[1]; d[i * 4 + 2] = o[2]; d[i * 4 + 3] = 200; } }
   ctx.putImageData(img, 0, 0);
   const A0 = CORE.m2ll(g.bb[0], g.bb[1]), B0 = CORE.m2ll(g.bb[2], g.bb[3]);
+  TK.canvas = c;
   TK.hien = L.imageOverlay(c.toDataURL(), [[A0[1], A0[0]], [B0[1], B0[0]]], {opacity: 1, interactive: false, pmIgnore: true, zIndex: 455}).addTo(map);
   const el = TK.hien.getElement && TK.hien.getElement(); if (el) el.style.imageRendering = "pixelated";
 }

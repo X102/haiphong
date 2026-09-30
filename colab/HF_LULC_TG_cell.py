@@ -8,8 +8,16 @@
 # Ảnh xuất theo đúng lưới UTM 48N của bộ dữ liệu (manifest["grid"]) để không lệch điểm ảnh, cắt theo ranh giới xã, đổi sang COG
 # EPSG:3857 láng giềng gần nhất, 0 = ngoài vùng. Dynamic World lưu mã + 1 (1..9) vì 0 dành cho "không có dữ liệu".
 # Giấy phép: DW, ESRI, WorldCover, GLC_FCS30D đều CC BY 4.0 (ghi công trong manifest và README).
+#
+# CHE_DO = "dung_lai" (mặc định, KHÔNG cần Earth Engine): dùng 20 ảnh GL_DW_2017..2025, GL_ESRI_2017..2025, GL_WC20_2020,
+# GL_WC21_2021 đã xuất trước đây bằng s2_globallc (sổ tay s2_gee_globallc_akkaunt3, tài khoản thứ ba) và chép vào
+# Drive/HP_3class_v1/globallc. Các ảnh này đã quy về hệ 3 lớp (1 thực vật, 2 nước, 3 xây dựng, 0 = lớp không quy đổi: thực vật
+# ngập nước, đất trống, băng, mây), UTM 48N 10 m đúng lưới nghiên cứu. Trong ranh giới, 0 được ghi thành 4 "ngoài ba lớp" để
+# thống kê phân biệt với "ngoài vùng". Muốn chú giải gốc đầy đủ (và GLC_FCS30D) thì đặt CHE_DO = "gee" khi còn hạn mức.
+CHE_DO = "dung_lai"
+THU_MUC_GL = ["HP_3class_v1/globallc", "HP_globallc_export", "HP_globallc"]   # nơi tìm GL_*.tif trong Drive (theo thứ tự)
 HF_REPO = "lopmaybay/haiphong-lop-tham-chieu"
-GEE_PROJECT = ""                    # dự án Earth Engine, vd "ee-lopmaybay"
+GEE_PROJECT = ""                    # dự án Earth Engine (chỉ cần khi CHE_DO = "gee"), vd "ee-lopmaybay"
 SAN_PHAM = ["DW", "ESRI", "WC", "GLC"]
 NAM = list(range(2017, 2026))       # năm muốn có (mỗi sản phẩm tự bỏ năm không có)
 DW_MUA_KHO = True                   # True: tháng 11 năm trước đến tháng 4 (khớp ảnh tổng hợp mùa khô); False: cả năm
@@ -130,8 +138,9 @@ def luoi_3857(bounds_utm, crs="EPSG:32648", res=10.0):
     return from_origin(x0, y1, res, res), int(math.ceil((x1 - x0) / res)), int(math.ceil((y1 - y0) / res))
 
 
-def lop_cog(nguon, out, grid, hinh=None, tmp_dir="/tmp", rows=2048):
-    """Một hay nhiều mảnh GeoTIFF mã lớp -> COG 3857 trên `grid`, láng giềng gần nhất, 0 ngoài `hinh` (shapely, EPSG:3857)."""
+def lop_cog(nguon, out, grid, hinh=None, tmp_dir="/tmp", rows=2048, ma_trong=None):
+    """Một hay nhiều mảnh GeoTIFF mã lớp -> COG 3857 trên `grid`, láng giềng gần nhất, 0 ngoài `hinh` (shapely, EPSG:3857).
+    ma_trong: mã ghi cho điểm ảnh 0 NẰM TRONG `hinh` (ảnh nguồn dùng 0 cho "lớp không quy đổi" chứ không phải "trống")."""
     import rasterio
     import rasterio.shutil as rsh
     from rasterio.enums import Resampling
@@ -158,7 +167,10 @@ def lop_cog(nguon, out, grid, hinh=None, tmp_dir="/tmp", rows=2048):
             hh = min(rows, h - r0); win = Window(0, r0, w, hh)
             a = v.read(1, window=win)
             if hinh is not None:
-                a[geometry_mask([hinh], out_shape=a.shape, transform=wtf(win, tf), invert=False)] = 0
+                ngoai = geometry_mask([hinh], out_shape=a.shape, transform=wtf(win, tf), invert=False)
+                if ma_trong:
+                    a[(a == 0) & ~ngoai] = ma_trong
+                a[ngoai] = 0
             u, c = np.unique(a, return_counts=True)
             for q, n in zip(u.tolist(), c.tolist()):
                 dem[q] = dem.get(q, 0) + n
@@ -194,23 +206,54 @@ def cho_xong(ee, ten, phut=180, verbose=True):
     return kq
 
 
+# ---- dùng lại ảnh GL_*.tif đã quy về 3 lớp (s2_globallc) ----
+GL_SP = {"DW": ("dw", "Dynamic World V1: quy về 3 lớp (mùa khô)", "Dynamic World V1: 3 classes (dry season)", "Dynamic World V1: 3 класса (сухой сезон)", "GOOGLE/DYNAMICWORLD/V1"),
+         "ESRI": ("esri", "Esri 10 m Annual LULC: quy về 3 lớp", "Esri 10 m Annual LULC: 3 classes", "Esri 10 m Annual LULC: 3 класса", "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS"),
+         "WC20": ("wc", "ESA WorldCover 10 m: quy về 3 lớp", "ESA WorldCover 10 m: 3 classes", "ESA WorldCover 10 м: 3 класса", "ESA/WorldCover/v100, v200"),
+         "WC21": ("wc", "ESA WorldCover 10 m: quy về 3 lớp", "ESA WorldCover 10 m: 3 classes", "ESA WorldCover 10 м: 3 класса", "ESA/WorldCover/v100, v200")}
+GL_LOP = {1: ("thực vật", "#2e9d3a", 0, 1), 2: ("nước", "#1f5fbf", 1, 2), 3: ("xây dựng", "#d7191c", 6, 3),
+          4: ("ngoài ba lớp (thực vật ngập nước, đất trống, mây)", "#bdbdbd", 0, 0)}
+
+
+def tim_gl(goc, thu_muc=THU_MUC_GL):
+    """{(id lớp, năm): [đường dẫn]} của các ảnh GL_<SP>_<năm>.tif (kể cả khi Earth Engine chia mảnh) trong thư mục đầu tiên có ảnh."""
+    for tm in thu_muc:
+        ds = sorted(glob.glob(f"{goc}/{tm}/GL_*.tif"))
+        if not ds:
+            continue
+        out = {}
+        for p in ds:
+            m = re.match(r"^GL_([A-Z0-9]+)_(\d{4})(-\d+-\d+)?\.tif$", os.path.basename(p))
+            if m and m.group(1) in GL_SP:
+                out.setdefault((GL_SP[m.group(1)][0], int(m.group(2))), []).append(p)
+        if out:
+            return f"{goc}/{tm}", out
+    return None, {}
+
+
+def muc_manifest_gl(k, nam_xong):
+    id_, ten, ten_en, ten_ru, nguon = GL_SP[k]
+    return dict(id=id_, ten=ten, ten_en=ten_en, ten_ru=ten_ru, kieu="lop", nhom="lulc_tg", duong_dan=f"lulc_tg/{id_}_{{y}}.tif", nam=sorted(nam_xong),
+                ten_lop={str(c): v[0] for c, v in GL_LOP.items()}, bang_mau={str(c): v[1] for c, v in GL_LOP.items()},
+                chung={str(c): v[2] for c, v in GL_LOP.items()}, nhom3={str(c): v[3] for c, v in GL_LOP.items()},
+                do_phan_giai_m=10, nguon=nguon, giay_phep="CC BY 4.0", trich_dan=SP[{"dw": "DW", "esri": "ESRI", "wc": "WC"}[id_]]["trich_dan"],
+                ghi_chu="đã quy về 3 lớp bằng s2_globallc (bảng quy đổi TƯỜNG MINH: thực vật ngập nước, đất trống, băng, mây không gán vào ba lớp; "
+                        "trong ranh giới chúng mang mã 4)")
+
+
 # ---------------- CHẠY (Colab) ----------------
 try:
     from google.colab import drive; drive.mount("/content/drive")
 except Exception:
     pass
 import subprocess
-subprocess.run(["pip", "install", "-q", "rasterio", "geopandas", "huggingface_hub", "earthengine-api"], check=False)
-import ee
+subprocess.run(["pip", "install", "-q", "rasterio", "geopandas", "huggingface_hub"] + (["earthengine-api"] if CHE_DO == "gee" else []), check=False)
 import geopandas as gpd
 from shapely.ops import unary_union
 D = "/content/drive/MyDrive"; HF_DIR = f"{D}/HP_HF_LOP_THAM_CHIEU"; TMP = "/content/tmp_lulc"; os.makedirs(TMP, exist_ok=True)
-assert GEE_PROJECT, "điền GEE_PROJECT (dự án Earth Engine)"
-ee.Authenticate(); ee.Initialize(project=GEE_PROJECT)
 man = json.load(open(f"{HF_DIR}/manifest.json"))
 xa = gpd.read_file(f"{HF_DIR}/{man.get('ranh_gioi_xa', 'ranh_gioi/xa.geojson')}")
 bien = unary_union(list(xa.geometry))
-vung = ee.Geometry.Rectangle(list(xa.total_bounds), "EPSG:4326", False)
 grid_utm = man["grid"]
 bu = xa.to_crs(grid_utm["crs"]).total_bounds
 G3857 = luoi_3857(bu, grid_utm["crs"])
@@ -227,38 +270,60 @@ if GUI_LEN:
     tren_hf = set(api.list_repo_files(HF_REPO, repo_type="dataset"))
 else:
     tren_hf = set()
-# 1. xuất những năm còn thiếu
-viec = []
-for k in SAN_PHAM:
-    for y in nam_co(k, NAM):
-        ten = f"LULCTG_{SP[k]['id']}_{y}"
-        if not LAM_LAI and (f"lulc_tg/{SP[k]['id']}_{y}.tif" in tren_hf or glob.glob(f"{D}/{THU_MUC_DRIVE}/{ten}*.tif")):
-            continue
-        if xuat(ee, k, y, vung, grid_utm):
-            viec.append(ten); print("  xuất", ten)
-if viec:
-    print("chờ Earth Engine (xem thêm ở code.earthengine.google.com/tasks)…")
-    tt = cho_xong(ee, viec)
-    for d, s in tt.items():
-        if s != "COMPLETED":
-            print("  KHÔNG xong:", d, s)
-    time.sleep(60)                                  # Drive cần thời gian đồng bộ tệp mới
-# 2. COG 3857, cắt theo ranh giới, thống kê
 os.makedirs(f"{HF_DIR}/lulc_tg", exist_ok=True)
 thong_ke, moi = {}, []
-for k in SAN_PHAM:
-    xong = list(da_co.get(SP[k]["id"], {}).get("nam", [])) if not LAM_LAI else []
-    for y in nam_co(k, NAM):
-        ten = f"LULCTG_{SP[k]['id']}_{y}"; dich = f"{HF_DIR}/lulc_tg/{SP[k]['id']}_{y}.tif"
-        manh = sorted(glob.glob(f"{D}/{THU_MUC_DRIVE}/{ten}*.tif"))
-        if not manh:
-            continue
-        dem = lop_cog(manh, dich, G3857, hinh3857, tmp_dir=TMP)
-        thong_ke[f"{SP[k]['id']}_{y}"] = dem; xong.append(y); moi.append(f"lulc_tg/{SP[k]['id']}_{y}.tif")
-        print(f"  {SP[k]['id']} {y}: {os.path.getsize(dich) / 1e6:.1f} MB, lớp", sorted(dem))
-    if xong:
-        m = muc_manifest(k, sorted(set(xong)))
-        man["layers"] = [l for l in man["layers"] if l["id"] != m["id"]] + [m]
+if CHE_DO == "dung_lai":
+    TM, GL = tim_gl(D)
+    assert GL, ("không thấy ảnh GL_*.tif trong " + ", ".join(THU_MUC_GL) + ": kiểm tra lối tắt HP_3class_v1 trong My Drive, "
+                "hoặc đặt CHE_DO = \"gee\"")
+    print("dùng lại", sum(len(v) for v in GL.values()), "ảnh trong", TM)
+    nam_theo = {}
+    for (id_, y), manh in sorted(GL.items()):
+        dich = f"{HF_DIR}/lulc_tg/{id_}_{y}.tif"
+        if not LAM_LAI and f"lulc_tg/{id_}_{y}.tif" in tren_hf and y in da_co.get(id_, {}).get("nam", []):
+            nam_theo.setdefault(id_, set()).add(y); continue
+        dem = lop_cog(manh, dich, G3857, hinh3857, tmp_dir=TMP, ma_trong=4)
+        thong_ke[f"{id_}_{y}"] = dem; nam_theo.setdefault(id_, set()).add(y); moi.append(f"lulc_tg/{id_}_{y}.tif")
+        print(f"  {id_} {y}: {os.path.getsize(dich) / 1e6:.1f} MB, lớp", sorted(dem))
+    for k0 in ["DW", "ESRI", "WC20"]:
+        id_ = GL_SP[k0][0]
+        if id_ in nam_theo:
+            m = muc_manifest_gl(k0, nam_theo[id_]); man["layers"] = [l for l in man["layers"] if l["id"] != m["id"]] + [m]
+else:
+    import ee
+    assert GEE_PROJECT, "điền GEE_PROJECT (dự án Earth Engine)"
+    ee.Authenticate(); ee.Initialize(project=GEE_PROJECT)
+    vung = ee.Geometry.Rectangle(list(xa.total_bounds), "EPSG:4326", False)
+    # 1. xuất những năm còn thiếu
+    viec = []
+    for k in SAN_PHAM:
+        for y in nam_co(k, NAM):
+            ten = f"LULCTG_{SP[k]['id']}_{y}"
+            if not LAM_LAI and (f"lulc_tg/{SP[k]['id']}_{y}.tif" in tren_hf or glob.glob(f"{D}/{THU_MUC_DRIVE}/{ten}*.tif")):
+                continue
+            if xuat(ee, k, y, vung, grid_utm):
+                viec.append(ten); print("  xuất", ten)
+    if viec:
+        print("chờ Earth Engine (xem thêm ở code.earthengine.google.com/tasks)…")
+        tt = cho_xong(ee, viec)
+        for d, s in tt.items():
+            if s != "COMPLETED":
+                print("  KHÔNG xong:", d, s)
+        time.sleep(60)                                  # Drive cần thời gian đồng bộ tệp mới
+    # 2. COG 3857, cắt theo ranh giới, thống kê
+    for k in SAN_PHAM:
+        xong = list(da_co.get(SP[k]["id"], {}).get("nam", [])) if not LAM_LAI else []
+        for y in nam_co(k, NAM):
+            ten = f"LULCTG_{SP[k]['id']}_{y}"; dich = f"{HF_DIR}/lulc_tg/{SP[k]['id']}_{y}.tif"
+            manh = sorted(glob.glob(f"{D}/{THU_MUC_DRIVE}/{ten}*.tif"))
+            if not manh:
+                continue
+            dem = lop_cog(manh, dich, G3857, hinh3857, tmp_dir=TMP)
+            thong_ke[f"{SP[k]['id']}_{y}"] = dem; xong.append(y); moi.append(f"lulc_tg/{SP[k]['id']}_{y}.tif")
+            print(f"  {SP[k]['id']} {y}: {os.path.getsize(dich) / 1e6:.1f} MB, lớp", sorted(dem))
+        if xong:
+            m = muc_manifest(k, sorted(set(xong)))
+            man["layers"] = [l for l in man["layers"] if l["id"] != m["id"]] + [m]
 json.dump(thong_ke, open(f"{HF_DIR}/lulc_tg/thong_ke_diem_anh.json", "w"), indent=1)
 if not os.path.exists(f"{HF_DIR}/manifest_v6.json"):
     shutil.copyfile(f"{HF_DIR}/manifest.json", f"{HF_DIR}/manifest_v6.json")
@@ -266,9 +331,16 @@ man["phien_ban"] = max(int(man.get("phien_ban", 1)), 7); man["cap_nhat"] = time.
 man["chu_giai_chung"] = {str(k): v for k, v in CHUNG.items()}
 json.dump(man, open(f"{HF_DIR}/manifest.json", "w"), ensure_ascii=False, indent=1)
 rd = open(f"{HF_DIR}/README.md", encoding="utf-8").read().split("\n## Lớp phủ toàn cầu")[0]
-rd += f"\n## Lớp phủ toàn cầu ({time.strftime('%Y-%m-%d')})\n" + "".join(
-    f"- `lulc_tg/{SP[k]['id']}_{{năm}}.tif`: {SP[k]['ten']}, {SP[k]['do_phan_giai_m']} m, {SP[k]['giay_phep']}. {SP[k]['trich_dan']}.\n" for k in SAN_PHAM) + \
-    "- Mã lớp gốc (Dynamic World: mã + 1), COG EPSG:3857, cắt theo ranh giới xã; bảng quy đổi về chú giải chung 7 lớp và hệ 3 lớp nằm trong manifest.\n"
+if CHE_DO == "dung_lai":
+    rd += (f"\n## Lớp phủ toàn cầu ({time.strftime('%Y-%m-%d')})\n"
+           "- `lulc_tg/dw_{năm}.tif`, `lulc_tg/esri_{năm}.tif`, `lulc_tg/wc_{năm}.tif`: Dynamic World V1 (nhãn trội mùa khô), Esri 10 m Annual LULC, "
+           "ESA WorldCover 2020, 2021 (đều CC BY 4.0), đã quy về 3 lớp bằng s2_globallc: 1 thực vật, 2 nước, 3 xây dựng, 4 ngoài ba lớp "
+           "(thực vật ngập nước, đất trống, băng, mây); COG EPSG:3857 10 m, cắt theo ranh giới xã. Chú giải gốc cần xuất lại bằng Earth Engine.\n"
+           + "".join(f"- {SP[k]['trich_dan']}.\n" for k in ["DW", "ESRI", "WC"]))
+else:
+    rd += f"\n## Lớp phủ toàn cầu ({time.strftime('%Y-%m-%d')})\n" + "".join(
+        f"- `lulc_tg/{SP[k]['id']}_{{năm}}.tif`: {SP[k]['ten']}, {SP[k]['do_phan_giai_m']} m, {SP[k]['giay_phep']}. {SP[k]['trich_dan']}.\n" for k in SAN_PHAM) + \
+        "- Mã lớp gốc (Dynamic World: mã + 1), COG EPSG:3857, cắt theo ranh giới xã; bảng quy đổi về chú giải chung 7 lớp và hệ 3 lớp nằm trong manifest.\n"
 open(f"{HF_DIR}/README.md", "w", encoding="utf-8").write(rd)
 if GUI_LEN and moi:
     for t in moi + ["lulc_tg/thong_ke_diem_anh.json", "manifest.json", "manifest_v6.json", "README.md"]:

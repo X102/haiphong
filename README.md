@@ -9,7 +9,7 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 
 ## Tính năng chính
 
-- Gán nhãn từng điểm cho từng năm theo hệ 12 + 3 lớp; tạo bộ điểm mới (lưới, ngẫu nhiên, phân tầng theo bản đồ, từ OpenStreetMap) với các năm cần gán riêng.
+- Gán nhãn từng điểm cho từng năm theo hệ 12 + 3 lớp (sang điểm mới thì tự về năm đầu tiên chưa gán); tạo bộ điểm mới (lưới, ngẫu nhiên, phân tầng theo bản đồ, từ OpenStreetMap) với các năm cần gán riêng.
 - Ảnh nền Wayback theo năm đang gán; ô thiếu ảnh chi tiết được phóng to có nội suy từ ô cha của cùng bản phát hành, không còn ô trắng.
 - Lớp đối chiếu: màu thật, B11-B8-B4, PCA chuỗi năm, PC1-5, embedding g7, bản đồ 3 lớp, và lớp S2 10 băng với tổ hợp màu, chỉ số, CTX tính trong trình duyệt.
 - Đường mùa vụ 6 kỳ nhiều năm, đồ thị giá trị điểm ảnh theo năm (PC, embedding, S2, chỉ số, CTX) có đánh dấu năm lệch.
@@ -21,13 +21,14 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 - Chuẩn hoá đa giác (làm trơn, vuông góc hoá, bám đường kênh OSM, xoá mảnh vụn), gán lại lớp, sửa vùng đã lưu ngay trên bản đồ; tự lưu điểm mẫu chọn vùng thành bộ điểm, gộp bộ; tệp tiến độ chứa cả phiên làm việc.
 - DEM Copernicus GLO-30: độ cao, độ dốc, bóng địa hình; giá trị các lớp tại điểm khi nhấp bản đồ; đặc trưng chọn vùng gồm S2, chỉ số, CTX, PC, DEM.
 - Phát hiện thay đổi giữa hai năm (khung nhìn, các xã, một vùng đã lưu): chuẩn hoá bức xạ theo điểm ảnh ổn định, độ lớn thay đổi gộp 10 băng, chỉ số, CTX, PC, embedding; ngưỡng Otsu, theo điểm mẫu (tối ưu F1) hoặc tự đặt; loại thay đổi không cần mẫu (lớp sơ bộ từ chỉ số), theo điểm mẫu hoặc theo bản đồ lớp; nhận định, bảng, ma trận từ-đến, biểu đồ, CSV, GeoJSON, rải điểm kiểm tra.
-- Trợ lý AI: DeepSeek, Yandex AI Studio, ProxyAPI, ChatGPT, Gemini, Claude, Grok, Ollama, LM Studio hoặc máy chủ tương thích OpenAI; khoá lưu mã hoá trong trình duyệt; gửi số liệu và ảnh của điểm để nhận mô tả, gợi ý nhãn, gán một chạm hoặc hàng loạt; nhận định kết quả phát hiện thay đổi; relay riêng trên Hugging Face Space để khỏi dùng VPN (xem `docs/AI_RELAY.md`).
+- Trợ lý AI: DeepSeek, Yandex AI Studio, ProxyAPI, ChatGPT, Gemini, Claude, Grok, Ollama, LM Studio hoặc máy chủ tương thích OpenAI; khoá lưu mã hoá trong trình duyệt; gửi số liệu và ảnh của điểm để nhận mô tả, gợi ý nhãn, gán một chạm hoặc hàng loạt; nhận định kết quả phát hiện thay đổi; relay riêng miễn phí trên Google Apps Script (hoặc Hugging Face Space, cần gói PRO) để khỏi dùng VPN (xem `docs/AI_RELAY.md`).
 - Tạo bản đồ lớp phủ từ điểm mẫu không cần học máy (cosine hoặc khoảng cách chuẩn hoá như công cụ chọn vùng; mẫu gần nhất, nguyên mẫu, tâm lớp), kiểm định chéo, cảnh báo chỗ cần thêm mẫu, cặp lớp lẫn, lớp nên tách, nhãn nghi sai, xã chưa có mẫu.
 - Thống kê và so sánh lớp phủ: bản đồ của bộ dữ liệu, bản đồ toàn cầu (Dynamic World, Esri 10 m, ESA WorldCover, GLC_FCS30D), bản đồ tạo từ điểm mẫu, GeoTIFF của người dùng; chú giải gốc, chung 7 lớp hoặc 3 lớp; diện tích theo năm, theo xã, đồng thuận (kappa), CSV, GeoTIFF.
 - Ranh giới 34 tỉnh, 3321 xã (từ 01/07/2025): chọn tỉnh, tìm xã trên cả nước; ảnh nền Google, OpenStreetMap, lớp nhãn; dải ảnh theo năm ở mọi nơi (Sentinel-2 cloudless của EOX, Esri Wayback).
 - OpenStreetMap: xem, lọc bằng biểu thức, thống kê, sửa thẻ và hình (lưu trong trình duyệt, xuất GeoJSON), rải điểm mẫu trong đa giác.
 - Liên kết ngoài theo điểm (Google Maps, Earth, Street View, Wayback, Copernicus, Bing, Yandex, OSM, Wikimapia, cổng quy hoạch Hải Phòng); nút báo lỗi.
 - Tiến độ lưu tự động trong trình duyệt; xuất CSV, GeoJSON, tệp tiến độ JSON (nhập lại, gộp nhiều người).
+- Lưu kết quả thành tệp HTML tự chứa (phát hiện thay đổi, thống kê lớp phủ, phân loại, câu trả lời của trợ lý AI): số liệu, bảng, biểu đồ, bản đồ, nhận định.
 
 ## Cấu trúc kho
 
@@ -37,12 +38,12 @@ Giao diện tiếng Việt, tiếng Nga, tiếng Anh (`?lang=ru`, `?lang=en`), d
 | `cau_hinh.json` | cấu hình web (xem dưới) |
 | `src/` | mã nguồn trang: `tpl.html` (khung, CSS, lõi), `*_ui.js`, từ điển `i18n.json` và các tệp sinh từ điển |
 | `tools/dung_trang.py` | dựng `index.html` từ `src/` |
-| `tools/ai_relay/` | relay AI (Python chuẩn, Docker cho Hugging Face Space); `tools/tao_o_relay.py` sinh ô Colab `colab/HF_AI_RELAY_cell.py` |
+| `tools/ai_relay/` | relay AI: `ai_relay_gas.gs` (Google Apps Script, miễn phí) và `ai_relay.py` (Python chuẩn, Docker cho Hugging Face Space hoặc VPS); `tools/tao_o_relay.py` sinh ô Colab `colab/HF_AI_RELAY_cell.py` |
 | `tools/phuc_vu_cuc_bo.py` | máy chủ tĩnh cục bộ có HTTP Range, để thử trang với dữ liệu trên máy |
 | `tests/` | bài thử jsdom trên dữ liệu giả (`mk_fixtures.py` tạo dữ liệu, `chay_het.sh` chạy tất cả) |
 | `colab/` | ô và notebook Colab dựng dữ liệu rồi đẩy lên Hugging Face |
 | `docs/TRIEN_KHAI.md` | hướng dẫn đưa lên GitHub Pages và cập nhật |
-| `docs/DU_LIEU_2_7.md` | ranh giới Việt Nam, bản đồ lớp phủ toàn cầu (ô Colab), thống kê, phân loại, ảnh nền mới |
+| `docs/DU_LIEU_2_7.md` | ranh giới Việt Nam, bản đồ lớp phủ toàn cầu (ô Colab, dùng lại ảnh GL_* trên Drive không cần GEE), thống kê, phân loại, ảnh nền mới, thay đổi 2.7.1 |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
 ## Cấu hình web (`cau_hinh.json`)

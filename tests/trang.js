@@ -23,7 +23,7 @@ function moTrang(opt = {}) {
       w.fetch = (u, o) => fetch(new URL(u, w.location.href).href, o).then(r => new Proxy(r, {get(t, k) {
         if (k === "arrayBuffer") return async () => { const b = await t.arrayBuffer(), a = new w.ArrayBuffer(b.byteLength); new w.Uint8Array(a).set(new Uint8Array(b)); return a; };
         const v = t[k]; return typeof v === "function" ? v.bind(t) : v; }}));
-      w.localStorage.setItem("laymau_hp_cfg_v1", JSON.stringify({repo: "x/y", rev: "main", base: "http://127.0.0.1:8765/", years: [2023, 2024, 2025], auto: true}));
+      w.localStorage.setItem("laymau_hp_cfg_v1", JSON.stringify({repo: "x/y", rev: "main", base: "http://127.0.0.1:8765/", years: [2023, 2024, 2025], auto: true, dau_nam: !!opt.dauNam}));
       w.localStorage.setItem("laymau_hp_ol_v1", JSON.stringify(opt.olPref || {}));
       const noop = () => {};
       w.Worker = class { postMessage() {} terminate() {} addEventListener() {} };

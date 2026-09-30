@@ -15,7 +15,7 @@ vẫn dùng ranh giới xã sẵn có (`ranh_gioi/xa.geojson`).
 
 ## 2. Bản đồ lớp phủ toàn cầu
 
-Ô Colab `colab/HF_LULC_TG_cell.py` (cần dự án Google Earth Engine, điền `GEE_PROJECT`):
+Ô Colab `colab/HF_LULC_TG_cell.py`, chế độ `CHE_DO = "gee"` (cần dự án Google Earth Engine, điền `GEE_PROJECT`; chế độ mặc định không cần GEE, xem 2b):
 
 | sản phẩm | độ phân giải | năm | giấy phép |
 |---|---|---|---|
@@ -28,6 +28,20 @@ vẫn dùng ranh giới xã sẵn có (`ranh_gioi/xa.geojson`).
 (Dynamic World lưu mã + 1). Manifest ghi tên lớp, màu, bảng quy đổi về chú giải chung 7 lớp (nước, cây gỗ, cây trồng, cỏ và cây bụi,
 ngập nước có thực vật, xây dựng, đất trống) và hệ 3 lớp (thực vật, nước, xây dựng; như s2_globallc: thực vật ngập nước, rừng ngập
 mặn, đất trống không gán vào ba lớp). Chạy lại ô thì chỉ xuất những năm còn thiếu.
+
+### 2b. Dùng lại ảnh đã xuất trên Drive, không cần Earth Engine (mặc định từ 2.7.1)
+
+Ô `HF_LULC_TG_cell.py` nay mặc định `CHE_DO = "dung_lai"`: không gọi Earth Engine, chỉ đọc 20 ảnh đã xuất trước đây bằng `s2_globallc.py`
+(sổ tay `s2_gee_globallc_akkaunt3.ipynb`, tài khoản GEE thứ ba) và đã chép vào Drive:
+
+- nơi tìm (theo thứ tự): `MyDrive/HP_3class_v1/globallc`, `MyDrive/HP_globallc_export`, `MyDrive/HP_globallc`;
+- tệp: `GL_DW_2017` .. `GL_DW_2025`, `GL_ESRI_2017` .. `GL_ESRI_2025`, `GL_WC20_2020`, `GL_WC21_2021` (`.tif`, có thể chia mảnh);
+- đã quy về 3 lớp (1 thực vật, 2 nước, 3 xây dựng; 0 là lớp không quy đổi), UTM 48N 10 m, đúng lưới nghiên cứu.
+
+Ô ghép mảnh, cắt theo ranh giới xã, đổi sang COG EPSG:3857 rồi đẩy lên `lopmaybay/haiphong-lop-tham-chieu` (không đẩy vào kho DOI).
+Trong ranh giới, giá trị 0 được ghi thành lớp 4 "ngoài ba lớp (thực vật ngập nước, đất trống, mây)" để thống kê phân biệt với "ngoài vùng".
+Vì ảnh chỉ còn 3 lớp, phương án toàn cầu ở chế độ này chỉ so được theo hệ 3 lớp; muốn chú giải gốc đầy đủ và GLC_FCS30D thì đặt
+`CHE_DO = "gee"` khi tài khoản Earth Engine còn hạn mức.
 
 ## 3. Trong trang
 
@@ -46,3 +60,14 @@ mặn, đất trống không gán vào ba lớp). Chạy lại ô thì chỉ xu�
   (Google hoặc Esri) lên mọi ảnh nền. Ảnh nền Google dùng theo điều khoản của Google.
 - **Dải ảnh theo năm ở mọi nơi**: nguồn Sentinel-2 cloudless của EOX (ảnh tổng hợp năm 10 m, 2016-2025,
   CC BY-NC-SA 4.0, chỉ dùng phi thương mại) hoặc Esri Wayback; điểm ngoài vùng có ảnh của bộ dữ liệu thì dải tự chuyển sang EOX.
+
+## 4. Bản 2.7.1
+
+- **Sang điểm mới thì về năm đầu tiên chưa gán**: chọn một điểm khác (bấm trên bản đồ, danh sách, phím chuyển điểm), trang tự nhảy về năm
+  đầu tiên trong các năm cần gán mà điểm đó chưa có nhãn (điểm mới hoàn toàn: năm đầu tiên, ví dụ 2017); điểm đã gán đủ thì về năm đầu tiên.
+  Gán xong một năm vẫn tự sang năm kế như cũ. Tắt được trong ⚙ Cài đặt ("Sang điểm mới thì về năm đầu tiên chưa gán").
+- **Lưu kết quả thành HTML** (tệp tự chứa, mở bằng mọi trình duyệt, không cần mạng): nút **Lưu HTML** ở Phát hiện thay đổi (nhận định,
+  nhận định của AI, bản đồ, bảng, ma trận, biểu đồ, thông số), 📊 Lớp phủ (diện tích, biểu đồ, theo xã, đồng thuận, kappa, bảng quy đổi,
+  bản đồ), 🧭 Phân loại (tóm tắt, bản đồ, cảnh báo, diện tích, kiểm định), Trợ lý AI (câu trả lời của một điểm kèm ảnh và số liệu đã gửi;
+  bảng gán hàng loạt). Mỗi tệp ghi tác giả, phiên bản, thời điểm; không chứa khoá API hay mã relay.
+- **Relay AI trên Google Apps Script** (miễn phí) thay cho Hugging Face Space (nay cần gói PRO): xem `AI_RELAY.md`, mục 2.

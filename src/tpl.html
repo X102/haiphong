@@ -447,7 +447,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
         <span>Lưới</span><select id="tkLuoi" title="lưới lớn thì chi tiết hơn nhưng chậm hơn"><option value="900">vừa (≤ 900 × 900 điểm ảnh)</option><option value="1500">chi tiết (≤ 1500)</option><option value="2500">rất chi tiết (≤ 2500, chậm)</option></select></div>
       <div class="row" id="tkXaW" hidden><select id="tkXa" multiple size="4" style="width:100%" data-noi18n></select></div>
       <div class="row" id="tkVungW" hidden><select id="tkVung" style="width:100%" data-noi18n></select></div>
-      <div class="row"><button id="tkChay" type="button" class="on">Thống kê</button><button id="tkCSV" type="button">CSV</button></div>
+      <div class="row"><button id="tkChay" type="button" class="on">Thống kê</button><button id="tkCSV" type="button">CSV</button><button id="tkHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button></div>
       <div id="tkKQ" hidden>
         <div class="row"><button type="button" data-ttab="dt" class="on">Diện tích</button><button type="button" data-ttab="bd">Biểu đồ</button><button type="button" data-ttab="xa">Theo xã</button><button type="button" data-ttab="dong">Đồng thuận</button><button type="button" data-ttab="cg">Quy đổi</button></div>
         <div data-tpane="dt"><div id="tkBang" data-noi18n></div></div>
@@ -483,7 +483,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
         <div class="row">bản đồ <select id="plXem"><option value="lop">lớp</option><option value="tin">độ giống mẫu</option><option value="cb">chỗ cần thêm mẫu, chỗ lẫn</option><option value="tat">tắt</option></select></div>
         <div id="plLeg" data-noi18n></div>
         <div class="row"><input id="plTen" type="text" placeholder="tên phương án" style="flex:1" data-noi18n><button id="plLuu" type="button" class="on" title="lưu vào trình duyệt, dùng ở Thống kê lớp phủ và Phát hiện thay đổi, có trong tệp tiến độ">Lưu thành phương án</button></div>
-        <div class="row"><button id="plTif" type="button">GeoTIFF</button><button id="plGeo" type="button">GeoJSON</button><button id="plCSV" type="button">CSV</button></div>
+        <div class="row"><button id="plTif" type="button">GeoTIFF</button><button id="plGeo" type="button">GeoJSON</button><button id="plCSV" type="button">CSV</button><button id="plHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button></div>
       </div>
     </div>
   </div>
@@ -518,7 +518,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
         <div class="row">bản đồ <select id="cdXem"><option value="loai">loại thay đổi</option><option value="doi">thay đổi / không đổi</option><option value="do">độ lớn thay đổi</option>
           <option value="ndvi">hiệu NDVI</option><option value="tu">lớp năm sau ở chỗ thay đổi</option><option value="tat">tắt</option></select></div>
         <div id="cdLeg" data-noi18n></div>
-        <div class="row"><button id="cdCSV" type="button">CSV</button><button id="cdGeo" type="button">GeoJSON mảng thay đổi</button>
+        <div class="row"><button id="cdHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button><button id="cdCSV" type="button">CSV</button><button id="cdGeo" type="button">GeoJSON mảng thay đổi</button>
           rải <input id="cdNDiem" type="number" value="10" min="1" style="width:46px"> điểm mỗi loại <button id="cdRai" type="button">để kiểm tra</button></div>
       </div>
     </div>
@@ -732,6 +732,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
     <tr><td>Hoặc địa chỉ gốc tự chọn</td><td><input id="cBase" type="text" size="42" placeholder="vd http://localhost:8000/ (để trống = Hugging Face)"></td></tr>
     <tr><td>Các năm cần gán</td><td><input id="cYears" type="text" size="42"></td></tr>
     <tr><td>Tự sang năm sau khi gán</td><td><input id="cAuto" type="checkbox"></td></tr>
+    <tr><td>Sang điểm mới thì về năm đầu tiên chưa gán</td><td><input id="cDauNam" type="checkbox"></td></tr>
     <tr><td>Hệ thống lớp</td><td><button id="bScheme">Tải hệ thống lớp JSON…</button> <button id="bSchemeOut">Lưu hệ thống lớp</button></td></tr>
   </table>
   <p class="mu sm" data-i18n-html="setNote">Trang đọc <code>manifest.json</code> của bộ dữ liệu để biết các lớp đối chiếu và bộ điểm. Bộ dữ liệu phải công khai. Nếu trình duyệt chặn đọc khi mở tệp bằng <code>file://</code>, chạy <code>python -m http.server</code> trong thư mục chứa trang rồi mở <code>http://localhost:8000/LAY_MAU_DA_NAM.html</code>.</p>
@@ -862,10 +863,10 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
       <span id="aiThuMucL">Thư mục (folder ID)</span><input id="aiThuMuc" type="text" spellcheck="false" placeholder="b1g…">
       <span>Ảnh</span><label><input type="checkbox" id="aiAnh"> model nhận ảnh (bỏ chọn nếu model chỉ đọc chữ)</label></div>
     <details><summary>Relay riêng (không cần VPN)</summary>
-      <div class="vg-o"><span>Địa chỉ relay</span><input id="aiRelay" type="text" spellcheck="false" placeholder="https://ten-ban-ai-relay.hf.space">
-        <span>Mã relay</span><input id="aiRelayMa" type="password" autocomplete="off" spellcheck="false">
+      <div class="vg-o"><span>Địa chỉ relay</span><input id="aiRelay" type="text" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+        <span>Mã relay</span><span class="row" style="margin:0;flex-wrap:nowrap"><input id="aiRelayMa" type="password" autocomplete="off" spellcheck="false" style="flex:1;min-width:0"><button id="aiTaoMa" type="button" title="tạo một mã ngẫu nhiên để dán vào thuộc tính RELAY_TOKEN của relay">Tạo mã</button></span>
         <span>Đi qua relay</span><label><input type="checkbox" id="aiQuaRelay"> với nhà cung cấp đang chọn</label></div>
-      <div class="mu sm">Relay là máy chủ nhỏ của riêng bạn trên Hugging Face Space (ô Colab HF_AI_RELAY_cell.py dựng tự động): giữ khoá API làm bí mật ở máy chủ, chỉ nhận yêu cầu có mã relay và đến từ trang này, rồi chuyển tiếp tới nhà cung cấp. Có khoá trên relay thì ở đây không cần nhập khoá.</div></details>
+      <div class="mu sm">Relay là máy chủ nhỏ của riêng bạn giữ khoá API ở phía máy chủ và chuyển tiếp yêu cầu tới nhà cung cấp, chỉ nhận yêu cầu có đúng mã relay. Miễn phí: Google Apps Script (tệp ai_relay_gas.gs, địa chỉ dạng https://script.google.com/macros/s/…/exec). Có thể dùng máy chủ riêng (ai_relay.py) hoặc Hugging Face Space nếu tài khoản có gói PRO. Có khoá trên relay thì ở đây không cần nhập khoá. Xem hướng dẫn AI_RELAY.md.</div></details>
     <details><summary>Lưu khoá</summary>
       <div class="vg-o"><span>Cách lưu</span><select id="aiLuu"><option value="thiet_bi">mã hoá, gắn với trình duyệt này (khuyên dùng)</option><option value="mat_khau">mã hoá bằng mật khẩu riêng</option><option value="phien">chỉ đến khi đóng thẻ</option><option value="khong">không lưu</option></select>
         <span id="aiMKW">Mật khẩu</span><input id="aiMK" type="password" autocomplete="off" placeholder="ít nhất 6 ký tự"></div>
@@ -883,7 +884,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
       <span>Gửi kèm</span><span><label><input type="checkbox" data-ag="dai" checked> dải ảnh theo năm</label> <label><input type="checkbox" data-ag="mua" checked> đường mùa vụ 6 kỳ</label>
         <label><input type="checkbox" data-ag="gt" checked> giá trị tại điểm</label> <label><input type="checkbox" data-ag="s2" checked> 10 băng và chỉ số theo năm</label></span>
       <span>Ghi chú cho AI</span><input id="aiGhi" type="text" placeholder="vd: gần đê biển, nghi ao nuôi tôm"></div>
-    <div class="row"><button id="aiHoi" type="button" class="on">Hỏi AI</button><button id="aiXemGui" type="button" title="xem đúng số liệu và ảnh sẽ gửi đi, không gọi AI">Xem nội dung sẽ gửi</button></div>
+    <div class="row"><button id="aiHoi" type="button" class="on">Hỏi AI</button><button id="aiXemGui" type="button" title="xem đúng số liệu và ảnh sẽ gửi đi, không gọi AI">Xem nội dung sẽ gửi</button><button id="aiHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">Lưu HTML</button></div>
     <div id="aiKQ" data-noi18n></div>
   </div>
   <div data-apane="loat" hidden>
@@ -895,7 +896,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
       <span>Đánh dấu</span><label><input type="checkbox" id="aiLXL" checked> "cần xem lại" cho nhãn do AI gán</label>
       <span>Nghỉ giữa hai lần gọi</span><span><input id="aiLNghi" type="number" value="1.5" min="0" step="0.5" style="width:64px"> s</span></div>
     <div class="mu sm">Mỗi điểm một lần gọi với cùng nội dung như "Hỏi về điểm" (các ô "Gửi kèm" ở thẻ đó). Nhãn U, M không tự gán. Nhãn do AI gán ghi tên model và độ tin cậy vào điểm (có trong tệp tiến độ), độ tin cậy của người gán đặt là thấp hoặc vừa.</div>
-    <div class="row"><button id="aiLChay" type="button" class="on">Bắt đầu</button><button id="aiLDung" type="button" disabled>Dừng</button><button id="aiLCSV" type="button">CSV kết quả</button></div>
+    <div class="row"><button id="aiLChay" type="button" class="on">Bắt đầu</button><button id="aiLDung" type="button" disabled>Dừng</button><button id="aiLCSV" type="button">CSV kết quả</button><button id="aiLHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button></div>
     <div class="mu sm" id="aiLTT" data-noi18n></div>
     <div id="aiLKQ" data-noi18n style="max-height:40vh;overflow:auto"></div>
   </div>
@@ -2097,7 +2098,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.7";
+const VERSION = "2.7.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2903,8 +2904,13 @@ L.DomEvent.disableClickPropagation($("fab")); L.DomEvent.disableScrollPropagatio
 if (MQ && MQ.addEventListener) MQ.addEventListener("change", () => setTimeout(() => map.invalidateSize(), 200));
 
 /* ---------------- thao tác ---------------- */
+function namDauCanGan(p) {                 // bản 2.7: năm đầu tiên chưa gán của điểm (hết thì năm đầu tiên)
+  const ys = years(); return ys.find(y => !(p.nhan && p.nhan[y])) || ys[0];
+}
 function select(id, pan) {
-  ST.cur = id; save(); render();
+  const moi = id !== ST.cur; ST.cur = id; save();
+  const p0 = cur(), y0 = moi && p0 && CFG.dau_nam !== false ? namDauCanGan(p0) : null;
+  if (y0 && y0 !== ST.nam) setYear(y0); else render();
   const p = cur(); if (p && pan) map.setView([p.lat, p.lon], Math.max(map.getZoom(), 17));
   if (p && isMobile()) {
     if (document.body.dataset.sheet === "min") sheet("mid");
@@ -3001,13 +3007,13 @@ $("bLoad").onclick = () => $("fileIn").click();
 $("bExport").onclick = () => $("dlgExp").showModal(); $("eClose").onclick = () => $("dlgExp").close();
 $("bHelp").onclick = openHelp; $("hClose").onclick = () => $("dlgHelp").close();
 $("bSet").onclick = () => {
-  $("cRepo").value = CFG.repo; $("cRev").value = CFG.rev; $("cBase").value = CFG.base; $("cYears").value = CFG.years.join(", "); $("cAuto").checked = CFG.auto;
+  $("cRepo").value = CFG.repo; $("cRev").value = CFG.rev; $("cBase").value = CFG.base; $("cYears").value = CFG.years.join(", "); $("cAuto").checked = CFG.auto; $("cDauNam").checked = CFG.dau_nam !== false;
   $("dlgSet").showModal();
 };
 $("cCancel").onclick = () => $("dlgSet").close();
 $("cOk").onclick = () => {
   const ys = $("cYears").value.split(/[ ,;]+/).map(Number).filter(v => v > 1980 && v < 2100).sort();
-  CFG = {repo: $("cRepo").value.trim(), rev: $("cRev").value.trim() || "main", base: $("cBase").value.trim(), years: ys.length ? ys : CFG.years, auto: $("cAuto").checked};
+  CFG = {repo: $("cRepo").value.trim(), rev: $("cRev").value.trim() || "main", base: $("cBase").value.trim(), years: ys.length ? ys : CFG.years, auto: $("cAuto").checked, dau_nam: $("cDauNam").checked};
   ls(KEY_CFG, CFG); TIFF.clear(); $("dlgSet").close(); loadManifest(); render();
 };
 $("bScheme").onclick = () => $("fileIn").click();
@@ -3108,6 +3114,7 @@ function setLang(l) {
 /*__V27__*/
 /*__TK__*/
 /*__PL__*/
+/*__BC__*/
 </script>
 </body>
 </html>

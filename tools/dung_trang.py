@@ -20,6 +20,7 @@ for k, v in [("/*__SCHEME__*/null", json.dumps(sc, ensure_ascii=False)),
              ("/*__V27__*/", (S / "v27_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__TK__*/", (S / "tk_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__PL__*/", (S / "pl_ui.js").read_text(encoding="utf-8").strip()),
+             ("/*__BC__*/", (S / "bc_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__CHISO__*/null", (S / "chiso_s2.json").read_text(encoding="utf-8").strip()),
              ("/*__I18N__*/{}", json.dumps(json.loads((S / "i18n.json").read_text(encoding="utf-8")), ensure_ascii=False))]:
     assert s.count(k) == 1, k
