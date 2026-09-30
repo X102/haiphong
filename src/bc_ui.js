@@ -54,7 +54,17 @@ function bcAnhPhan(cv, leg, g) {
 /* ---------- từng bảng ---------- */
 function bcThayDoi() {
   const K = CD.kq; if (!K) { msg(T("chạy phát hiện thay đổi trước"), "wa", 3000); return; }
-  const ts = [[T("Năm"), `${K.A} → ${K.B}`], [T("Phạm vi"), esc(cdTenPV(K.PV))], [T("Lưới"), `${K.g.w} × ${K.g.h}, ${K.res.toFixed(1)} m`],
+  if (K.kieu === "xh") {                       // bản 2.8: hồi quy xu hướng
+    const ts = [[T("Phương pháp"), esc(T("hồi quy tuyến tính chỉ số theo năm (xu hướng)"))], [T("Chỉ số"), esc(K.cs.ten)], [T("Năm"), K.nam.join(", ")],
+      [T("Phạm vi"), esc(cdTenPV(K.PV))], [T("Lưới"), `${K.g.w} × ${K.g.h}, ${K.res.toFixed(1)} m`], [T("Cách tính"), esc(xhTenCach(K))],
+      [T("Ngưỡng"), `${K.t1} / ${K.t2} ${esc(T("mỗi năm"))} (${esc(xhTenNg(K))})`]];
+    bcTai(`xu_huong_${v28TenTep(K.cs.ten)}_${K.A}_${K.B}`, T("Xu hướng {c} {a}-{b}", {c: K.cs.ten, a: K.A, b: K.B}), ts, [
+      {h: T("Nhận định"), html: bcSach(cd$("cdTom"))}, {h: T("Nhận định của AI"), html: bcSach(cd$("cdAIKQ"))},
+      {h: T("Bản đồ"), html: bcAnhPhan(CD.canvas, cd$("cdLeg"), K.g)}, {h: T("Bảng"), html: bcSach(cd$("cdBang"))},
+      {h: T("Cặp năm"), html: bcSach(cd$("cdMT"))}, {h: T("Biểu đồ"), html: bcSach(cd$("cdBD"))}]);
+    return;
+  }
+  const ts = [[T("Phương pháp"), K.pp === "irmad" ? "IR-MAD (Nielsen 2007)" : T("véc tơ thay đổi (CVA)")], [T("Năm"), `${K.A} → ${K.B}`], [T("Phạm vi"), esc(cdTenPV(K.PV))], [T("Lưới"), `${K.g.w} × ${K.g.h}, ${K.res.toFixed(1)} m`],
     [T("Ngưỡng độ lớn"), `${K.t.toFixed(3)} (${esc(K.tCach)})`], [T("Loại thay đổi"), esc(cd$("cdPL").selectedOptions[0].textContent)], [T("Đặc trưng dùng"), esc(K.ten.join(", "))]];
   bcTai("thay_doi_" + K.A + "_" + K.B, T("Phát hiện thay đổi {a} → {b}", {a: K.A, b: K.B}), ts, [
     {h: T("Nhận định"), html: bcSach(cd$("cdTom"))}, {h: T("Nhận định của AI"), html: bcSach(cd$("cdAIKQ"))},

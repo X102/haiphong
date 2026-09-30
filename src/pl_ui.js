@@ -268,7 +268,8 @@ pl$("plThu").onclick = () => { const b = pl$("plBody"); b.hidden = !b.hidden; pl
 pl$("plPV").onchange = plHien; pl$("plPP").onchange = plHien;
 ["plNam", "plHe"].forEach(id => { pl$(id).onchange = plVeBo; });
 pl$("plChay").onclick = plChay; pl$("plXem").onchange = plVe; pl$("plLuu").onclick = plLuu; pl$("plGeo").onclick = plGeo; pl$("plCSV").onclick = plCSV;
-pl$("plTif").onclick = () => { const K = PL.kq; if (K) tkTif(plGiaTri(K), K.g, `phan_loai_${K.y}_${stamp()}.tif`); };
+pl$("plTif").onclick = () => { const K = PL.kq; if (!K) return;
+  try { v28TifLop(`phan_loai_${K.y}_${stamp()}`, K.g, plGiaTri(K), null, K.lop.map(l => ({ma: l.v, ten: l.ten, mau: l.mau}))); } catch (e) { msg(T("lỗi: ") + (e.message || e), "er", 6000); } };
 document.querySelectorAll("#plP [data-ptab]").forEach(b => { b.onclick = () => plTab(b.dataset.ptab); });
 document.addEventListener("xa27", () => { if (!pl$("plP").hidden) pl$("plXa").innerHTML = v27DSXa(); });
 { const el = pl$("plP"); L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el);

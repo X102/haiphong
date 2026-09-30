@@ -490,8 +490,11 @@ function aiLoatCSV() {
 async function aiThayDoi() {
   const K = CD.kq, box = ai$("cdAIKQ"); if (!K) { msg(T("chạy phát hiện thay đổi trước"), "wa", 3000); return; }
   const pct = v => +(100 * v / Math.max(K.tong, 1e-9)).toFixed(2);
+  if (K.kieu === "xh") return aiXuHuong(K, box, pct);
   const J = {pham_vi: cdTenPV(K.PV), nam_truoc: K.A, nam_sau: K.B, dien_tich_co_du_lieu_ha: +K.tong.toFixed(1), nguong_do_lon: +K.t.toFixed(3), cach_dat_nguong: K.tCach,
     dien_tich_thay_doi_ha: +K.tongDoi.toFixed(1), ty_le_thay_doi_pct: pct(K.tongDoi), dac_trung_so_sanh: K.ten,
+    phuong_phap: K.pp === "irmad" ? "IR-MAD (Nielsen 2007), magnitude = sqrt(chi2/p) of standardized MAD variates" : "change vector analysis (RMS of robustly standardized differences)",
+    ...(K.mad ? {irmad_tuong_quan_chinh_tac: K.mad.rho.map(r => +r.toFixed(4)), irmad_vong_lap: K.mad.it, irmad_hoi_tu: K.mad.hoiTu} : {}),
     cach_xac_dinh_loai: K.pl === "sobo" ? "rule-based preliminary classes from NDVI/MNDWI (water, vegetation, built-up or bare)" : K.pl === "mau" ? "k-means prototypes of labelled samples" : "existing class maps",
     cac_loai: K.ten_loai.map((t, k) => t && K.dt[k] ? {loai: t, mau_tren_ban_do: K.pl === "sobo" ? CD_MAU[k] : (k === 1 ? CD_MAU[1] : CD_MAU[9]), ha: +K.dt[k].toFixed(2), pct: pct(K.dt[k]),
       dNDVI_tb: +(K.tb[k].dN / K.tb[k].n).toFixed(3), dMNDWI_tb: +(K.tb[k].dW / K.tb[k].n).toFixed(3), dNDBI_tb: +(K.tb[k].dB / K.tb[k].n).toFixed(3)} : null).filter(Boolean),
@@ -511,6 +514,30 @@ async function aiThayDoi() {
   box.innerHTML = `<div class="mu sm">${T("đang hỏi {m}…", {m: aiModel()})}</div>`;
   try {
     const r = await aiGoi(he, "Change detection result (JSON):\n" + JSON.stringify(J) + (anh.length ? "\nAttached: " + anh[0].mo_ta : ""), anh, {max: 2500});
+    box.innerHTML = `<div class="ai-kq"><b>${esc(r.model)}</b> <span class="mu">${(r.ms / 1000).toFixed(1)} s</span>` +
+      r.text.trim().split(/\n{2,}/).map(t => `<p>${esc(t).replace(/\n/g, "<br>").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")}</p>`).join("") +
+      `<p class="mu">${T("Nhận định do AI viết từ bảng số liệu trên; cần kiểm tra lại.")}</p></div>`;
+  } catch (e) { box.innerHTML = `<div class="ai-kq">${T("lỗi: ")}${esc(aiAn(e.message || e))}</div>`; if (/khoá|model|mật khẩu/.test(e.message || "")) aiMo("kn"); }
+}
+
+async function aiXuHuong(K, box, pct) {        // bản 2.8: AI nhận định kết quả hồi quy xu hướng
+  const ten = k => ["", "strong decrease", "weak decrease", "stable", "weak increase", "strong increase"][k];
+  const J = {pham_vi: cdTenPV(K.PV), chi_so: K.cs.ten, cac_nam: K.nam, moi_nam: "one dry-season Sentinel-2 composite per year", cach_tinh: K.cach === "mk" ? `Theil-Sen slope + Mann-Kendall (|Z| >= ${K.zc}${K.loc ? ", non-significant counted as stable" : ""})` : "OLS slope per year with R2",
+    nguong_moi_nam: {nhe: K.t1, manh: K.t2}, dien_tich_co_du_lieu_ha: +K.tong.toFixed(1),
+    cac_cap: [1, 2, 3, 4, 5].map(k => ({cap: ten(k), mau_tren_ban_do: XH_MAU[k], ha: +K.dt[k].toFixed(2), pct: pct(K.dt[k]), he_so_goc_tb: K.dem[k] ? +(K.tbS[k] / K.dem[k]).toFixed(4) : null}))};
+  if (isFinite(K.r2tb)) J.r2_trung_binh = +K.r2tb.toFixed(3); if (isFinite(K.pSig)) J.ty_le_diem_anh_co_y_nghia_pct = +(100 * K.pSig).toFixed(1);
+  if (K.cap.length) J.theo_cap_nam_ha = K.cap.map(c => ({cap_nam: `${c.a}-${c.b}`, giam_manh: +c.dt[1].toFixed(1), giam_nhe: +c.dt[2].toFixed(1), on_dinh: +c.dt[3].toFixed(1), tang_nhe: +c.dt[4].toFixed(1), tang_manh: +c.dt[5].toFixed(1)}));
+  const xa = Object.entries(K.theoXa).map(([i, o]) => [(VG.xa.find(x => x.i === +i) || {}).ten || i, +(o[1] + o[2]).toFixed(1), +(o[4] + o[5]).toFixed(1)]).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (xa.length) J.xa_giam_nhieu_nhat_ha = xa.map(([t, g, u]) => ({xa: t, giam: g, tang: u}));
+  const anh = [];
+  if (CD.canvas && CD.canvas.width) { const a = await aiAnhCanvas(CD.canvas, "image/png"); if (a) { a.mo_ta = `trend map (${ai$("cdXem").value}), north up, colours as in "cac_cap"`; anh.push(a); } }
+  const he = "You are a remote sensing analyst of vegetation and land cover trends in Hai Phong, Vietnam. Interpret the per-pixel linear trend of a spectral index " +
+    "across yearly Sentinel-2 dry-season composites using ONLY the statistics given (never invent numbers): where and when greening or degradation dominates, " +
+    "plausible causes (urban expansion, industrial parks, land reclamation, aquaculture, crop rotation, storms), the effect of having one composite per year " +
+    "(for adjacent year pairs the slope is just the difference), threshold sensitivity, and what to verify with the yearly image strip. Write in " + aiNN() + ", plain text, short paragraphs, at most 300 words.";
+  box.innerHTML = `<div class="mu sm">${T("đang hỏi {m}…", {m: aiModel()})}</div>`;
+  try {
+    const r = await aiGoi(he, "Trend result (JSON):\n" + JSON.stringify(J) + (anh.length ? "\nAttached: " + anh[0].mo_ta : ""), anh, {max: 2500});
     box.innerHTML = `<div class="ai-kq"><b>${esc(r.model)}</b> <span class="mu">${(r.ms / 1000).toFixed(1)} s</span>` +
       r.text.trim().split(/\n{2,}/).map(t => `<p>${esc(t).replace(/\n/g, "<br>").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")}</p>`).join("") +
       `<p class="mu">${T("Nhận định do AI viết từ bảng số liệu trên; cần kiểm tra lại.")}</p></div>`;

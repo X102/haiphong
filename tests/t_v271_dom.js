@@ -33,7 +33,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   let nb = blobs.length; $("tkHTML").click(); await sleep(50);
   const h1 = await docBlob(blobs[nb]);
   ok(blobs[nb].type === "text/html" && /^<!doctype html>/.test(h1) && /<title>Thống kê lớp phủ<\/title>/.test(h1) && /<h2>Diện tích<\/h2>/.test(h1) && /<h2>Đồng thuận<\/h2>/.test(h1) &&
-     /<svg/.test(h1) && /kappa/.test(h1) && !/<button/.test(h1) && !/<select/.test(h1) && /Phạm Đăng Hiển/.test(h1) && /v2\.7/.test(h1),
+     /<svg/.test(h1) && /kappa/.test(h1) && !/<button/.test(h1) && !/<select/.test(h1) && /Phạm Đăng Hiển/.test(h1) && h1.includes("v" + E("VERSION")),
      "HTML thống kê: tự chứa, đủ các mục, biểu đồ SVG, kappa, không còn nút bấm, có tác giả và phiên bản");
   E("tkMo(false)");
   E("cdMo(true)"); await sleep(200); $("cdPV").value = "tinh"; $("cdNguong").value = "otsu"; $("cdPL").value = "sobo";

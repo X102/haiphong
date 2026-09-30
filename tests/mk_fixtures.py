@@ -52,6 +52,12 @@ with rasterio.open(f"{FX}/s2_2023.tif", "w", driver="GTiff", width=W, height=Hh,
                    transform=from_origin(x0, y0, 10, 10)) as o: o.write(s2_23)
 ns["s2d_cog"](f"{FX}/s2.tif", f"{R}/s2d/s2d_2025.tif"); ns["s2d_cog"](f"{FX}/s2_2023.tif", f"{R}/s2d/s2d_2023.tif")
 assert ns["kiem_s2d"](f"{FX}/s2.tif", f"{R}/s2d/s2d_2025.tif")[0] == 0
+# bản 2.8: năm 2024 (không ghi vào manifest; bài thử hồi quy tự thêm): giữa 2023 và 2025, dải cột 200:300 NIR giảm mạnh (mất thực vật)
+s2_24 = np.where(s2 > 0, np.clip(s2.astype(np.int32) - 100, 1, 9000), 0).astype(np.int16)
+s2_24[6:8, :, 200:300] = np.where(s2_24[6:8, :, 200:300] > 0, np.clip(s2_24[6:8, :, 200:300] // 3, 1, 9000), 0)
+with rasterio.open(f"{FX}/s2_2024.tif", "w", driver="GTiff", width=W, height=Hh, count=10, dtype="int16", crs="EPSG:32648",
+                   transform=from_origin(x0, y0, 10, 10)) as o: o.write(s2_24)
+ns["s2d_cog"](f"{FX}/s2_2024.tif", f"{R}/s2d/s2d_2024.tif")
 KG = ns["s2d_keo_gian"](f"{FX}/s2.tif", n_win=20, win=200)
 json.dump(dict(mu=[0] * 64, comps=[[0] * 64] * 6, lo=[-3, -2, -1, -4, -5, -6], hi=[3, 2, 1, 4, 5, 6]), open(f"{R}/emb/g7_phep_chieu.json", "w"))
 json.dump(dict(id=[f"E{i:04d}" for i in range(len(rc))], ky=[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]], k=k, nam=cv),

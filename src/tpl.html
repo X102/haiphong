@@ -291,6 +291,28 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
 .cb27 button{font-size:11px;padding:0 5px;margin-left:4px}
 #vnKQ button{display:block;width:100%;text-align:left;font-size:12px;margin:1px 0}
 @media (max-width: 760px){ .pn27{left:6px!important;right:64px;top:6px!important;width:auto;max-height:50%} }
+/* ---- bản 2.8: kéo giãn, độ trong suốt, hồi quy, xuất bản đồ ---- */
+.keo28-doc{position:absolute;top:0;bottom:0;width:7px;z-index:1150;cursor:col-resize;touch-action:none}
+.keo28-trai{left:0}.keo28-phai{right:0}
+.keo28-ngang{position:absolute;left:0;right:0;bottom:0;height:7px;z-index:1150;cursor:row-resize;touch-action:none}
+.keo28-doc:hover,.keo28-ngang:hover,body.keo28 .keo28-doc,body.keo28 .keo28-ngang{background:rgba(11,99,206,.35)}
+body.keo28{user-select:none}
+.rz28{resize:both}
+#panel.thu{resize:none}
+@media (max-width: 760px){ .rz28{resize:none} }
+.op28{display:grid;grid-template-columns:minmax(0,1fr) 92px 38px;gap:4px;align-items:center;font-size:12px;padding:1px 0}
+.op28 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op28 input[type=range]{width:92px!important}
+.op28 small{color:var(--mu);font-size:11px;text-align:right}
+#opW summary{cursor:pointer;font-weight:600;margin-top:4px}
+i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-align:-1px;border:1px solid rgba(0,0,0,.2)}
+#dlgXB{width:min(760px,96vw);max-height:92vh;overflow:auto}
+#dlgXB .vg-o{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr)}
+#dlgXB input[type=number]{width:70px}
+#dlgXB textarea{width:100%;min-height:38px;font-size:12px}
+#xbXem{max-width:100%;border:1px solid var(--ln);background:#fff;display:block;margin:6px auto}
+#xbCG label{display:block;font-size:12px}
+@media (max-width: 760px){ #dlgXB .vg-o{grid-template-columns:auto minmax(0,1fr)} }
 </style>
 </head>
 <body>
@@ -312,6 +334,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
     <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt">🤖 AI</button>
     <button id="bPL" type="button" title="Tạo bản đồ lớp phủ từ các điểm mẫu, kèm kiểm định và cảnh báo chỗ cần thêm mẫu">🧭 Phân loại</button>
     <button id="bTK" type="button" title="Thống kê, so sánh các bản đồ lớp phủ: bộ dữ liệu, toàn cầu, bản đồ riêng">📊 Lớp phủ</button>
+    <button id="bXB" type="button" title="Xuất bản đồ đang xem thành ảnh JPEG hoặc PNG độ phân giải cao (300 dpi) có lưới toạ độ, chú giải, thước tỉ lệ, mũi tên bắc">🖨 Xuất bản đồ</button>
     <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
       <option value="trai">▤ trong bảng này</option>
       <option value="phai">▥ cột bên phải</option>
@@ -491,34 +514,46 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
     <div class="vg-dau"><b title="kéo thanh này để dời bảng">⠿ Phát hiện thay đổi</b><span class="mu" id="cdTrang" data-noi18n></span>
       <span style="margin-left:auto"></span><button id="cdThu" type="button" title="thu gọn / mở rộng bảng">–</button><button id="cdDong" type="button" title="đóng">×</button></div>
     <div id="cdBody">
-      <div class="vg-o"><span>Năm trước</span><select id="cdA" data-noi18n></select><span>Năm sau</span><select id="cdB" data-noi18n></select>
+      <div class="vg-o"><span>Phương pháp</span><select id="cdPP" title="CVA: độ lớn véc tơ hiệu giữa hai năm; IR-MAD: tương quan chính tắc lặp có trọng số (Nielsen 2007); hồi quy: hệ số góc của chỉ số theo các năm">
+          <option value="cva">véc tơ thay đổi (CVA): hai năm</option><option value="irmad">IR-MAD (Nielsen 2007): hai năm</option><option value="xh">hồi quy tuyến tính chỉ số theo năm (xu hướng)</option></select>
+        <span id="cdAT" data-noi18n>Năm trước</span><select id="cdA" data-noi18n></select><span id="cdBT" data-noi18n>Năm sau</span><select id="cdB" data-noi18n></select>
         <span>Phạm vi</span><select id="cdPV"><option value="nhin">khung nhìn hiện tại</option><option value="xa">các xã chọn dưới đây</option><option value="tinh">cả tỉnh đang chọn</option><option value="vung">một vùng đã lưu</option></select></div>
       <div class="row" id="cdXaW" hidden><select id="cdXa" multiple size="4" style="width:100%" data-noi18n></select></div>
       <div class="row" id="cdVungW" hidden><select id="cdVung" style="width:100%" data-noi18n></select></div>
-      <details open><summary>Dữ liệu so sánh</summary>
+      <details open id="cdDLW"><summary>Dữ liệu so sánh</summary>
         <label style="display:block"><input type="checkbox" data-cd="s2" checked> S2 10 băng (phản xạ)</label>
         <label style="display:block"><input type="checkbox" data-cd="cs" checked> các chỉ số (NDVI, MNDWI, NDBI, BSI và danh sách đang dùng)</label>
         <label style="display:block"><input type="checkbox" data-cd="ctx"> CTX trung bình 15 × 15 (10 băng)</label>
         <label style="display:block"><input type="checkbox" data-cd="pc"> PC chuỗi năm</label>
         <label style="display:block"><input type="checkbox" data-cd="emb"> embedding (ảnh chiếu 8 bit)</label>
         <label style="display:block"><input type="checkbox" id="cdChuan" checked> chuẩn hoá bức xạ tương đối theo điểm ảnh ổn định</label></details>
-      <details open><summary>Cách phát hiện</summary>
-        <div class="vg-o"><span>Ngưỡng</span><select id="cdNguong"><option value="otsu">tự động (Otsu)</option><option value="mau">theo điểm đã gán nhãn cả hai năm (tối ưu F1)</option><option value="tay">tự đặt</option></select>
+      <details open id="cdCachW"><summary>Cách phát hiện</summary>
+        <div class="vg-o"><span>Ngưỡng</span><span><select id="cdNguong"><option value="otsu">tự động (Otsu)</option><option value="mau">theo điểm đã gán nhãn cả hai năm (tối ưu F1)</option><option value="tay">tự đặt</option><option value="chi2">theo phân phối χ² (IR-MAD)</option></select>
+          <span id="cdChiW" hidden>mức <select id="cdChiP"><option value="0.95">95 %</option><option value="0.99" selected>99 %</option><option value="0.999">99.9 %</option></select></span></span>
           <span>độ lớn</span><span><input id="cdT" type="range" min="0.5" max="8" step="0.05" value="2.5" style="width:130px"> <b id="cdTV" data-noi18n>2.50</b></span>
           <span>Mảng nhỏ nhất</span><span><input id="cdMin" type="number" value="0.05" step="0.01" min="0" style="width:64px"> ha</span>
           <span>Loại thay đổi</span><select id="cdPL"><option value="sobo">theo lớp sơ bộ từ chỉ số (không cần mẫu)</option><option value="mau">theo điểm mẫu (lớp của hệ thống, cần mẫu cả hai năm)</option><option value="bando">theo bản đồ lớp có sẵn</option></select>
           <span>Bộ điểm mẫu</span><select id="cdBo" data-noi18n></select><span>Bản đồ lớp</span><select id="cdPA" data-noi18n></select></div></details>
+      <details open id="cdXhW" hidden><summary>Hồi quy xu hướng</summary>
+        <div class="vg-o"><span>Chỉ số</span><select id="xhCS" data-noi18n title="danh sách chỉ số đang dùng (thêm ở thư viện chỉ số của lớp S2)"></select>
+          <span>Cách tính</span><span><select id="xhCach"><option value="ols">OLS: hồi quy tuyến tính (hệ số góc, R²)</option><option value="mk">Theil–Sen (hệ số góc) + Mann–Kendall (ý nghĩa)</option></select>
+            <span id="xhZW" hidden>độ tin cậy <select id="xhZ"><option value="1.645">90 %</option><option value="1.96" selected>95 %</option><option value="2.576">99 %</option></select>
+            <label><input type="checkbox" id="xhMask" checked> không ý nghĩa tính là ổn định</label></span></span>
+          <span>Ngưỡng</span><select id="xhNg"><option value="ma">theo mã GEE ChuyenDoiXanh v6.11: 0.01 / 0.03</option><option value="bao">theo bài Thủy Nguyên, cặp năm liền kề: 0.1 / 0.2</option><option value="tay">tự đặt</option></select>
+          <span>nhẹ / mạnh</span><span><input id="xhT1" type="number" step="0.005" min="0" value="0.01" style="width:66px"> / <input id="xhT2" type="number" step="0.005" min="0" value="0.03" style="width:66px"> <span class="mu">mỗi năm</span></span></div>
+        <label style="display:block"><input type="checkbox" id="xhCap"> thêm bảng từng cặp năm liền kề trong khoảng</label>
+        <div class="mu sm">Mỗi năm một ảnh tổng hợp mùa khô của bộ dữ liệu; hệ số góc tính bằng chỉ số mỗi năm. Với hai năm liền kề, hệ số góc là hiệu chỉ số giữa hai năm.</div></details>
       <div class="row"><button id="cdChay" type="button" class="on">Phát hiện thay đổi</button><button id="cdAI" type="button" title="gửi bảng số liệu và bản đồ loại thay đổi cho AI để nhận định">🤖 Nhờ AI nhận định</button></div>
       <div id="cdKQ" hidden>
-        <div class="vg-tab"><button data-ctab="tom" class="on">Nhận định</button><button data-ctab="bang">Bảng</button><button data-ctab="mt">Ma trận</button><button data-ctab="bd">Biểu đồ</button></div>
+        <div class="vg-tab"><button data-ctab="tom" class="on">Nhận định</button><button data-ctab="bang">Bảng</button><button data-ctab="mt" data-noi18n>Ma trận</button><button data-ctab="bd">Biểu đồ</button></div>
         <div data-cpane="tom"><div id="cdTom" data-noi18n></div><div id="cdAIKQ" data-noi18n></div></div>
         <div data-cpane="bang" hidden><div id="cdBang" data-noi18n></div></div>
         <div data-cpane="mt" hidden><div id="cdMT" data-noi18n></div></div>
         <div data-cpane="bd" hidden><div id="cdBD" data-noi18n></div></div>
-        <div class="row">bản đồ <select id="cdXem"><option value="loai">loại thay đổi</option><option value="doi">thay đổi / không đổi</option><option value="do">độ lớn thay đổi</option>
+        <div class="row">bản đồ <select id="cdXem" data-noi18n><option value="loai">loại thay đổi</option><option value="doi">thay đổi / không đổi</option><option value="do">độ lớn thay đổi</option>
           <option value="ndvi">hiệu NDVI</option><option value="tu">lớp năm sau ở chỗ thay đổi</option><option value="tat">tắt</option></select></div>
         <div id="cdLeg" data-noi18n></div>
-        <div class="row"><button id="cdHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button><button id="cdCSV" type="button">CSV</button><button id="cdGeo" type="button">GeoJSON mảng thay đổi</button>
+        <div class="row"><button id="cdHTML" type="button" title="lưu số liệu, bảng, biểu đồ, bản đồ, nhận định thành một tệp HTML (mở bằng trình duyệt, in ra PDF được)">HTML</button><button id="cdCSV" type="button">CSV</button><button id="cdGeo" type="button">GeoJSON mảng thay đổi</button><button id="cdTif" type="button" title="bản đồ đang xem thành GeoTIFF (255 = không có dữ liệu) kèm tệp kiểu QGIS .qml">GeoTIFF</button>
           rải <input id="cdNDiem" type="number" value="10" min="1" style="width:46px"> điểm mỗi loại <button id="cdRai" type="button">để kiểm tra</button></div>
       </div>
     </div>
@@ -548,6 +583,7 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
     <b>Lớp đối chiếu (năm đang gán)</b> <span class="mu sm">nháy: <kbd>b</kbd></span>
     <div id="ols"></div>
     <div class="mu sm" id="olmsg"></div>
+    <details id="opW"><summary>Độ trong suốt các lớp trên bản đồ</summary><div id="opDS" data-noi18n></div></details>
     <div id="vnW" hidden>
       <div class="osm-h"><b>Hành chính</b> <select id="vnTinh" title="chọn tỉnh: nạp các xã của tỉnh cho tìm xã, chọn vùng, phát hiện thay đổi, thống kê, phân loại" data-noi18n></select></div>
       <div class="row"><label><input type="checkbox" id="cVnTinh"> ranh giới tỉnh</label> <label><input type="checkbox" id="cVnXa"> ranh giới xã</label></div>
@@ -686,12 +722,36 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
 <aside id="dock" hidden></aside>
 </div>
 
+<dialog id="dlgXB">
+  <h3>Xuất bản đồ thành ảnh</h3>
+  <div class="vg-o">
+    <span>Tiêu đề</span><input id="xbTieuDe" type="text" data-noi18n style="grid-column:span 3" placeholder="ví dụ: Xu hướng NDVI 2017-2025, Thủy Nguyên">
+    <span>Phụ đề</span><input id="xbPhuDe" type="text" data-noi18n style="grid-column:span 3">
+    <span>Khổ</span><select id="xbKho" data-noi18n></select>
+    <span>Rộng × cao</span><span><input id="xbW" type="number" step="0.1" min="3" max="120"> × <input id="xbH" type="number" step="0.1" min="3" max="120"> cm</span>
+    <span>Độ phân giải</span><select id="xbDpi"><option value="150">150 dpi</option><option value="300">300 dpi</option><option value="600">600 dpi</option></select>
+    <span>Định dạng</span><select id="xbDD"><option value="jpg">JPEG</option><option value="png">PNG</option></select>
+    <span>Lưới toạ độ</span><select id="xbLuoi"><option value="dms">độ, phút, giây (WGS 84)</option><option value="dd">độ thập phân (WGS 84)</option><option value="utm">UTM vùng 48N, mét</option><option value="tat">không</option></select>
+    <span>Chú giải</span><select id="xbCGV"><option value="phai">bên phải khung bản đồ</option><option value="trong">trong khung, góc dưới phải</option><option value="tat">không</option></select>
+    <span>Cỡ chữ</span><span><input id="xbChu" type="number" min="5" max="24" step="0.5"> pt</span>
+    <span>Độ đậm nét</span><span><input id="xbNet" type="number" min="0.3" max="4" step="0.1"> ×</span>
+  </div>
+  <div class="row"><label><input type="checkbox" id="xbDuong"> đường lưới trên bản đồ</label><label><input type="checkbox" id="xbThuoc"> thước tỉ lệ</label>
+    <label><input type="checkbox" id="xbBac"> mũi tên bắc</label><label><input type="checkbox" id="xbKhung"> khung</label></div>
+  <details open><summary>Chú giải gồm</summary><div id="xbCG" data-noi18n></div></details>
+  <div class="row">Nguồn, ghi chú (in dưới bản đồ) <button id="xbNguonMac" type="button" title="viết lại dòng nguồn theo các lớp đang hiện">↺</button></div>
+  <textarea id="xbNguon" data-noi18n></textarea>
+  <div class="row"><button id="xbXemBtn" type="button">Xem trước</button><button id="xbXuatBtn" type="button" class="on">Xuất ảnh</button><button id="xbDong" type="button">Đóng</button>
+    <span class="mu sm" id="xbTT" data-noi18n></span></div>
+  <div><canvas id="xbXem" width="10" height="10"></canvas></div>
+  <div class="mu sm">Bản đồ lấy đúng khung nhìn hiện tại (nới theo tỉ lệ khổ ảnh) với các lớp đang hiện và độ trong suốt của chúng. Ảnh nền phải cho phép tải chéo (Esri, Wayback, OpenStreetMap, EOX thường cho phép); lớp nào không lấy được sẽ bị bỏ và được báo lại. Tệp ghi sẵn dpi nên Word, PowerPoint đặt đúng cỡ.</div>
+</dialog>
 <dialog id="dlgGT">
   <h3>Giới thiệu</h3>
   <div data-i18n-html="gtBody">
   <p><b>Geoportal lớp phủ Hải Phòng</b> là công cụ web mở để xem, gán nhãn và thống kê lớp phủ mặt đất nhiều năm (2017-2026) của thành phố Hải Phòng mới. Trang phục vụ luận án tiến sĩ của tác giả và dùng chung cho mọi người quan tâm đến biến động đất đai, đô thị hoá, mặt nước và nông nghiệp ở Hải Phòng.</p>
   <p><b>Dữ liệu</b>: ảnh tổng hợp Sentinel-2 mùa khô từng năm (10 băng), PCA chuỗi năm và đường mùa vụ 6 kỳ, embedding, đặc trưng ngữ cảnh CTX, bản đồ lớp phủ, DEM Copernicus GLO-30, OpenStreetMap, ranh giới xã; ảnh nền Esri Wayback theo năm. Dữ liệu lưu trên Hugging Face và được đọc thẳng từng đoạn, trang không cần máy chủ riêng; nhãn người dùng lưu trong trình duyệt của họ và xuất được thành tệp.</p>
-  <p><b>Chức năng chính</b>: gán nhãn điểm theo năm, tra cứu nhanh một điểm bất kỳ, chọn vùng giống điểm mẫu và chuẩn hoá ranh giới, so sánh các năm, phát hiện thay đổi giữa hai năm, trợ lý AI gợi ý nhãn, phân loại từ điểm mẫu không cần học máy, thống kê và so sánh với bản đồ lớp phủ toàn cầu, ranh giới hành chính cả nước, thư viện 248 chỉ số Sentinel-2 và công thức tự nhập, thống kê theo xã, xuất CSV, GeoJSON, tệp tiến độ.</p>
+  <p><b>Chức năng chính</b>: gán nhãn điểm theo năm, tra cứu nhanh một điểm bất kỳ, chọn vùng giống điểm mẫu và chuẩn hoá ranh giới, so sánh các năm, phát hiện thay đổi (véc tơ thay đổi, IR-MAD, hồi quy xu hướng chỉ số), trợ lý AI gợi ý nhãn, phân loại từ điểm mẫu không cần học máy, thống kê và so sánh với bản đồ lớp phủ toàn cầu, ranh giới hành chính cả nước, xuất bản đồ in ấn 300 dpi, thư viện 248 chỉ số Sentinel-2 và công thức tự nhập, thống kê theo xã, xuất CSV, GeoJSON, tệp tiến độ.</p>
   <p class="mu sm">Mã nguồn mở theo giấy phép MIT. Dữ liệu theo giấy phép của từng nguồn: Copernicus Sentinel-2, Copernicus DEM (© DLR e.V., © Airbus Defence and Space, qua chương trình Copernicus), © OpenStreetMap contributors (ODbL), Esri World Imagery.</p>
   </div>
   <div id="gtTacGia" data-noi18n></div>
@@ -795,6 +855,10 @@ i.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-alig
     <li><b>Hành chính</b>: 34 tỉnh, 3321 xã (từ 01/07/2025); chọn tỉnh là nạp các xã của tỉnh cho tìm xã, chọn vùng, phát hiện thay đổi, thống kê, phân loại; tìm xã trên cả nước, gõ không dấu cũng được.</li>
     <li><b>📊 Lớp phủ</b>: các phương án bản đồ lớp (bản đồ của bộ dữ liệu, toàn cầu DW, ESRI, WorldCover, GLC_FCS30D, bản đồ tạo từ điểm mẫu, GeoTIFF của bạn); diện tích theo năm theo chú giải gốc, chú giải chung 7 lớp hoặc 3 lớp, biểu đồ, theo xã, đồng thuận giữa hai bản đồ (tỉ lệ trùng khớp, kappa), CSV, GeoTIFF.</li>
     <li><b>🧭 Phân loại</b>: bản đồ lớp phủ từ điểm mẫu không cần học máy (cosine hoặc khoảng cách chuẩn hoá; mẫu gần nhất, nguyên mẫu, tâm lớp), kiểm định chéo, cảnh báo chỗ chưa có mẫu, cặp lớp lẫn nhau, lớp nên tách, nhãn nghi sai, xã chưa có mẫu; lưu thành phương án.</li>
+    <li><b>Δ Thay đổi</b>: ba phương pháp: véc tơ thay đổi (CVA), IR-MAD (Nielsen 2007; không nhạy với khác biệt bức xạ tuyến tính giữa hai năm; ngưỡng Otsu, theo điểm mẫu hoặc theo phân phối χ²) và hồi quy tuyến tính chỉ số theo năm (OLS kèm R², hoặc Theil–Sen kèm Mann–Kendall; 5 cấp như công cụ GEE ChuyenDoiXanh; bảng từng cặp năm liền kề); GeoTIFF của bản đồ đang xem.</li>
+    <li><b>🖨 Xuất bản đồ</b>: ảnh JPEG hoặc PNG 150, 300, 600 dpi đúng khung nhìn, có lưới toạ độ (độ phút giây, độ thập phân, UTM 48N), chú giải, thước tỉ lệ kèm tỉ lệ số, mũi tên bắc, tiêu đề, dòng nguồn.</li>
+    <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
+    <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
     <li><b>Ngôn ngữ</b>: chọn ở đầu bảng điều khiển (Tiếng Việt, Русский, English); mở thẳng bằng <code>?lang=ru</code> hoặc <code>?lang=en</code>.</li>
   </ol>
@@ -2090,6 +2154,10 @@ var CORE = (function () {
 if (typeof module !== "undefined") module.exports = {CORE: CORE, DEFAULT_SCHEME: DEFAULT_SCHEME};
 </script>
 
+<script id="xhcore">
+/*__XHCORE__*/
+</script>
+
 <script id="ui">
 /* =============================== GIAO DIỆN =============================== */
 /*__REL__*/
@@ -2098,7 +2166,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.7.1";
+const VERSION = "2.8";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3115,6 +3183,9 @@ function setLang(l) {
 /*__TK__*/
 /*__PL__*/
 /*__BC__*/
+/*__V28__*/
+/*__XH__*/
+/*__XB__*/
 </script>
 </body>
 </html>

@@ -24,11 +24,16 @@ for x in re.findall(r">([^<>]+)<", body2):
     k = re.sub(r"\s+", " ", H.unescape(x)).strip()
     if k and VI.search(k): static.append(k)
 attrs = [H.unescape(a) for a in re.findall(r'(?:title|placeholder)="([^"]+)"', body2) if VI.search(a)]
-src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js")) + open("wayback_core.js", encoding="utf-8").read()
+src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js", "v28_ui.js", "xh_ui.js", "xb_ui.js", "xh_core.js")) + open("wayback_core.js", encoding="utf-8").read()
 dyn = []
 for m in re.finditer(r'\b(?:T|msg|vgTrang|confirm|Error)\(\s*(["\'])((?:\\.|(?!\1).)*)\1', src):
     k = m.group(2).replace('\\"', '"').replace("\\'", "'")
     if VI.search(k): dyn.append(k)
+# bản 2.8: các bảng chữ dạng mảng
+for name, mau in [("XH_TEN", r'"([^"]+)"'), ("XH_XEM", r'\["\w+", "([^"]+)"\]'), ("CD_XEM", r'\["\w+", "([^"]+)"\]'),
+                  ("XB_KHO", r'\[[\d.]+, [\d.]+, "([^"]+)"\]'), ("V28_KEO", r'\["\w+", "[^"]+", "([^"]+)"\]')]:
+    m = re.search(name + r" = (\[.*?\]|\{.*?\});\n", src, re.S)
+    dyn += [v for v in re.findall(mau, m.group(1)) if VI.search(v)]
 # giá trị của các bảng chữ
 for name in ["GOI_Y", "LINK_LBL", "S2_PRE_TEN", "PV_GIAI", "HL_GIAI"]:
     m = re.search(name + r" = \{(.*?)\};", src, re.S)

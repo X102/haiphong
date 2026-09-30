@@ -30,6 +30,7 @@ async function cdMo(on) {
 }
 function cdHien() {
   const pv = cd$("cdPV").value; cd$("cdXaW").hidden = pv !== "xa"; cd$("cdVungW").hidden = pv !== "vung";
+  if (typeof xhHien === "function") xhHien();
   if (cd$("cdPA")) { const bd = cd$("cdPL").value === "bando"; cd$("cdPA").hidden = !bd; cd$("cdPA").previousElementSibling.hidden = !bd; }
   cd$("cdTV").textContent = (+cd$("cdT").value).toFixed(2);
   cd$("cdT").disabled = cd$("cdNguong").value !== "tay";
@@ -100,6 +101,8 @@ function cdDanhGia(M, doi) {                   // ma trận nhầm lẫn thay đ
   return {tp, fp, fn, tn, n, oa: n ? (tp + tn) / n : 0, pr, rc, f1: pr + rc ? 2 * pr * rc / (pr + rc) : 0};
 }
 async function cdChay() {
+  const pp = cd$("cdPP") ? cd$("cdPP").value : "cva";
+  if (pp === "xh") return xhChay();
   const tok = ++CD.tok, A = +cd$("cdA").value, B = +cd$("cdB").value, tt = cd$("cdTrang");
   try {
     if (!MAN || !MAN.s2d) throw new Error(T("cần ảnh S2 10 băng (s2d) của bộ dữ liệu"));
@@ -120,7 +123,7 @@ async function cdChay() {
     };
     // ② chuẩn hoá bức xạ tương đối: điểm ảnh ổn định = 30 % thay đổi ít nhất (theo 10 băng gốc)
     let heSo = null;
-    if (cd$("cdChuan").checked) {
+    if (cd$("cdChuan").checked && pp !== "irmad") {          // IR-MAD bất biến với biến đổi tuyến tính từng băng: không cần
       const m0 = doLon(SA.map((a, b) => [a, SB[b]])).m, mau = []; for (let i = 0; i < N; i += buoc) if (valid[i] && isFinite(m0[i])) mau.push(m0[i]);
       const t30 = CORE.phanVi(mau, 0.3); heSo = [];
       for (let b = 0; b < nb; b++) { const x = [], y = []; for (let i = 0; i < N; i += buoc) if (valid[i] && m0[i] <= t30) { x.push(SA[b][i]); y.push(SB[b][i]); }
@@ -143,7 +146,18 @@ async function cdChay() {
     if (!F.length) throw new Error(T("chọn ít nhất một nhóm dữ liệu so sánh"));
     if (tok !== CD.tok) return;
     tt.textContent = T("đang tính…");
-    const {m: mag, sd} = doLon(F);
+    let mag, sd, mad = null;
+    if (pp === "irmad") {                       // IR-MAD (Nielsen 2007): độ lớn = √(χ²/p) của các biến MAD chuẩn hoá
+      const X = F.map(f => f[0]), Y = F.map(f => f[1]), mau = [];
+      let nv2 = 0; for (let i = 0; i < N; i++) if (valid[i]) nv2++;
+      const b2 = Math.max(1, Math.floor(nv2 / 20000)); let dem = 0;
+      for (let i = 0; i < N; i++) if (valid[i] && (dem++ % b2 === 0) && F.every(([a, b]) => isFinite(a[i]) && isFinite(b[i]))) mau.push(i);
+      tt.textContent = T("IR-MAD: đang lặp trên {n} điểm ảnh…", {n: mau.length});
+      try { mad = XH.irmad(X, Y, Int32Array.from(mau), {maxIt: 30}); } catch (e) { throw new Error(T(e.message || String(e))); }
+      const Z = XH.irmadZ(mad, X, Y, N, valid), p = F.length; mag = new Float32Array(N).fill(NaN);
+      for (let i = 0; i < N; i++) if (isFinite(Z[i])) mag[i] = Math.sqrt(Z[i] / p);
+      sd = mad.sd; mad.t99 = Math.sqrt(XH.chi2inv(0.99, p) / p);
+    } else ({m: mag, sd} = doLon(F));
     const vm = []; for (let i = 0; i < N; i += buoc) if (valid[i] && isFinite(mag[i])) vm.push(mag[i]);
     const mx = vm.reduce((a, b) => (b > a ? b : a), 0), ngCach = cd$("cdNguong").value;
     const otsuLog = () => Math.max(CD_SAN, Math.expm1(CORE.otsu(vm.map(Math.log1p), 0, Math.log1p(mx) || 1, 256)));   // thay đổi hiếm vẫn tách được
@@ -152,6 +166,7 @@ async function cdChay() {
     const nhiPhan = t => { const d = new Uint8Array(N); for (let i = 0; i < N; i++) if (valid[i] && mag[i] > t) d[i] = 1; return CORE.removeSmall(d, g.w, g.h, minPx); };
     let t = +cd$("cdT").value, tCach = "tay", hieuChinh = null;
     if (ngCach === "otsu") { t = otsuLog(); tCach = "otsu"; }
+    if (ngCach === "chi2") { if (mad) { const q = +(cd$("cdChiP") ? cd$("cdChiP").value : 0.99); t = Math.sqrt(XH.chi2inv(q, F.length) / F.length); tCach = "chi2"; } else { t = otsuLog(); tCach = "otsu"; } }
     if (ngCach === "mau") {
       const that = mauDiem.filter(m => m.a !== m.b).length;
       if (that < 3 || mauDiem.length - that < 3) { t = otsuLog(); tCach = "otsu"; msg(T("chưa đủ điểm mẫu (cần ít nhất 3 điểm đổi lớp và 3 điểm không đổi): dùng ngưỡng Otsu"), "wa", 5000); }
@@ -204,12 +219,13 @@ async function cdChay() {
     const ten_loai = pl === "sobo" ? CORE.LOAI_TD.map(x => x && T(x)) : [null, T("đổi lớp"), T("thay đổi trong cùng lớp")];
     const danhGia = mauDiem.length ? cdDanhGia(mauDiem, doi) : null;
     CD.kq = {A, B, g, N, valid, mag, doi, loai, cA, cB, dN, IA, IB, t, tCach, hi, ten, sd, heSo, pl, plTT, lop, lopMau, mt, dt, tb, tong, tongDoi,
-             ten_loai, danhGia, hieuChinh, theoXa, PV, vm, minPx, res};
+             ten_loai, danhGia, hieuChinh, theoXa, PV, vm, minPx, res, pp, mad, chiP: cd$("cdChiP") ? +cd$("cdChiP").value : 0.99};
     cd$("cdKQ").hidden = false; cdVe(); cdBang(); tt.textContent = T("xong: {a} ha thay đổi / {b} ha", {a: tongDoi.toFixed(1), b: tong.toFixed(1)});
   } catch (e) { if (tok === CD.tok) tt.textContent = T("lỗi: ") + (typeof vgLoiDoc === "function" ? vgLoiDoc(e) : (e.message || e)); }
   TIFF_PT.clear();
 }
 function cdVe() {                              // lớp bản đồ kết quả
+  if (CD.kq && CD.kq.kieu === "xh") return xhVe();
   const K = CD.kq; if (CD.hien) { map.removeLayer(CD.hien); CD.hien = null; }
   if (!K) return; const mode = cd$("cdXem").value; if (mode === "tat") { cd$("cdLeg").innerHTML = ""; return; }
   const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h;
@@ -263,7 +279,8 @@ function cdSVGCot(K) {                         // diện tích từng loại tha
 function cdNhanDinh(K) {                       // câu nhận định dựng từ đúng các con số đã tính
   const ds = K.ten_loai.map((t, k) => [t, K.dt[k]]).filter(x => x[0] && x[1] > 0).sort((a, b) => b[1] - a[1]);
   const p = v => (100 * v / Math.max(K.tong, 1e-9)).toFixed(1);
-  const cach = {otsu: T("tự động theo Otsu (không dưới 2.5)"), mau: T("tối ưu F1 trên điểm mẫu"), tay: T("tự đặt")}[K.tCach];
+  const cach = {otsu: T("tự động theo Otsu (không dưới 2.5)"), mau: T("tối ưu F1 trên điểm mẫu"), tay: T("tự đặt"),
+    chi2: T("theo phân phối χ², mức {q} %", {q: (100 * (K.chiP || 0.99)).toFixed(1).replace(/\.0$/, "")})}[K.tCach];
   let h = `<p>${T("Phạm vi: {v}; diện tích có dữ liệu cả hai năm {x} và {y}: {a} ha.", {v: esc(cdTenPV(K.PV)), a: K.tong.toFixed(1), x: K.A, y: K.B})} ` +
     `${T("Với ngưỡng độ lớn {t} ({c}) và bỏ mảng dưới {m} ha, {d} ha ({p} %) được coi là thay đổi.", {t: K.t.toFixed(2), c: cach, m: (+cd$("cdMin").value || 0).toFixed(2), d: K.tongDoi.toFixed(1), p: p(K.tongDoi)})}</p>`;
   if (ds.length) h += `<p>${T("Các loại chính")}: ` + ds.slice(0, 4).map(([t, a]) => `${esc(t)} ${a.toFixed(1)} ${T("ha")} (${p(a)} %)`).join("; ") + ".</p>";
@@ -271,6 +288,10 @@ function cdNhanDinh(K) {                       // câu nhận định dựng t�
     const tv = k => K.mt.reduce((s, r) => s + r[k], 0), tr = k => K.mt[k].reduce((s, v) => s + v, 0);
     h += `<p>${T("Theo lớp sơ bộ từ chỉ số")}: ` + CD_SOBO.slice(1).map((n, k) => `${T(n)} ${tr(k).toFixed(1)} → ${tv(k).toFixed(1)} ${T("ha")}`).join("; ") + `.</p>`;
   } else if (K.plTT) h += `<p class="mu">${esc(K.plTT)}</p>`;
+  if (K.mad) { const r = K.mad.rho;
+    h += `<p>${T("IR-MAD (Nielsen 2007): {p} đặc trưng, {it} vòng lặp ({hc}), hệ số tương quan chính tắc từ {a} đến {b}; độ lớn thay đổi là √(χ²/p) của các biến MAD chuẩn hoá. Ngưỡng χ² 99 % ứng với độ lớn {t}.",
+      {p: K.mad.p, it: K.mad.it, hc: K.mad.hoiTu ? T("đã hội tụ") : T("chưa hội tụ"), a: Math.min(...r).toFixed(3), b: Math.max(...r).toFixed(3), t: K.mad.t99.toFixed(2)})}</p>` +
+      `<p class="mu sm">${T("Trọng số lặp của IR-MAD thường làm χ² ở chỗ không đổi lớn hơn phân phối lý thuyết, nên ngưỡng χ² hay báo thừa thay đổi; đối chiếu với ngưỡng Otsu hoặc theo điểm mẫu.")}</p>`; }
   if (K.heSo) { const bs = s2Bang(), r = K.heSo[bs.indexOf("B4")], n8 = K.heSo[bs.indexOf("B8")];
     h += `<p class="mu">${T("Chuẩn hoá bức xạ: năm {y} được đưa về thang của năm {x} (băng đỏ: hệ số {a}, băng cận hồng ngoại: hệ số {b}).", {y: K.B, x: K.A, a: r.a.toFixed(3), b: n8.a.toFixed(3)})}</p>`; }
   if (K.danhGia && K.danhGia.n) { const e = K.danhGia;
@@ -279,7 +300,7 @@ function cdNhanDinh(K) {                       // câu nhận định dựng t�
   return h;
 }
 function cdBang() {
-  const K = CD.kq; if (!K) return;
+  const K = CD.kq; if (!K) return; if (K.kieu === "xh") return xhBang();
   cd$("cdTom").innerHTML = cdNhanDinh(K);
   const p = v => (100 * v / Math.max(K.tong, 1e-9)).toFixed(1);
   let h = `<table><tr><th>${T("loại thay đổi")}</th><th>${T("ha")}</th><th>%</th><th>ΔNDVI</th><th>ΔMNDWI</th><th>ΔNDBI</th></tr>`;
@@ -293,6 +314,8 @@ function cdBang() {
     h += `<p><b>${T("Đánh giá trên điểm mẫu")}</b> (${e.n})</p><table><tr><th></th><th>${T("dự báo: thay đổi")}</th><th>${T("dự báo: không đổi")}</th></tr>` +
       `<tr><td>${T("nhãn: đổi lớp")}</td><td>${e.tp}</td><td>${e.fn}</td></tr><tr><td>${T("nhãn: không đổi")}</td><td>${e.fp}</td><td>${e.tn}</td></tr></table>`; }
   h += `<p class="mu sm">${T("Đặc trưng dùng")}: ${K.ten.map(esc).join(", ")}</p>`;
+  if (K.mad) h += `<p><b>${T("IR-MAD: hệ số tương quan chính tắc")}</b></p><table><tr><th>${T("biến")}</th><th>ρ</th><th>σ MAD</th></tr>` +
+    K.mad.rho.map((r, i) => `<tr><td>${i + 1}</td><td>${r.toFixed(4)}</td><td>${K.mad.sd[i].toFixed(4)}</td></tr>`).join("") + `</table>`;
   cd$("cdBang").innerHTML = h;
   let m = `<p class="mu sm">${T("Hàng: lớp năm {a}; cột: lớp năm {b}; ô: ha (mọi điểm ảnh có dữ liệu, cả chỗ không đổi).", {a: K.A, b: K.B})} ${K.pl === "sobo" ? T("Lớp sơ bộ từ chỉ số.") : esc(K.plTT)}</p>`;
   m += `<table><tr><th>${K.A} \\ ${K.B}</th>` + K.lop.map(t => `<th>${esc(t)}</th>`).join("") + `<th>${T("tổng")}</th></tr>`;
@@ -303,20 +326,20 @@ function cdBang() {
 }
 function cdTab(t) { document.querySelectorAll("#cdP [data-ctab]").forEach(b => b.classList.toggle("on", b.dataset.ctab === t)); document.querySelectorAll("#cdP [data-cpane]").forEach(p => { p.hidden = p.dataset.cpane !== t; }); }
 function cdCSV() {
-  const K = CD.kq; if (!K) return; const rows = [];
+  const K = CD.kq; if (!K) return; if (K.kieu === "xh") return xhCSV(); const rows = [];
   K.ten_loai.forEach((t, k) => { if (t && K.dt[k]) rows.push({bang: "loai", nam_truoc: K.A, nam_sau: K.B, muc: t, tu: "", den: "", dien_tich_ha: +K.dt[k].toFixed(3)}); });
   K.mt.forEach((r, i) => r.forEach((v, j) => rows.push({bang: "ma_tran", nam_truoc: K.A, nam_sau: K.B, muc: "", tu: K.lop[i], den: K.lop[j], dien_tich_ha: +v.toFixed(3)})));
   download(`thay_doi_${K.A}_${K.B}_${stamp()}.csv`, CORE.toCSV(rows, ["bang", "nam_truoc", "nam_sau", "muc", "tu", "den", "dien_tich_ha"]), "text/csv");
 }
 function cdGeo() {
-  const K = CD.kq; if (!K) return; const fs = [];
+  const K = CD.kq; if (!K) return; if (K.kieu === "xh") return xhGeo(); const fs = [];
   K.ten_loai.forEach((t, k) => { if (!t || !K.dt[k]) return; const m = new Uint8Array(K.N); for (let i = 0; i < K.N; i++) if (K.doi[i] && K.loai[i] === k) m[i] = 1;
     CORE.vectorize(m, K.g, 1).forEach(pg => fs.push({type: "Feature", geometry: {type: "Polygon", coordinates: pg},
       properties: {loai: k, ten_loai: t, nam_truoc: K.A, nam_sau: K.B, dien_tich_ha: +(CORE.geodesicArea([pg]) / 1e4).toFixed(4)}})); });
   download(`thay_doi_${K.A}_${K.B}_${stamp()}.geojson`, JSON.stringify({type: "FeatureCollection", features: fs}), "application/geo+json");
 }
 function cdRai() {                             // rải điểm ngẫu nhiên trong từng loại thay đổi thành bộ điểm mới (gán nhãn cả hai năm để kiểm tra)
-  const K = CD.kq; if (!K) return; const n = Math.max(1, +cd$("cdNDiem").value || 10), pts = [];
+  const K = CD.kq; if (!K) return; if (K.kieu === "xh") return xhRai(); const n = Math.max(1, +cd$("cdNDiem").value || 10), pts = [];
   K.ten_loai.forEach((t, k) => { if (!t || !K.dt[k]) return; const m = new Uint8Array(K.N); for (let i = 0; i < K.N; i++) if (K.doi[i] && K.loai[i] === k) m[i] = 1;
     CORE.samplePixels(m, n, 1000 + k).forEach(i => { const x = i % K.g.w, y = (i - x) / K.g.w, ll = CORE.pixToLL(K.g, x + 0.5, y + 0.5); pts.push({lon: ll[0], lat: ll[1], tang: k}); }); });
   const m0 = new Uint8Array(K.N); for (let i = 0; i < K.N; i++) if (K.valid[i] && !K.doi[i]) m0[i] = 1;   // cả chỗ không đổi để kiểm sai sót bỏ sót
@@ -324,7 +347,7 @@ function cdRai() {                             // rải điểm ngẫu nhiên tr
   taoBoTuDiem(T("kiểm tra thay đổi {a}-{b}", {a: K.A, b: K.B}), [K.A, K.B], pts, {cach: "kiem_tra_thay_doi", tham_so: {nam_truoc: K.A, nam_sau: K.B, nguong: +K.t.toFixed(3)}});
 }
 function cdTaiDiem(ll) {                       // một dòng cho bảng giá trị tại điểm
-  const K = CD.kq; if (!K) return null;
+  const K = CD.kq; if (!K) return null; if (K.kieu === "xh") return xhTaiDiem(ll);
   const q = CORE.llToPix(K.g, ll.lng, ll.lat), x = Math.floor(q[0]), y = Math.floor(q[1]); if (x < 0 || y < 0 || x >= K.g.w || y >= K.g.h) return null;
   const i = y * K.g.w + x; if (!K.valid[i]) return null;
   const t = K.doi[i] ? (K.ten_loai[K.loai[i]] || T("thay đổi")) : T("không đổi");
@@ -348,6 +371,7 @@ cd$("cdCSV").onclick = cdCSV; cd$("cdGeo").onclick = cdGeo; cd$("cdRai").onclick
   document.addEventListener("mouseup", () => { st = null; });
 })();
 const _setLang26 = setLang;
-setLang = function (l) { _setLang26(l); if (CD.kq) { const K = CD.kq; K.ten_loai = K.pl === "sobo" ? CORE.LOAI_TD.map(x => x && T(x)) : [null, T("đổi lớp"), T("thay đổi trong cùng lớp")];
+setLang = function (l) { _setLang26(l); if (CD.kq && CD.kq.kieu === "xh") { xhBang(); xhVe(); cd$("cdTrang").textContent = ""; if (!cd$("cdP").hidden) cdMo(true); return; }
+  if (CD.kq) { const K = CD.kq; K.ten_loai = K.pl === "sobo" ? CORE.LOAI_TD.map(x => x && T(x)) : [null, T("đổi lớp"), T("thay đổi trong cùng lớp")];
   if (K.pl === "sobo") K.lop = CD_SOBO.slice(1).map(x => T(x)); cdBang(); cdVe(); cd$("cdTrang").textContent = T("xong: {a} ha thay đổi / {b} ha", {a: K.tongDoi.toFixed(1), b: K.tong.toFixed(1)}); }
   else cd$("cdTrang").textContent = ""; if (!cd$("cdP").hidden) cdMo(true); };

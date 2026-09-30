@@ -91,14 +91,14 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   $("tkCG").value = "chung"; $("tkChay").click(); await until(() => /xong/.test($("tkTT").textContent) && E("TK.kq.che") === "chung", 30000, "chung");
   const ctxC = E("TK.kq.cot.find(c => c.pa.id === 'man:lulc_ctx' && c.y === 2025)");
   ok(!ctxC.dt[3] && ctxC.dt[1] > 0 && ctxC.dt[6] > 0 && gan(ctxC.loai, R27.ha_lop[1], 0.03 * R27.ha_lop[1]), "chú giải chung: \"thực vật\" của bản đồ 3 lớp không quy đổi được, nước và xây dựng thì được");
-  const nb = blobs.length; $("tkCSV").click(); $("tkCotXem").value = "0"; $("tkTif").click(); await sleep(50);
+  const nb = blobs.length; $("tkCSV").click(); $("tkCotXem").value = "0"; $("tkTif").click(); await sleep(650);
   const csv = await docBlob(blobs[nb]);
   ok(/phuong_an,nam,chu_giai/.test(csv), "CSV thống kê");
   // đọc GeoTIFF vừa xuất bằng chính geotiff.js
   w.__tif = blobs[nb + 1];
   const tf2 = await E(`(async () => { const t = await GeoTIFF.fromArrayBuffer(await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsArrayBuffer(window.__tif); })); const im = await t.getImage();
-      const d = await im.readRasters({interleave: true}); const g = TK.kq.g; return {w: im.getWidth(), h: im.getHeight(), bb: im.getBoundingBox(), gb: [g.x0, g.y1 - g.h * g.res, g.x0 + g.w * g.res, g.y1], gw: g.w, gh: g.h, e: im.getGeoKeys().ProjectedCSTypeGeoKey, n: d.filter(v => v).length, m: TK.kq.cot[0].ma.filter(v => v).length}; })()`);
-  ok(tf2.w === tf2.gw && tf2.h === tf2.gh && tf2.e === 3857 && tf2.bb.every((v, i) => gan(v, tf2.gb[i], 1e-3)) && tf2.n === tf2.m, `xuất GeoTIFF EPSG:3857 đúng lưới, đúng giá trị (${tf2.w} × ${tf2.h})`);
+      const d = await im.readRasters({interleave: true}); const g = TK.kq.g; return {w: im.getWidth(), h: im.getHeight(), bb: im.getBoundingBox(), gb: [g.x0, g.y1 - g.h * g.res, g.x0 + g.w * g.res, g.y1], gw: g.w, gh: g.h, e: im.getGeoKeys().ProjectedCSTypeGeoKey, n: d.filter(v => v && v < 254).length, m: TK.kq.cot[0].ma.filter(v => v).length, nd: im.getGDALNoData(), n254: d.filter(v => v === 254).length, k254: TK.kq.cot[0].co.filter((v, i) => v && !TK.kq.cot[0].ma[i]).length}; })()`);
+  ok(tf2.w === tf2.gw && tf2.h === tf2.gh && tf2.e === 3857 && tf2.bb.every((v, i) => gan(v, tf2.gb[i], 1e-3)) && tf2.n === tf2.m && tf2.nd === 255 && tf2.n254 === tf2.k254, `xuất GeoTIFF EPSG:3857 đúng lưới, đúng giá trị, nodata 255, "không quy đổi được" 254 (${tf2.w} × ${tf2.h}, ${tf2.n254} điểm ảnh 254)`);
 
   // ---------- nhập GeoTIFF bản đồ riêng (UTM 48N, bảng màu)
   const buf = fs.readFileSync("/tmp/fx/nhap_utm.tif"), f = new w.File([new w.Uint8Array(buf)], "ban_do_rieng_2024.tif", {type: "image/tiff"});
@@ -140,7 +140,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   ok(E("!!PL.hien && map.hasLayer(PL.hien)") && $("plLeg").querySelectorAll("i").length === 3, "bản đồ lớp và chú giải");
   $("plTen").value = "Phân loại thử 2025"; $("plLuu").click(); await sleep(50);
   ok(E("PA.rieng.some(p => p.ten === 'Phân loại thử 2025' && p.nam[0] === 2025 && p.lop[11].chung === 1 && p.lop[31].n3 === 3)"), "lưu thành phương án (giá trị = mã số của lớp, có quy đổi chung và 3 lớp)");
-  const nb2 = blobs.length; $("plGeo").click(); $("plCSV").click(); $("plTif").click(); await sleep(50);
+  const nb2 = blobs.length; $("plGeo").click(); $("plCSV").click(); $("plTif").click(); await sleep(650);
   const gj = JSON.parse(await docBlob(blobs[nb2]));
   ok(gj.features.length >= 3 && new Set(gj.features.map(f => f.properties.lop)).size === 3 && /dien_tich/.test(await docBlob(blobs[nb2 + 1])) && blobs[nb2 + 2].type === "image/tiff", "xuất GeoJSON, CSV, GeoTIFF");
 

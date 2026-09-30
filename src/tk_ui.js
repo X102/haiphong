@@ -99,13 +99,7 @@ phienNhap = async function (j) {
   return _phienNhap27(j);
 };
 
-/* ---------- GeoTIFF: xuất (EPSG:3857) và nhập bản đồ lớp của người dùng ---------- */
-function tkTif(data, g, ten) {
-  const ab = GeoTIFF.writeArrayBuffer(data, {width: g.w, height: g.h, ModelPixelScale: [g.res, g.res, 0], ModelTiepoint: [0, 0, 0, g.x0, g.y1, 0],
-    GTModelTypeGeoKey: 1, GTRasterTypeGeoKey: 1, ProjectedCSTypeGeoKey: 3857, BitsPerSample: [8], SampleFormat: [1]});
-  const u = URL.createObjectURL(new Blob([ab], {type: "image/tiff"})), a = document.createElement("a");
-  a.href = u; a.download = ten; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
-}
+/* ---------- GeoTIFF: xuất (EPSG:3857, bản 2.8: v28TifLop có nodata, bảng màu, QML) và nhập bản đồ lớp của người dùng ---------- */
 const VN2000 = "+towgs84=-191.90441429,-39.30318279,-111.45032835,-0.00928836,0.01975479,-0.00427372,0.252906278";
 function paProj(e) {                           // chuỗi proj4 của mã EPSG hay gặp ở Việt Nam
   if (e === 4326 || e === 4979) return "EPSG:4326";
@@ -234,11 +228,11 @@ async function tkChay() {
     for (const pa of ds) for (const y of (pa.nam ? pa.nam.filter(q => nam.includes(q)) : [null])) {
       tt.textContent = T("đang đọc {t} {y}…", {t: paTen(pa), y: y || ""});
       const raw = await paDoc(pa, g, y); if (!raw) continue;
-      const b = paBang(pa, che), ma = new Uint8Array(N), dt = {}; let tong = 0, loai = 0;
+      const b = paBang(pa, che), ma = new Uint8Array(N), co = new Uint8Array(N), dt = {}; let tong = 0, loai = 0;
       for (let j = 0; j < g.h; j++) { const a = ra[j] / 1e4; for (let i = j * g.w, e = i + g.w; i < e; i++) {
-        if ((vung && !vung[i]) || !raw[i]) continue; const c = b[raw[i]]; tong += a;
+        if ((vung && !vung[i]) || !raw[i]) continue; const c = b[raw[i]]; tong += a; co[i] = 1;
         if (c) { ma[i] = c; dt[c] = (dt[c] || 0) + a; } else loai += a; } }
-      cot.push({pa, y, ma, dt, tong, loai, cg: tkChuGiai(che, pa)});
+      cot.push({pa, y, ma, co, dt, tong, loai, cg: tkChuGiai(che, pa)});
     }
     if (tk$("tkP").hidden) return;
     if (!cot.length) throw new Error(T("các phương án đã chọn không có dữ liệu trong phạm vi và các năm này"));
@@ -338,7 +332,7 @@ function tkQuyDoi() {
 }
 function tkTab(t) { document.querySelectorAll("#tkP [data-ttab]").forEach(b => b.classList.toggle("on", b.dataset.ttab === t)); document.querySelectorAll("#tkP [data-tpane]").forEach(p => { p.hidden = p.dataset.tpane !== t; }); TK.tab = t; }
 function tkVe(k, kieu) {                         // hiện một bản đồ (hoặc bản đồ trùng / khác của A, B) lên bản đồ
-  const K = TK.kq; if (TK.hien) { map.removeLayer(TK.hien); TK.hien = null; } if (!K || kieu === "tat") return;
+  const K = TK.kq; if (TK.hien) { map.removeLayer(TK.hien); TK.hien = null; } if (!K || kieu === "tat") return; TK._xem = kieu; TK._k = k;
   const g = K.g, c = document.createElement("canvas"); c.width = g.w; c.height = g.h; const ctx = c.getContext && c.getContext("2d"); if (!ctx) return;
   const img = ctx.createImageData(g.w, g.h), d = img.data, rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   if (kieu === "dt") { const A = K.cot[+tk$("tkCotA").value || 0], B = K.cot[+tk$("tkCotB").value || 1];
@@ -369,7 +363,8 @@ tk$("tkLopBD").onchange = tkBieuDo;
 tk$("tkXemBtn").onclick = () => tkVe(+tk$("tkCotXem").value, "lop");
 tk$("tkXemDT").onclick = () => tkVe(0, "dt");
 tk$("tkXemTat").onclick = () => tkVe(0, "tat");
-tk$("tkTif").onclick = () => { const K = TK.kq; if (!K) return; const c = K.cot[+tk$("tkCotXem").value || 0]; tkTif(c.ma, K.g, `${(c.pa.L0 ? c.pa.L0.id : c.pa.id)}_${c.y || ""}_${K.che}_${stamp()}.tif`); };
+tk$("tkTif").onclick = () => { const K = TK.kq; if (!K) return; const c = K.cot[+tk$("tkCotXem").value || 0];
+  try { v28TifLop(`${(c.pa.L0 ? c.pa.L0.id : c.pa.id)}_${c.y || ""}_${K.che}_${stamp()}`, K.g, c.ma, c.co, c.cg); } catch (e) { msg(T("lỗi: ") + (e.message || e), "er", 6000); } };
 tk$("tkNhap").onclick = () => tk$("tkNhapTep").click();
 tk$("tkNhapTep").onchange = e => { const f = e.target.files[0]; if (f) tkNhapTep(f); e.target.value = ""; };
 document.addEventListener("xa27", () => { if (!tk$("tkP").hidden) { tk$("tkXa").innerHTML = v27DSXa(); } });
