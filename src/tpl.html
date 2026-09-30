@@ -2166,7 +2166,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.8";
+const VERSION = "2.8.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2207,9 +2207,10 @@ function cmadat(c) {                      // mã đất kèm chú thích theo ng
   const x = ((I18N[LANG] || {}).__lop || {})[c.ma];
   return (x && x.ma_dat) || c.ma_dat;
 }
+const VI_TEN_LOP = {lulc_ctxts: "Bản đồ 3 lớp CTX + PC chuỗi năm"};   // bỏ mã nội bộ trong tên lớp của manifest
 function lname(L0) {                      // tên lớp đối chiếu trong manifest
   if (!L0) return "";
-  if (LANG === "vi") return L0.ten;
+  if (LANG === "vi") return VI_TEN_LOP[L0.id] || L0.ten;
   if (L0["ten_" + LANG]) return L0["ten_" + LANG];
   const d = (I18N[LANG] || {}).__layer || {};
   if (d[L0.id]) return d[L0.id];

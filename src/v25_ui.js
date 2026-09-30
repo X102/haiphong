@@ -90,7 +90,7 @@ vg$("vgXoaChon").onclick = () => {
 function vgPopupVung(id, ll) {
   const v = ST.vung[id]; if (!v) return;
   const c = IDX.by[v.ma_lop] || {}, k = v.khu && ST.khu[v.khu], div = document.createElement("div"); div.className = "gt-tai";
-  div.innerHTML = `<b>${T("Vùng mẫu")} ${esc(v.id)}</b><div class="sm"><span class="sw" style="background:${c.mau || "#555"}"></span> ${esc(v.ma_lop)} ${esc(cten(c))} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ha` +
+  div.innerHTML = `<b>${T("Vùng mẫu")} ${esc(v.id)}</b><div class="sm"><span class="sw" style="background:${c.mau || "#555"}"></span> ${esc(v.ma_lop)} ${esc(cten(c))} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ${T("ha")}` +
     (k ? ` · 🔒 ${esc(k.ten)}` : "") + (v.ghi_chu ? ` · ${esc(v.ghi_chu)}` : "") + `</div>` +
     `<div class="row">${T("đổi lớp")} <select data-k="lop" style="max-width:170px">${(SCHEME.lop || []).map(q => `<option value="${q.ma}"${q.ma === v.ma_lop ? " selected" : ""}>${q.ma} ${esc(cten(q))}</option>`).join("")}</select>` +
     `<button type="button" data-a="lop">${T("Đổi")}</button></div>` +

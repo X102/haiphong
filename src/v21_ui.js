@@ -443,7 +443,7 @@ async function boMo(kieu) {
   $("boLopBD").innerHTML = lopL.map(l => `<option value="${l.id}">${lname(l)}</option>`).join("") || `<option value="">${T("(không có bản đồ lớp)")}</option>`;
   const napNam = () => { const L0 = lopL.find(l => l.id === $("boLopBD").value); $("boNamBD").innerHTML = (L0 ? L0.nam : []).map(y => `<option${y === ST.nam ? " selected" : ""}>${y}</option>`).join(""); };
   $("boLopBD").onchange = napNam; napNam();
-  $("boVung").innerHTML = Object.values(ST.vung || {}).map(v => `<option value="${v.id}">${v.id} · ${v.ma_lop} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(1)} ha</option>`).join("") ||
+  $("boVung").innerHTML = Object.values(ST.vung || {}).map(v => `<option value="${v.id}">${v.id} · ${v.ma_lop} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(1)} ${T("ha")}</option>`).join("") ||
     `<option value="">${T("(chưa lưu vùng nào)")}</option>`;
   if (typeof VG !== "undefined" && !VG.xa && MAN && MAN.ranh_gioi_xa) { try { await vgTaiXaHF(); } catch (e) { /* không có */ } }
   const xs = typeof VG !== "undefined" && VG.xa ? VG.xa.slice().sort((a, b) => a.ten.localeCompare(b.ten, "vi")) : [];

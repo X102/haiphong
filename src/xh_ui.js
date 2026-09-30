@@ -150,8 +150,8 @@ function xhSVG(K) {                            // tần suất hệ số góc, v
     s3 = `<svg viewBox="0 0 ${Wc} ${Hc}" xmlns="http://www.w3.org/2000/svg"><line x1="40" x2="${Wc}" y1="${y0}" y2="${y0}" stroke="#667085"/><text x="2" y="12" font-size="9" fill="#667085">${T("ha")}</text>` +
       `<text x="2" y="${y0 - 64}" font-size="9" fill="#667085">+${m.toFixed(0)}</text><text x="2" y="${y0 + 72}" font-size="9" fill="#667085">-${m.toFixed(0)}</text>`;
     K.cap.forEach((c, k) => { const x = 44 + k * cw, w = cw * 0.7; let yu = y0, yd = y0;
-      [4, 5].forEach(q => { const hq = c.dt[q] * sc; yu -= hq; s3 += `<rect x="${x.toFixed(1)}" y="${yu.toFixed(1)}" width="${w.toFixed(1)}" height="${hq.toFixed(1)}" fill="${XH_MAU[q]}"><title>${c.a}-${c.b} ${esc(T(XH_TEN[q]))}: ${c.dt[q].toFixed(1)} ha</title></rect>`; });
-      [2, 1].forEach(q => { const hq = c.dt[q] * sc; s3 += `<rect x="${x.toFixed(1)}" y="${yd.toFixed(1)}" width="${w.toFixed(1)}" height="${hq.toFixed(1)}" fill="${XH_MAU[q]}"><title>${c.a}-${c.b} ${esc(T(XH_TEN[q]))}: ${c.dt[q].toFixed(1)} ha</title></rect>`; yd += hq; });
+      [4, 5].forEach(q => { const hq = c.dt[q] * sc; yu -= hq; s3 += `<rect x="${x.toFixed(1)}" y="${yu.toFixed(1)}" width="${w.toFixed(1)}" height="${hq.toFixed(1)}" fill="${XH_MAU[q]}"><title>${c.a}-${c.b} ${esc(T(XH_TEN[q]))}: ${c.dt[q].toFixed(1)} ${T("ha")}</title></rect>`; });
+      [2, 1].forEach(q => { const hq = c.dt[q] * sc; s3 += `<rect x="${x.toFixed(1)}" y="${yd.toFixed(1)}" width="${w.toFixed(1)}" height="${hq.toFixed(1)}" fill="${XH_MAU[q]}"><title>${c.a}-${c.b} ${esc(T(XH_TEN[q]))}: ${c.dt[q].toFixed(1)} ${T("ha")}</title></rect>`; yd += hq; });
       s3 += `<text x="${(x + w / 2).toFixed(1)}" y="${Hc - 4}" font-size="8.5" text-anchor="middle" fill="#344054">${String(c.a).slice(2)}-${String(c.b).slice(2)}</text>`; });
     s3 += "</svg>";
   }

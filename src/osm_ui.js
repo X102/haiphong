@@ -328,9 +328,9 @@ function osmThongKe() {
   fs.forEach(f => { const d = osmDo(f), k = f.properties.the || T("(không thẻ chính)"); const g = nhom[k] = nhom[k] || {n: 0, ha: 0, km: 0};
     g.n++; if (d.ha) { g.ha += d.ha; ha += d.ha; } if (d.km) { g.km += d.km; km += d.km; } });
   const ds = Object.entries(nhom).sort((a, b) => b[1].n - a[1].n);
-  osm$("osmTK").innerHTML = `<div><b>${fs.length.toLocaleString(LOCALE[LANG] || "vi")}</b> ${T("đối tượng")}` + (ha ? ` · ${ha.toFixed(1)} ha` : "") + (km ? ` · ${km.toFixed(1)} km` : "") +
+  osm$("osmTK").innerHTML = `<div><b>${fs.length.toLocaleString(LOCALE[LANG] || "vi")}</b> ${T("đối tượng")}` + (ha ? ` · ${ha.toFixed(1)} ${T("ha")}` : "") + (km ? ` · ${km.toFixed(1)} ${T("km")}` : "") +
     (OSM.locStr ? ` · <span class="mu">${esc(OSM.locStr)}</span>` : "") + `</div>` +
-    (ds.length ? `<table>` + ds.slice(0, 12).map(([k, g]) => `<tr><td>${esc(k)}</td><td>${g.n}</td><td>${g.ha ? g.ha.toFixed(1) + " ha" : g.km ? g.km.toFixed(1) + " km" : ""}</td></tr>`).join("") +
+    (ds.length ? `<table>` + ds.slice(0, 12).map(([k, g]) => `<tr><td>${esc(k)}</td><td>${g.n}</td><td>${g.ha ? g.ha.toFixed(1) + " " + T("ha") : g.km ? g.km.toFixed(1) + " " + T("km") : ""}</td></tr>`).join("") +
       (ds.length > 12 ? `<tr><td colspan="3" class="mu">${T("và {n} loại khác", {n: ds.length - 12})}</td></tr>` : "") + `</table>` : "");
   osm$("osmKQ").innerHTML = fs.length ? `<table>` + fs.slice(0, 100).map(f => `<tr data-f="${esc(f.id)}"><td>${esc(f.properties.ten || f.properties.the || f.id)}</td>` +
     `<td class="mu">${esc(CORE.osmLop(f.properties.tags, OSM_QD) || "")}</td><td><button type="button">${T("xem")}</button></td></tr>`).join("") + `</table>` +

@@ -279,7 +279,7 @@ function tkBieuDo() {
       s2 = `<svg viewBox="0 0 ${W} 175" xmlns="http://www.w3.org/2000/svg"><text x="4" y="12" font-size="10">${T("ha")}</text><text x="4" y="24" font-size="9" fill="#667085">${mx.toFixed(0)}</text>`;
       for (let y = y0; y <= y1; y++) s2 += `<text x="${X(y).toFixed(1)}" y="168" font-size="9" text-anchor="middle" fill="#667085">${y}</text>`;
       L_.forEach((n, k) => { n.d.sort((a, b) => a[0] - b[0]); s2 += `<polyline points="${n.d.map(q => X(q[0]).toFixed(1) + "," + Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="${mau[k % 6]}" stroke-width="2"/>` +
-        n.d.map(q => `<circle cx="${X(q[0]).toFixed(1)}" cy="${Y(q[1]).toFixed(1)}" r="2.5" fill="${mau[k % 6]}"><title>${esc(paTen(n.pa))} ${q[0]}: ${q[1].toFixed(1)} ha</title></circle>`).join("") +
+        n.d.map(q => `<circle cx="${X(q[0]).toFixed(1)}" cy="${Y(q[1]).toFixed(1)}" r="2.5" fill="${mau[k % 6]}"><title>${esc(paTen(n.pa))} ${q[0]}: ${q[1].toFixed(1)} ${T("ha")}</title></circle>`).join("") +
         `<text x="${W - 4}" y="${14 + 11 * k}" font-size="9" text-anchor="end" fill="${mau[k % 6]}">${esc(paTen(n.pa).slice(0, 30))}</text>`; });
       s2 += "</svg>";
     }

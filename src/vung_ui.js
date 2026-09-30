@@ -102,7 +102,7 @@ function vgBangLop() {
   const box = vg$("vgBangLop"), K = VG.kq, ds = vgNhomHat(); if (!box) return;
   if (!ds.length) { box.innerHTML = ""; return; }
   const act = VG.res ? VG.res.ma : null;
-  box.innerHTML = `<table><tr><th></th><th>${T("lớp")}</th><th>${T("mẫu")}</th><th>ha</th><th>${T("mảng")}</th></tr>` + ds.map(ma => {
+  box.innerHTML = `<table><tr><th></th><th>${T("lớp")}</th><th>${T("mẫu")}</th><th>${T("ha")}</th><th>${T("mảng")}</th></tr>` + ds.map(ma => {
     const st = K && K.st[ma], n = VG.pos.filter(h => (h.ma || "") === ma).length;
     return `<tr data-ma="${ma}" class="${ma === act ? "on" : ""}"><td><span class="sw" style="background:${vgMau(ma)}"></span></td><td>${vgTenLop(ma)}</td><td>+${n}</td>` +
       `<td>${st ? st.dien_tich_ha.toFixed(2) : ""}</td><td>${st ? st.n_manh : ""}</td></tr>`;
@@ -230,7 +230,7 @@ function vgTomTat() {
   const o = VG.obj, st = VG.res && (VG.res.st_sua || VG.res.st), D = VG.data;
   const nNghi = o && o.nghi ? [...o.nghi].filter(v => v >= vgNguong2()).length : 0;
   vg$("vgTom").innerHTML = !st ? "" :
-    `<span class="sw" style="background:${vgMau(VG.res && VG.res.ma)}"></span> <b>${VG.res && VG.res.ma ? VG.res.ma : "?"}</b> · <b>${st.dien_tich_ha.toFixed(2)} ha</b> · ${o ? o.n : st.n_manh} ${o && o.kieu === "da_giac" ? T("đa giác") : T("mảng")} · ` +
+    `<span class="sw" style="background:${vgMau(VG.res && VG.res.ma)}"></span> <b>${VG.res && VG.res.ma ? VG.res.ma : "?"}</b> · <b>${st.dien_tich_ha.toFixed(2)} ${T("ha")}</b> · ${o ? o.n : st.n_manh} ${o && o.kieu === "da_giac" ? T("đa giác") : T("mảng")} · ` +
     `<span style="color:#b42318">${T("xoá {n}", {n: VG.loai.length})}</span> · <span style="color:#1a7f37">${T("giữ {n}", {n: VG.giu.length})}</span>` +
     (nNghi ? ` · <b style="color:#b54708">${T("nghi sai {n}", {n: nNghi})}</b>` : "") +
     ` <span class="mu">· ${T("năm {y}", {y: D ? D.y : ST.nam})} · ${st.do_phan_giai_m.toFixed(1)} m · +${VG.pos.length}/−${VG.neg.length} ${T("mẫu")}</span>` +
@@ -315,7 +315,7 @@ map.on("mousemove", e => {
   if (!k) { if (VG.tip) { map.removeLayer(VG.tip); VG.tip = null; } return; }
   const d = VG.obj.desc[k - 1], s = VG.obj.nghi ? VG.obj.nghi[k] : 0;
   if (!d) return;
-  const txt = `${T("mảng")} #${k} · ${d.dien_tich_ha.toFixed(2)} ha` + (VG.obj.giu[k] ? " · " + T("giữ") : "") + (s ? " · " + T("nghi sai {n}", {n: s.toFixed(2)}) : "");
+  const txt = `${T("mảng")} #${k} · ${d.dien_tich_ha.toFixed(2)} ${T("ha")}` + (VG.obj.giu[k] ? " · " + T("giữ") : "") + (s ? " · " + T("nghi sai {n}", {n: s.toFixed(2)}) : "");
   if (!VG.tip) VG.tip = L.tooltip({direction: "top", offset: [0, -8], className: "vg-tip"});
   VG.tip.setLatLng(e.latlng).setContent(txt);
   if (!map.hasLayer(VG.tip)) VG.tip.addTo(map);
@@ -420,7 +420,7 @@ async function vgDoc(g, y, ids, sc) {
   const lop = [];
   for (const L0 of MAN.layers.filter(l => l.kieu === "lop" && l.nam.includes(y))) {
     const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url);
-    if (r) lop.push({id: L0.id, ten: L0.ten, ten_lop: L0.ten_lop || TEN3, data: r.data});
+    if (r) lop.push(Object.assign({}, L0, {ten_lop: L0.ten_lop || TEN3, data: r.data}));   // giữ ten_en, ten_ru để lname() dịch được
   }
   return {lst, lop, sc};
 }
@@ -745,7 +745,7 @@ function vgDSNghi() {
   for (let k = 1; k <= o.n; k++) if (o.nghi[k] >= thr) ks.push(k);
   ks.sort((a, b) => o.nghi[b] - o.nghi[a]);
   box.innerHTML = !ks.length ? '<span class="mu">' + T("chưa có mảng nghi sai") + '</span>' :
-    `<table class="yt"><tr><th></th><th>${T("mảng")}</th><th>ha</th><th>${T("giống mảng xoá")}</th><th></th></tr>` +
+    `<table class="yt"><tr><th></th><th>${T("mảng")}</th><th>${T("ha")}</th><th>${T("giống mảng xoá")}</th><th></th></tr>` +
     ks.slice(0, 100).map(k => `<tr data-k="${k}"><td><input type="checkbox" ${o.tick[k] ? "checked" : ""}></td><td>#${k}</td>` +
       `<td>${o.desc[k - 1].dien_tich_ha.toFixed(2)}</td><td>${o.nghi[k].toFixed(2)}</td><td><button data-a="xem">${T("xem")}</button><button data-a="giu">${T("đúng")}</button></td></tr>`).join("") +
     `</table>` + (ks.length > 100 ? `<div class="mu">${T("và {n} mảng nữa", {n: ks.length - 100})}</div>` : "");
@@ -772,7 +772,7 @@ function vgDanhSach() {
   const key = {dt: k => -o.desc[k - 1].dien_tich_ha, nghi: k => -(o.nghi ? o.nghi[k] : 0), xa: k => -o.desc[k - 1].d_mean,
                dai: k => -o.desc[k - 1].elong}[kieu];
   ks.sort((a, b) => key(a) - key(b));
-  box.innerHTML = `<table class="yt"><tr><th>${T("mảng")}</th><th>ha</th><th>${T("kéo dài")}</th><th>${T("xa mẫu")}</th><th>${T("nghi")}</th><th></th></tr>` +
+  box.innerHTML = `<table class="yt"><tr><th>${T("mảng")}</th><th>${T("ha")}</th><th>${T("kéo dài")}</th><th>${T("xa mẫu")}</th><th>${T("nghi")}</th><th></th></tr>` +
     ks.slice(0, 80).map(k => { const d = o.desc[k - 1];
       return `<tr data-k="${k}"${o.giu[k] ? ' style="color:#1a7f37"' : ""}><td>#${k}</td><td>${d.dien_tich_ha.toFixed(2)}</td><td>${d.elong.toFixed(1)}</td>` +
         `<td>${d.d_mean.toFixed(3)}</td><td>${o.nghi && o.nghi[k] ? o.nghi[k].toFixed(2) : ""}</td>` +
@@ -793,13 +793,13 @@ function vgXoaKQ() {
 /* ---------- thống kê ---------- */
 function vgHienTK(st, g, lop, nguon, dtCau) {
   const pct = (a, t) => t ? (100 * a / t).toFixed(1) : "0", A = st.dien_tich_ha * 1e4;
-  let h = `<div style="margin:4px 0"><b>${st.dien_tich_ha.toFixed(2)} ha</b> (${(st.dien_tich_ha / 100).toFixed(3)} km²) · ${T("{n} điểm ảnh {r} m", {n: st.n_px.toLocaleString(LOCALE[LANG] || "vi"), r: st.do_phan_giai_m.toFixed(1)})} · ` +
+  let h = `<div style="margin:4px 0"><b>${st.dien_tich_ha.toFixed(2)} ${T("ha")}</b> (${(st.dien_tich_ha / 100).toFixed(3)} ${T("km²")}) · ${T("{n} điểm ảnh {r} m", {n: st.n_px.toLocaleString(LOCALE[LANG] || "vi"), r: st.do_phan_giai_m.toFixed(1)})} · ` +
           `${T("{n} mảng (lớn nhất {a} ha)", {n: st.n_manh, a: st.manh_lon_nhat_ha.toFixed(2)})} · <span class="mu">${T(nguon)}</span>` +
           (dtCau != null ? " · " + T("diện tích đa giác trên mặt cầu {a} ha", {a: (dtCau / 1e4).toFixed(2)}) : "") + `</div>`;
   const xa = Object.entries(st.theo_xa || {}).filter(([k]) => +k > 0).sort((a, b) => b[1] - a[1]);
   if (xa.length && VG.xa) {
     const ten = i => (VG.xa.find(x => x.i === +i) || {}).ten || i;
-    h += `<div><b>${T("Theo xã")}</b> (${xa.length}): ` + xa.slice(0, 8).map(([i, a]) => `${ten(i)} ${(a / 1e4).toFixed(1)} ha (${pct(a, A)} %)`).join(" · ") + (xa.length > 8 ? " · …" : "") + `</div>`;
+    h += `<div><b>${T("Theo xã")}</b> (${xa.length}): ` + xa.slice(0, 8).map(([i, a]) => `${ten(i)} ${(a / 1e4).toFixed(1)} ${T("ha")} (${pct(a, A)} %)`).join(" · ") + (xa.length > 8 ? " · …" : "") + `</div>`;
   }
   (lop || []).forEach(L0 => {
     const c = st.thanh_phan[L0.id] || {}, t = Object.values(c).reduce((s, v) => s + v, 0);
@@ -840,7 +840,7 @@ function vgThemDaGiac(mp, ma, chon) {        // ma: lớp riêng của đa giác
       if (ev.originalEvent && ev.originalEvent.shiftKey) vgGiuDT(k); else vgXoaDT([k]);
     });
     lyr.on("mouseover", () => { if (VG.obj && VG.obj.layers) { const k = VG.obj.layers.indexOf(lyr) + 1, d = k && VG.obj.desc[k - 1];
-      if (d) lyr.bindTooltip(`${T("đa giác")} #${k} · ${d.dien_tich_ha.toFixed(2)} ha` + (VG.obj.nghi[k] ? " · " + T("nghi sai {n}", {n: VG.obj.nghi[k].toFixed(2)}) : ""), {sticky: true}).openTooltip(); } });
+      if (d) lyr.bindTooltip(`${T("đa giác")} #${k} · ${d.dien_tich_ha.toFixed(2)} ${T("ha")}` + (VG.obj.nghi[k] ? " · " + T("nghi sai {n}", {n: VG.obj.nghi[k].toFixed(2)}) : ""), {sticky: true}).openTooltip(); } });
     VG.sua.addLayer(lyr);
     if (VG.coPM) L.PM.reInitLayer(lyr);
   });
@@ -917,7 +917,7 @@ function vgVeVung() {
     const c = IDX.by[v.ma_lop] || {}, k = v.khu && ST.khu[v.khu];
     L.geoJSON({type: "Feature", geometry: v.geom, properties: {}}, {pmIgnore: true,
       style: {color: c.mau || "#555", weight: k ? 2.5 : 2, fillOpacity: k ? 0.24 : 0.18, dashArray: v.nam === ST.nam ? null : "5 4"}})
-      .bindTooltip(`${v.id} · ${v.ma_lop} ${cten(c)} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ha` + (k ? ` · 🔒 ${k.ten}` : ""))
+      .bindTooltip(`${v.id} · ${v.ma_lop} ${cten(c)} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(2)} ${T("ha")}` + (k ? ` · 🔒 ${k.ten}` : ""))
       .on("click", e => { if (!VG.mode && typeof vgPopupVung === "function") vgPopupVung(v.id, e.latlng); }).addTo(VG.gVung);
   });
   const ds = Object.values(ST.vung).sort((a, b) => b.tg - a.tg);
@@ -987,7 +987,7 @@ function vgLuuHet(khu) {                    // mỗi lớp có điểm mẫu m�
     const id = "V" + Date.now().toString(36) + "_" + i;
     ST.vung[id] = vgBanGhiVung(id, ma, mp, st, K.prm, VG.loai.some(r => vgCuaLop(r, ma)), ma);
     if (khu) ST.vung[id].khu = khu;
-    ids.push(id); mo.push(`${ma} ${st.dien_tich_ha.toFixed(1)} ha`);
+    ids.push(id); mo.push(`${ma} ${st.dien_tich_ha.toFixed(1)} ${T("ha")}`);
   });
   save(); if (!khu) vgVeVung();
   if (ids.length && !khu) msg(T("đã lưu {n} vùng: {l}", {n: ids.length, l: mo.join(", ")}), "ok", 5000);
@@ -1040,7 +1040,7 @@ async function vgNam9(chiNam) {              // chiNam: chỉ tính lại các n
 function vgVeNamTK() {                      // vẽ (lại) bảng so sánh các năm, cả khi đổi ngôn ngữ
   const N = VG.namTK, box = vg$("vgNamTK"); if (!N || !N.lops) return;
   const rows = N.bang, lops = N.lops, act = N.act;
-  box.innerHTML = `<table class="yt"><tr><th>${T("năm")}</th>` + lops.map(ma => `<th><span class="sw" style="background:${vgMau(ma)}"></span> ${ma || "?"} ha</th>`).join("") +
+  box.innerHTML = `<table class="yt"><tr><th>${T("năm")}</th>` + lops.map(ma => `<th><span class="sw" style="background:${vgMau(ma)}"></span> ${ma || "?"} ${T("ha")}</th>`).join("") +
     `<th>Δ ${act || "?"}</th><th>${T("mảng")} ${act || "?"}</th></tr>` +
     rows.map((r, k) => r.loi ? `<tr><td>${r.nam}</td><td colspan="${lops.length + 2}" class="mu">${r.loi}</td></tr>` :
       `<tr data-y="${r.nam}"${r.nam === VG.namY ? ' class="cur"' : ""}><td>${r.nam}${r.nam === N.nam_goc ? " ●" : ""}</td>` + lops.map(ma => `<td>${r.lop[ma].ha.toFixed(1)}</td>`).join("") +
@@ -1123,7 +1123,7 @@ function vgNamBD() {                         // biểu đồ diện tích theo n
   const X = k => L0 + 16 + (n > 1 ? k * (W - L0 - R0 - 32) / (n - 1) : (W - L0 - R0 - 32) / 2), Y = v => T0 + (1 - v / hi) * (H - T0 - B0);
   let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">`;
   niceTicks(0, hi, 4).forEach(t => { s += `<line x1="${L0}" x2="${W - R0}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="#e9ecf0"/><text x="${L0 - 3}" y="${(Y(t) + 3).toFixed(1)}" font-size="9" fill="#98a2b3" text-anchor="end">${Number.isInteger(t) ? t : t.toFixed(1)}</text>`; });
-  s += `<text x="3" y="10" font-size="9" fill="#98a2b3">ha</text>`;
+  s += `<text x="3" y="10" font-size="9" fill="#98a2b3">${T("ha")}</text>`;
   rows.forEach((r, k) => {
     if (r.nam === VG.namY) s += `<rect x="${(X(k) - 9).toFixed(1)}" y="${T0}" width="18" height="${H - T0 - B0}" fill="#0b63ce" opacity=".08"/>`;
     s += `<text x="${X(k).toFixed(1)}" y="${H - 6}" font-size="9" text-anchor="middle" fill="${r.nam === VG.namY ? "#0b63ce" : "#667085"}" font-weight="${r.nam === N.nam_goc ? 700 : 400}">${r.nam}</text>`;
@@ -1131,7 +1131,7 @@ function vgNamBD() {                         // biểu đồ diện tích theo n
   lops.forEach(ma => {
     const c = vgMau(ma), pts = rows.map((r, k) => [X(k), Y(r.lop[ma].ha)]);
     if (pts.length > 1) s += `<polyline points="${pts.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="2"/>`;
-    rows.forEach((r, k) => { s += `<circle data-y="${r.nam}" cx="${pts[k][0].toFixed(1)}" cy="${pts[k][1].toFixed(1)}" r="${r.nam === VG.namY ? 4.5 : 3}" fill="${c}" stroke="#fff" stroke-width="1" style="cursor:pointer"><title>${ma || "?"} ${r.nam}: ${r.lop[ma].ha.toFixed(1)} ha, ${r.lop[ma].manh} ${T("mảng")}</title></circle>`; });
+    rows.forEach((r, k) => { s += `<circle data-y="${r.nam}" cx="${pts[k][0].toFixed(1)}" cy="${pts[k][1].toFixed(1)}" r="${r.nam === VG.namY ? 4.5 : 3}" fill="${c}" stroke="#fff" stroke-width="1" style="cursor:pointer"><title>${ma || "?"} ${r.nam}: ${r.lop[ma].ha.toFixed(1)} ${T("ha")}, ${r.lop[ma].manh} ${T("mảng")}</title></circle>`; });
   });
   box.innerHTML = s + "</svg>";
   box.querySelectorAll("circle[data-y]").forEach(e => { e.addEventListener("click", () => vgNamChonNam(+e.dataset.y)); });
@@ -1347,7 +1347,7 @@ function vgChot() {                          // lưu vùng của mọi lớp ở
   if (VG.obj && VG.obj.chiXem) vgNamThoat();
   const id = "K" + Date.now().toString(36), ten = vg$("vgKhuTen").value.trim() || vgTenKhuTuDong();
   const ids = vgLuuHet(id); if (!ids.length) { vgVeVung(); return; }
-  const tomTat = ids.map(v => `${ST.vung[v].ma_lop} ${ST.vung[v].thong_ke.dien_tich_ha.toFixed(1)} ha`);
+  const tomTat = ids.map(v => `${ST.vung[v].ma_lop} ${ST.vung[v].thong_ke.dien_tich_ha.toFixed(1)} ${T("ha")}`);
   ST.khu[id] = {id, ten, nam: ST.nam, tg: Date.now(), vung: ids, hat: VG.pos.map(h => ({lon: h.lon, lat: h.lat, ma: h.ma || ""})),
                 neg: VG.neg.map(h => ({lon: h.lon, lat: h.lat})), loai: VG.loai.slice(), giu: VG.giu.slice(), tham_so: Object.assign({}, K.prm)};
   ids.forEach(v => { if (!ST.vung[v].ghi_chu) ST.vung[v].ghi_chu = ten; });
@@ -1363,7 +1363,7 @@ function vgVeKhu() {
   box.innerHTML = ds.map(k => {
     const vs = k.vung.map(v => ST.vung[v]).filter(Boolean);
     return `<div class="row${k.an ? " vg-an" : ""}" data-k="${k.id}">🔒 <b>${k.ten}</b> ${k.nam} · ` +
-      vs.map(v => `<span class="sw" style="background:${(IDX.by[v.ma_lop] || {}).mau || "#555"}"></span>${v.ma_lop} ${v.thong_ke.dien_tich_ha.toFixed(1)} ha`).join(" ") +
+      vs.map(v => `<span class="sw" style="background:${(IDX.by[v.ma_lop] || {}).mau || "#555"}"></span>${v.ma_lop} ${v.thong_ke.dien_tich_ha.toFixed(1)} ${T("ha")}`).join(" ") +
       ` <button data-a="xem">${T("xem")}</button><button data-a="an">${k.an ? T("hiện") : T("ẩn")}</button><button data-a="mo" title="${T("xoá các vùng của khu, đưa điểm mẫu về để sửa tiếp")}">${T("mở lại")}</button><button data-a="xoa">${T("xoá")}</button></div>`;
   }).join("") || `<span class="mu">${T("chưa chốt khu nào: làm xong một khu thì bấm 🔒 Chốt khu")}</span>`;
   box.querySelectorAll("button").forEach(b => { b.onclick = () => vgKhuThaoTac(b.closest("[data-k]").dataset.k, b.dataset.a); });

@@ -519,6 +519,10 @@ for L_, (moc, them, _a, _b) in HELP26.items():            # bản 2.6: phát hi�
 from gen_i18n_v28 import R28, GT28, GT28_2, HELP28
 _co = {r[0] for r in R}
 R = R + [r for r in R28 if r[0] not in _co]                # bản 2.8
+from gen_i18n_v281 import R281, LAYER281
+_co = {r[0] for r in R}
+R = R + [r for r in R281 if r[0] not in _co]              # bản 2.8.1
+for _L, _d in LAYER281.items(): LAYER[_L].update(_d)
 for L_, (cu, moi) in GT27.items():                       # bản 2.7
     assert HTML[L_]["gtBody"].count(cu) == 1; HTML[L_]["gtBody"] = HTML[L_]["gtBody"].replace(cu, moi)
 for L_, (moc, them, _a, _b) in HELP27.items():

@@ -173,7 +173,7 @@ function xbThuoc(g, E, fs, dpi) {               // thước tỉ lệ ở góc d
   const lat = CORE.m2ll((E.x0 + E.x1) / 2, (E.y0 + E.y1) / 2)[1], mPx = E.r * Math.cos(lat * Math.PI / 180);
   const S = XH.thuocTiLe(mPx, E.fw * 0.24), h = fs * 0.42, x = E.fx + fs * 1.1, y = E.fy + E.fh - fs * 2.1;
   const mau = Math.round(mPx * dpi / 0.0254), tl = "1 : " + String(mau >= 10000 ? Math.round(mau / 100) * 100 : Math.round(mau / 10) * 10).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  const nhan = [["0", 0], [String(S.m >= 1000 ? S.m / 2000 : S.m / 2), 0.5], [S.nhan, 1]];
+  const nhan = [["0", 0], [String(S.m >= 1000 ? S.m / 2000 : S.m / 2), 0.5], [S.nhan.replace(/ km$/, " " + T("km")).replace(/ m$/, " " + T("m")), 1]];
   g.save(); g.fillStyle = "rgba(255,255,255,.85)";
   const wTl = xbDo(g, tl, fs * 0.8); g.fillRect(x - fs * 0.6, y - fs * 1.25, Math.max(S.px, wTl) + fs * 2.4, fs * 2.85);
   for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? "#fff" : "#111"; g.fillRect(x + S.px * i / 4, y, S.px / 4, h); }
