@@ -185,7 +185,7 @@ async function s2dAt(p) {
 }
 
 /* ---------------- ② giá trị điểm ảnh theo năm ---------------- */
-function embLayers() { return MAN ? MAN.layers.filter(l => l.kieu === "rgb" && (l.phep_chieu || /^Embedding /.test(l.ten || ""))) : []; }
+function embLayers() { return MAN ? MAN.layers.filter(l => l.kieu === "rgb" && l.nguon !== "ls" && (l.phep_chieu || /^Embedding /.test(l.ten || ""))) : []; }
 function pcLayers() { return MAN ? MAN.layers.filter(l => /^pc\d+$/.test(l.id) && l.kieu === "xam") : []; }
 const coS2 = () => !!(MAN && MAN.s2d);
 const NHOM_NAM = [

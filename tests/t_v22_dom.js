@@ -128,7 +128,7 @@ const RV = require("/tmp/fx/ref_vung.json");
   // ---------- báo lỗi
   w.dispatchEvent(new w.ErrorEvent("error", {message: "loi thu nghiem", filename: "http://x/a.js", lineno: 7}));
   $("bBaoLoi").click(); await sleep(30);
-  ok($("dlgLoi").open && /v2\.\d/.test($("loiCT").textContent) && /loi thu nghiem \(a\.js:7\)/.test($("loiCT").textContent) && /manifest phiên bản/.test($("loiCT").textContent),
+  ok($("dlgLoi").open && /v\d+\.\d/.test($("loiCT").textContent) && /loi thu nghiem \(a\.js:7\)/.test($("loiCT").textContent) && /manifest phiên bản/.test($("loiCT").textContent),
      "hộp báo lỗi: thông tin kỹ thuật có phiên bản, manifest, lỗi JavaScript gần đây");
   $("loiMoTa").value = "Bảng chọn vùng không hiện\nchi tiết thêm"; $("loiLienHe").value = "nguoi@vi.du";
   const mail = E("guiEmail()");

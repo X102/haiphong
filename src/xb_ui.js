@@ -202,7 +202,7 @@ function xbTamLop(o, y) {                       // lớp dữ liệu năm y: dù
   const url = CORE.dataUrl(CFG, o.L0.duong_dan.replace("{y}", y));
   if (o.layer && o.layer._url === url) return o.layer;
   if (!XB.tam[url]) { const op = {opacity: 1, minZoom: 8, maxZoom: 21, maxNativeZoom: 17};
-    XB.tam[url] = o.L0.kieu === "dem" ? new DEMLayer(url, op) : o.L0.kieu === "s2d" ? new S2DLayer(url, op) : new COGLayer(url, o.L0, op); }
+    XB.tam[url] = o.L0.kieu === "dem" ? new DEMLayer(url, op) : o.L0.kieu === "s2d" ? new S2DLayer(url, op) : o.L0.kieu === "lsd" ? new LSDLayer(url, op) : new COGLayer(url, o.L0, op); }
   return XB.tam[url];
 }
 function xbNamDS(L0) { return Array.isArray(L0.nam) && L0.nam.length ? L0.nam.slice().sort((a, b) => a - b) : [-1]; }
@@ -481,7 +481,7 @@ function xbNguonMac(o) {
     .map(s => by[s.k].ten + (s.nam > 0 ? " " + s.nam : ""));
   const luoi = o.luoi === "utm" ? T("lưới UTM vùng 48N (EPSG:32648, mét)") : T("lưới kinh độ, vĩ độ WGS 84");
   const tg = GT_MAC.tac_gia[LANG] || GT_MAC.tac_gia.vi;
-  const ng = [...new Set(ten)].concat(MAN && MAN.s2d ? ["Copernicus Sentinel-2"] : []);
+  const ng = [...new Set(ten)].concat(MAN && MAN.s2d ? ["Copernicus Sentinel-2"] : [], typeof coLS === "function" && coLS() ? ["USGS Landsat Collection 2"] : []);
   return (ng.length ? `${T("Nguồn")}: ${ng.join("; ")}. ` : "") + `${T("Phép chiếu Web Mercator (EPSG:3857); {l}.", {l: luoi})} ` +
     `${T("Geoportal lớp phủ Hải Phòng")} v${VERSION}, ${tg}, ${new Date().toLocaleDateString(LANG === "vi" ? "vi-VN" : LANG)}.`;
 }

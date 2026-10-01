@@ -11,7 +11,7 @@ const cd$ = id => document.getElementById(id);
 const CD_MAU = [null, "#d62728", "#1f77b4", "#2ca02c", "#8c564b", "#17becf", "#9467bd", "#ff7f0e", "#98df8a", "#e377c2"];
 const CD_SOBO = [null, "nước", "thực vật", "xây dựng, đất trống"];
 const CD_SOBO_MAU = [null, "#1f5fbf", "#2e9d3a", "#d7191c"];
-function cdNamCo() { return MAN && MAN.s2d ? (MAN.s2d.nam || []).slice().sort((a, b) => a - b) : []; }
+function cdNamCo() { const m = typeof qhNguon === "function" ? qhNguon().man : MAN && MAN.s2d; return m ? (m.nam || []).slice().sort((a, b) => a - b) : []; }
 async function cdMo(on) {
   const P = cd$("cdP"); P.hidden = on === false ? true : (on === true ? false : !P.hidden);
   if (P.hidden) return;
@@ -20,7 +20,7 @@ async function cdMo(on) {
     sa.innerHTML = sb.innerHTML = ys.map(y => `<option>${y}</option>`).join(""); sa.dataset.k = ys.join();
     if (ys.length) { sa.value = ys[0]; sb.value = ys[ys.length - 1]; }
   }
-  if (!ys.length) cd$("cdTrang").textContent = T("cần ảnh S2 10 băng (s2d) của bộ dữ liệu");
+  if (!ys.length) cd$("cdTrang").textContent = typeof qhCanAnh === "function" ? qhCanAnh() : T("cần ảnh S2 10 băng (s2d) của bộ dữ liệu");
   const bo = new Set(Object.values(ST.diem).map(p => p.bo));
   cd$("cdBo").innerHTML = `<option value="">${T("mọi bộ điểm")}</option>` + [...bo].map(b => `<option value="${esc(b)}">${esc(typeof boTen === "function" ? boTen(b) : b)}</option>`).join("");
   cd$("cdVung").innerHTML = Object.values(ST.vung).map(v => `<option value="${v.id}">${v.id} · ${v.ma_lop} · ${v.nam} · ${v.thong_ke.dien_tich_ha.toFixed(1)} ${T("ha")}</option>`).join("") || `<option value="">${T("(chưa lưu vùng nào)")}</option>`;
@@ -47,17 +47,18 @@ function cdPhamVi() {                         // -> {bb 3857, mp (MultiPolygon l
   const mp = vgMP(v.geom); return {bb: vgBB3857(mp), mp, kieu: "vung", id: v.id};
 }
 function cdTenPV(P) { return P.kieu === "nhin" ? T("khung nhìn") : P.kieu === "vung" ? T("vùng {id}", {id: P.id}) : P.ten; }
-async function cdDocS2(g, y) {                // phản xạ 10 băng trên lưới g: mảng Float32 từng băng (NaN = trống)
-  const nb = s2Bang().length, url = CORE.dataUrl(CFG, MAN.s2d.duong_dan.replace("{y}", y)), N = g.w * g.h;
+async function cdDocS2(g, y) {                // phản xạ các băng của nguồn ảnh (S2 10 băng, Landsat 6 băng) trên lưới g (NaN = trống)
+  const q = qhNguon(), nb = q.nb, url = CORE.dataUrl(CFG, q.man.duong_dan.replace("{y}", y)), N = g.w * g.h;
   const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, Array.from({length: nb}, (_, i) => i), false, true), url);
   const B = Array.from({length: nb}, () => new Float32Array(N).fill(NaN));
   if (R) for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0) continue; let z = true;
-    for (let b = 0; b < nb; b++) if (R.src[j * nb + b]) { z = false; break; }
+    if (q.nd) { z = false; for (let b = 0; b < nb; b++) if (R.src[j * nb + b] === q.nd) { z = true; break; } }
+    else for (let b = 0; b < nb; b++) if (R.src[j * nb + b]) { z = false; break; }
     if (!z) for (let b = 0; b < nb; b++) B[b][i] = R.src[j * nb + b] / 10000; }
   return B;
 }
 function cdChiSo(B) {                          // NDVI, MNDWI, NDBI, BSI (như CORE.indices) từ phản xạ
-  const bs = s2Bang(), k = n => B[bs.indexOf(n)], N = B[0].length, nd = (a, b) => { const o = new Float32Array(N); for (let i = 0; i < N; i++) o[i] = (a[i] - b[i]) / Math.max(a[i] + b[i], 1e-6); return o; };
+  const bs = qhNguon().bang, k = n => B[bs.indexOf(n)], N = B[0].length, nd = (a, b) => { const o = new Float32Array(N); for (let i = 0; i < N; i++) o[i] = (a[i] - b[i]) / Math.max(a[i] + b[i], 1e-6); return o; };
   const bsi = new Float32Array(N), b11 = k("B11"), b4 = k("B4"), b8 = k("B8"), b2 = k("B2");
   for (let i = 0; i < N; i++) { const p = b11[i] + b4[i], q = b8[i] + b2[i]; bsi[i] = (p - q) / Math.max(p + q, 1e-6); }
   return {NDVI: nd(b8, b4), MNDWI: nd(k("B3"), b11), NDBI: nd(b11, b8), BSI: bsi};
@@ -68,9 +69,9 @@ function cdTiepCS(B, c) {                      // chỉ số đang dùng (công 
   return o;
 }
 async function cdDocPC(g, y) {
-  if (!MAN.pc || !MAN.pc.nam.includes(y)) return null;
+  const P = qhNguon().pc; if (!P || !P.nam.includes(y)) return null;
   const gr = cdPCXam(g, y); if (gr) return gr;               // bản 2.9: lưới thô (vd. cả tỉnh) đọc lớp PC 8 bit có overview
-  const k = MAN.pc.k, url = CORE.dataUrl(CFG, MAN.pc.duong_dan.replace("{y}", y)), s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, N = g.w * g.h;
+  const k = P.k, url = CORE.dataUrl(CFG, P.duong_dan.replace("{y}", y)), s = P.he_so_nhan, N = g.w * g.h;
   const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, Array.from({length: k}, (_, i) => i), false, true), url);
   const out = Array.from({length: k}, () => new Float32Array(N).fill(NaN));
   if (R) for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0 || R.src[j * k] === -32768) continue; for (let q = 0; q < k; q++) out[q][i] = R.src[j * k + q] / s; }
@@ -79,9 +80,9 @@ async function cdDocPC(g, y) {
 /* PC gốc (pc5d) không có overview: cả tỉnh ở 10 m là hàng chục triệu điểm ảnh × k băng. Khi ô lưới phân tích thô hơn 30 m,
    đọc các lớp xám PC1..PCk (EPSG:3857, có overview) rồi đổi ngược 8 bit -> giá trị: x = lo + (v - 1) / 254 × (hi - lo), chia hệ số nhân. */
 function cdPCXam(g, y) {
-  const k = MAN.pc.k, s = (MAN.pc.he_so && MAN.pc.he_so.he_so_nhan) || 100, lat = CORE.m2ll((g.bb[0] + g.bb[2]) / 2, (g.bb[1] + g.bb[3]) / 2)[1];
-  if (g.res * Math.cos(lat * Math.PI / 180) <= 30) return null;
-  const ds = []; for (let q = 1; q <= k; q++) { const L0 = MAN.layers.find(l => l.id === "pc" + q); if (!L0 || !L0.keo_gian || !L0.nam.includes(y)) return null; ds.push(L0); }
+  const P = qhNguon().pc, k = P.k, s = P.he_so_nhan, lat = CORE.m2ll((g.bb[0] + g.bb[2]) / 2, (g.bb[1] + g.bb[3]) / 2)[1];
+  if (g.res * Math.cos(lat * Math.PI / 180) <= (qhNguon().id === "ls" ? 60 : 30)) return null;
+  const ds = []; for (let q = 1; q <= k; q++) { const L0 = P.xam(q); if (!L0 || !L0.keo_gian || !L0.nam.includes(y)) return null; ds.push(L0); }
   return (async () => {
     const N = g.w * g.h, out = [];
     for (const L0 of ds) {
@@ -95,7 +96,7 @@ function cdPCXam(g, y) {
 }
 async function cdDocEmb(g, y) {                // các thành phần embedding (đổi từ 8 bit theo phép chiếu)
   const out = [], N = g.w * g.h;
-  for (const L0 of embLayers()) {
+  for (const L0 of qhNguon().emb) {
     if (!L0.nam.includes(y)) return null;
     const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url), pj = await embPJ(L0);
     const m = /thành phần ([\d-]+)/.exec(L0.ten || ""), tp = m ? m[1].split("-").map(Number) : [1, 2, 3];
@@ -123,9 +124,9 @@ async function cdChay() {
   if (pp === "xh") return xhChay();
   const tok = ++CD.tok, A = +cd$("cdA").value, B = +cd$("cdB").value, tt = cd$("cdTrang");
   try {
-    if (!MAN || !MAN.s2d) throw new Error(T("cần ảnh S2 10 băng (s2d) của bộ dữ liệu"));
+    const QN = qhNguon(); if (!MAN || !QN.man) throw new Error(qhCanAnh());
     if (!(A < B)) throw new Error(T("năm trước phải nhỏ hơn năm sau"));
-    const PV = cdPhamVi(), g = CORE.gridFor(PV.bb, 900, {x0: 0, y1: 0, res0: 10}), N = g.w * g.h, dung = k => !!document.querySelector(`#cdP [data-cd="${k}"]`).checked;
+    const PV = cdPhamVi(), g = CORE.gridFor(PV.bb, 900, {x0: 0, y1: 0, res0: QN.res}), N = g.w * g.h, dung = k => !!document.querySelector(`#cdP [data-cd="${k}"]`).checked;
     tt.textContent = T("đang đọc ảnh năm {y}…", {y: A}); const SA = await cdDocS2(g, A);
     tt.textContent = T("đang đọc ảnh năm {y}…", {y: B}); const SB = await cdDocS2(g, B);
     if (tok !== CD.tok) return;
@@ -149,14 +150,14 @@ async function cdChay() {
         heSo.push(h); for (let i = 0; i < N; i++) if (isFinite(SB[b][i])) SB[b][i] = (SB[b][i] - h.b) / h.a; }
     }
     const IA = cdChiSo(SA), IB = cdChiSo(SB), F = [], ten = [];
-    if (dung("s2")) s2Bang().forEach((b, q) => { F.push([SA[q], SB[q]]); ten.push(b); });
+    if (dung("s2")) QN.tenBang.forEach((b, q) => { F.push([SA[q], SB[q]]); ten.push(b); });
     if (dung("cs")) {
       ["NDVI", "MNDWI", "NDBI", "BSI"].forEach(k => { F.push([IA[k], IB[k]]); ten.push(k); });
-      csDS().filter(c => !CS_GOC[c.id]).forEach(c => { F.push([cdTiepCS(SA, c), cdTiepCS(SB, c)]); ten.push(c.ten); });
+      csDS().filter(c => !CS_GOC[c.id]).map(c => QN.cs(c)).filter(Boolean).forEach(c => { F.push([cdTiepCS(SA, c), cdTiepCS(SB, c)]); ten.push(c.ten); });
     }
     if (dung("ctx")) { const r = Math.max(1, Math.round(7 * 10 / g.res));
       for (let b = 0; b < nb; b++) { const f = S => { const a = new Float32Array(N); for (let i = 0; i < N; i++) a[i] = isFinite(S[b][i]) ? S[b][i] : 0; return CORE.boxImage(a, g.w, g.h, 1, 0, r).m; };
-        F.push([f(SA), f(SB)]); ten.push("CTX " + s2Bang()[b]); } }
+        F.push([f(SA), f(SB)]); ten.push("CTX " + QN.tenBang[b]); } }
     if (dung("pc")) { tt.textContent = T("đang đọc PC…"); const PA = await cdDocPC(g, A), PB = await cdDocPC(g, B);
       if (PA && PB) PA.forEach((a, q) => { F.push([a, PB[q]]); ten.push("PC" + (q + 1)); }); }
     if (dung("emb")) { tt.textContent = T("đang đọc embedding…"); const EA = await cdDocEmb(g, A), EB = await cdDocEmb(g, B);
@@ -208,7 +209,7 @@ async function cdChay() {
       for (let i = 0; i < N; i++) if (valid[i]) { cA[i] = ra ? ma.indexOf(ra[i]) + 1 : 0; cB[i] = rb ? ma.indexOf(rb[i]) + 1 : 0; }
       plTT = paTen(pa);
     } else {                                    // theo điểm mẫu: nguyên mẫu k-means của từng lớp ở từng năm, trên đặc trưng chuẩn hoá chung
-      const Fn = s2Bang().map((b, q) => [SA[q], SB[q]]).concat(["NDVI", "MNDWI", "NDBI", "BSI"].map(k => [IA[k], IB[k]])), nf = Fn.length;
+      const Fn = QN.bang.map((b, q) => [SA[q], SB[q]]).concat(["NDVI", "MNDWI", "NDBI", "BSI"].map(k => [IA[k], IB[k]])), nf = Fn.length;
       const mu = Fn.map(([a, b]) => { let s = 0, n = 0; for (let i = 0; i < N; i += buoc) if (valid[i]) { s += a[i] + b[i]; n += 2; } return s / Math.max(n, 1); });
       const sdv = Fn.map(([a, b], f) => { let s = 0, n = 0; for (let i = 0; i < N; i += buoc) if (valid[i]) { s += (a[i] - mu[f]) ** 2 + (b[i] - mu[f]) ** 2; n += 2; } return Math.sqrt(s / Math.max(n, 1)) || 1; });
       const ma = [...new Set(mauDiem.flatMap(m => [m.a, m.b]))].sort((x, y) => (IDX.by[x] ? SCHEME.lop.indexOf(IDX.by[x]) : 99) - (IDX.by[y] ? SCHEME.lop.indexOf(IDX.by[y]) : 99));
@@ -237,7 +238,7 @@ async function cdChay() {
     const ten_loai = pl === "sobo" ? CORE.LOAI_TD.map(x => x && T(x)) : [null, T("đổi lớp"), T("thay đổi trong cùng lớp")];
     const danhGia = mauDiem.length ? cdDanhGia(mauDiem, doi) : null;
     CD.kq = {A, B, g, N, valid, mag, doi, loai, cA, cB, dN, IA, IB, t, tCach, hi, ten, sd, heSo, pl, plTT, lop, lopMau, mt, dt, tb, tong, tongDoi,
-             ten_loai, danhGia, hieuChinh, theoXa, PV, vm, minPx, res, pp, mad, chiP: cd$("cdChiP") ? +cd$("cdChiP").value : 0.99};
+             ten_loai, danhGia, hieuChinh, theoXa, PV, vm, minPx, res, pp, mad, chiP: cd$("cdChiP") ? +cd$("cdChiP").value : 0.99, nguon: QN.id};
     cd$("cdKQ").hidden = false; cdVe(); cdBang(); tt.textContent = T("xong: {a} ha thay đổi / {b} ha", {a: tongDoi.toFixed(1), b: tong.toFixed(1)});
   } catch (e) { if (tok === CD.tok) tt.textContent = T("lỗi: ") + (typeof vgLoiDoc === "function" ? vgLoiDoc(e) : (e.message || e)); }
   TIFF_PT.clear();
@@ -313,7 +314,8 @@ function cdNhanDinh(K) {                       // câu nhận định dựng t�
     h += `<p>${T("IR-MAD (Nielsen 2007): {p} đặc trưng, {it} vòng lặp ({hc}), hệ số tương quan chính tắc từ {a} đến {b}; độ lớn thay đổi là √(χ²/p) của các biến MAD chuẩn hoá. Ngưỡng χ² 99 % ứng với độ lớn {t}.",
       {p: K.mad.p, it: K.mad.it, hc: K.mad.hoiTu ? T("đã hội tụ") : T("chưa hội tụ"), a: Math.min(...r).toFixed(3), b: Math.max(...r).toFixed(3), t: K.mad.t99.toFixed(2)})}</p>` +
       `<p class="mu sm">${T("Trọng số lặp của IR-MAD thường làm χ² ở chỗ không đổi lớn hơn phân phối lý thuyết, nên ngưỡng χ² hay báo thừa thay đổi; đối chiếu với ngưỡng Otsu hoặc theo điểm mẫu.")}</p>`; }
-  if (K.heSo) { const bs = s2Bang(), r = K.heSo[bs.indexOf("B4")], n8 = K.heSo[bs.indexOf("B8")];
+  if (K.nguon === "ls") h += `<p class="mu">${T("Nguồn ảnh: Landsat 30 m, ảnh mùa khô đã chuẩn hoá tương đối giữa các năm.")}</p>`;
+  if (K.heSo) { const bs = typeof qhNguon === "function" ? qhNguon(K.nguon).bang : s2Bang(), r = K.heSo[bs.indexOf("B4")], n8 = K.heSo[bs.indexOf("B8")];
     h += `<p class="mu">${T("Chuẩn hoá bức xạ: năm {y} được đưa về thang của năm {x} (băng đỏ: hệ số {a}, băng cận hồng ngoại: hệ số {b}).", {y: K.B, x: K.A, a: r.a.toFixed(3), b: n8.a.toFixed(3)})}</p>`; }
   if (K.danhGia && K.danhGia.n) { const e = K.danhGia;
     h += `<p>${T("Trên {n} điểm đã gán nhãn cả hai năm: đúng {oa} %, độ chính xác phát hiện {pr} %, độ phủ {rc} %, F1 {f1}.", {n: e.n, oa: (100 * e.oa).toFixed(0), pr: (100 * e.pr).toFixed(0), rc: (100 * e.rc).toFixed(0), f1: e.f1.toFixed(2)})}</p>`; }

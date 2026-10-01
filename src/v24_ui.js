@@ -251,13 +251,13 @@ function gtSo(x) { return x == null || !isFinite(x) ? "-" : fmtV(x); }
 async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của các lớp đang bật, chỉ số, DEM, xã, vùng mẫu, OSM tại một chỗ
   const p = CORE.newPoint("⌖", ll.lng, ll.lat, {bo: ""});
   const on = Object.values(OVL).filter(o => o.on).map(o => o.L0.id).join();
-  const key = [LANG, p.x, p.y, ST.nam, on, ST.chiso.dung.join(), JSON.stringify(ST.chiso.khoang), S2V.mode, Object.keys(ST.vung).length].join("|");
+  const key = [LANG, p.x, p.y, ST.nam, on, ST.chiso.dung.join(), JSON.stringify(ST.chiso.khoang), S2V.mode, typeof LSV !== "undefined" ? LSV.mode : "", Object.keys(ST.vung).length].join("|");
   if (GT_CACHE.has(key)) return GT_CACHE.get(key);
   const rows = [];
   if (!VG.xa && MAN && MAN.ranh_gioi_xa) { try { await vgTaiXaHF(); } catch (e) { /* không có */ } }
   const x = VG.xa ? vgXaTai(ll.lng, ll.lat) : null; if (x) rows.push([T("xã, phường"), esc(x.ten)]);
   for (const o of Object.values(OVL).filter(o => o.on)) {
-    const L0 = o.L0; if (L0.kieu === "dem") continue;
+    const L0 = o.L0; if (L0.kieu === "dem" || L0.kieu === "lsd") continue;          // Landsat: dòng riêng (bản 3.0, lsGiaTri)
     const y = layerYear(L0, ST.nam);
     if (!y) { rows.push([esc(lname(L0)), `<span class="mu">${T("không có năm {y}", {y: ST.nam})}</span>`]); continue; }
     try {
@@ -272,7 +272,7 @@ async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của
         const c = (L0.bang_mau || {})[v[0]];
         rows.push([ten, `${c ? `<span class="sw" style="background:${c}"></span> ` : ""}${esc(T((L0.ten_lop || TEN3)[v[0]] || String(v[0])))}`]);
       } else if (L0.kieu === "xam") {
-        const kg = L0.keo_gian; rows.push([ten, kg ? gtSo((kg[0] + (v[0] - 1) / 254 * (kg[1] - kg[0])) / (/^pc\d+$/.test(L0.id) ? 100 : 1)) + (/^pc\d+$/.test(L0.id) ? "" : ` <span class="mu">(${v[0]})</span>`) : String(v[0])]);
+        const kg = L0.keo_gian, pc_ = /^(ls)?pc\d+$/.test(L0.id); rows.push([ten, kg ? gtSo((kg[0] + (v[0] - 1) / 254 * (kg[1] - kg[0])) / (pc_ ? 100 : 1)) + (pc_ ? "" : ` <span class="mu">(${v[0]})</span>`) : String(v[0])]);
       } else {
         const pj = await embPJ(L0), m = /thành phần ([\d-]+)/.exec(L0.ten || ""), tp = m ? m[1].split("-").map(Number) : null;
         rows.push([ten, pj && pj.lo && tp ? tp.map((k, q) => `${k}: ${gtSo(pj.lo[k - 1] + (v[q] - 1) / 254 * (pj.hi[k - 1] - pj.lo[k - 1]))}`).join(" · ") : `R ${v[0]} · G ${v[1]} · B ${v[2]}`]);

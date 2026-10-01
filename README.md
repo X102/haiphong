@@ -1,7 +1,7 @@
 # Geoportal lớp phủ Hải Phòng
 
 Trang web một tệp (`index.html`) để xem và gán nhãn lớp phủ đa năm (2017-2026) cho thành phố Hải Phòng mới:
-ảnh Esri Wayback theo năm, ảnh Sentinel-2 mùa khô, PCA chuỗi năm, embedding, CTX, bản đồ lớp và OpenStreetMap.
+ảnh Esri Wayback theo năm, ảnh Sentinel-2 mùa khô, ảnh Landsat mùa khô 1987-2026, PCA chuỗi năm, embedding, CTX, bản đồ lớp và OpenStreetMap.
 Dữ liệu đọc thẳng từ bộ dữ liệu Hugging Face [`lopmaybay/haiphong-lop-tham-chieu`](https://huggingface.co/datasets/lopmaybay/haiphong-lop-tham-chieu)
 theo từng đoạn (COG, FlatGeobuf), nên trang không cần máy chủ riêng.
 
@@ -34,6 +34,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 - Lưu kết quả thành tệp HTML tự chứa (phát hiện thay đổi, thống kê lớp phủ, phân loại, vùng chọn, câu trả lời của trợ lý AI): số liệu, bảng, biểu đồ, bản đồ có khung, lưới toạ độ và chú giải, nhận định; vùng chọn còn xuất được GeoTIFF, GeoJSON; biểu đồ lưu SVG, PNG; dải ảnh theo năm lưu PNG.
 - Gộp nhiều tệp tiến độ JSON (nhiều người, nhiều lần làm) một lần; nhãn khác nhau được giải theo cách chọn, đánh dấu xem lại, liệt kê CSV.
 - Cài như ứng dụng (PWA) trên điện thoại, máy tính bảng, máy tính: biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng (giao diện, điểm, nhãn đã lưu), báo bản mới, mở tệp tiến độ bằng ứng dụng; nút "⤓ Cài ứng dụng" hiện hộp cài của trình duyệt hoặc hướng dẫn theo thiết bị. Các tệp `manifest.webmanifest`, `sw.js`, `icons/` cần đưa lên cùng `index.html`.
+- Landsat 1987-2026 (bản 3.0): nguồn ảnh quang học thứ hai; lớp Landsat 6 băng tính trong trình duyệt (tổ hợp màu theo tên băng, chỉ số dùng được với 6 băng, nhiệt độ bề mặt, nguồn điểm ảnh, cảm biến) chọn năm ngay trong lớp; màu thật, PC1-5 của PCA phổ chuỗi năm, embedding Landsat; dải ảnh, giá trị tại điểm, đồ thị theo năm; phát hiện thay đổi, IR-MAD và xu hướng chọn được nguồn ảnh Landsat (30 m, so hai năm bất kỳ từ 1987).
 
 ## Cấu trúc kho
 
@@ -52,6 +53,8 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/BAN_2_8.md` | GeoTIFF có nodata, hồi quy xu hướng, IR-MAD, xuất bản đồ in ấn, độ trong suốt, kéo giãn bảng |
 | `docs/BAN_2_9.md` | sửa lỗi 'offset' khi phát hiện thay đổi cả tỉnh; xuất bản đồ có quản lý lớp, chú giải kèm diện tích, PDF có toạ độ, GeoTIFF; báo cáo HTML có bản đồ đầy đủ; xuất vùng, biểu đồ, dải ảnh; gộp nhiều tệp tiến độ |
 | `docs/BAN_2_9_1.md` | cài như ứng dụng (PWA): manifest, service worker, biểu tượng, nút cài, mở tệp bằng ứng dụng, chạy khi mất mạng |
+| `docs/BAN_3_0.md` | Landsat 1987-2026 trên trang: lớp 6 băng, nhóm lớp, dải ảnh, giá trị tại điểm, đồ thị, nguồn ảnh cho phát hiện thay đổi và xu hướng |
+| `docs/LANDSAT_PHUONG_AN.md` | phương án dữ liệu Landsat: dựng lại trên GEE (chính sách cảm biến, lọc, mùa khô, cờ nguồn), chuẩn hoá IR-MAD, PCA, embedding; notebook `colab/ls_HF_LANDSAT.ipynb`, `colab/ls_GEE_tk1..4.ipynb` |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
 ## Cấu hình web (`cau_hinh.json`)
@@ -84,6 +87,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 ## Nguồn dữ liệu và ghi công
 
 - Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
+- Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.
 - Ranh giới hành chính: thanglequoc/vietnamese-provinces-database (MIT), dẫn xuất từ Bản đồ tham khảo đơn vị hành chính Việt Nam (sapnhap.bando.com.vn).

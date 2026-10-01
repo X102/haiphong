@@ -22,19 +22,20 @@ function xhHien() {                            // ẩn hiện các khối theo p
   const sx = cd$("cdXem"), ds = xh ? XH_XEM : CD_XEM, cu = sx.value;
   sx.innerHTML = ds.map(([v, t]) => `<option value="${v}">${esc(T(t))}</option>`).join("");
   sx.value = ds.some(q => q[0] === cu) ? cu : ds[0][0];
-  const sel = cd$("xhCS"); if (sel && typeof csDS === "function") { const v = sel.value || "NDVI", ds = csDS();
+  const sel = cd$("xhCS"); if (sel && typeof csDS === "function") { const v = sel.value || "NDVI", ds = csDS().filter(c => typeof qhNguon !== "function" || qhNguon().cs(c));
     sel.innerHTML = ds.map(c => `<option value="${esc(c.id)}">${esc(c.ten)}</option>`).join(""); sel.value = ds.some(c => c.id === v) ? v : (ds.some(c => c.id === "NDVI") ? "NDVI" : (ds[0] || {}).id || ""); }
   const nt = cd$("xhNg"); if (nt && nt.value !== "tay") { const [a, b] = XH_NG[nt.value]; cd$("xhT1").value = a; cd$("xhT2").value = b; }
   if (nt) { cd$("xhT1").disabled = cd$("xhT2").disabled = nt.value !== "tay"; }
   if (cd$("xhZW")) cd$("xhZW").hidden = cd$("xhCach").value !== "mk";
 }
-async function xhDocCS(g, y, c) {              // một chỉ số trên lưới g từ ảnh S2 10 băng năm y (chỉ đọc các băng cần)
-  const ch = c.f.chi.slice(), N = g.w * g.h, o = new Float32Array(N).fill(NaN); if (!ch.length) return o;
-  const url = CORE.dataUrl(CFG, MAN.s2d.duong_dan.replace("{y}", y));
+async function xhDocCS(g, y, c) {              // một chỉ số trên lưới g từ ảnh của nguồn đang chọn, năm y (chỉ đọc các băng cần)
+  const q = qhNguon(), ch = c.f.chi.slice(), N = g.w * g.h, o = new Float32Array(N).fill(NaN); if (!ch.length) return o;
+  const url = CORE.dataUrl(CFG, q.man.duong_dan.replace("{y}", y));
   const R = await vgThuLai(() => readUTM(url, g.bb, g.w, g.h, 0, ch, false, true), url); if (!R) return o;
-  const buf = new Array(s2Bang().length).fill(0), nb = ch.length;
+  const buf = new Array(q.nb).fill(0), nb = ch.length;
   for (let i = 0; i < N; i++) { const j = R.idx[i]; if (j < 0) continue; let z = true;
-    for (let b = 0; b < nb; b++) if (R.src[j * nb + b]) { z = false; break; } if (z) continue;
+    if (q.nd) { z = false; for (let b = 0; b < nb; b++) if (R.src[j * nb + b] === q.nd) { z = true; break; } }
+    else for (let b = 0; b < nb; b++) if (R.src[j * nb + b]) { z = false; break; } if (z) continue;
     for (let b = 0; b < nb; b++) buf[ch[b]] = R.src[j * nb + b] / 10000; const x = c.f(buf); if (x != null) o[i] = x; }
   return o;
 }
@@ -46,14 +47,15 @@ function xhPhanCap(R, N, valid, t1, t2, mk, zc, loc) {
 async function xhChay() {
   const tok = ++CD.tok, tt = cd$("cdTrang");
   try {
-    if (!MAN || !MAN.s2d) throw new Error(T("cần ảnh S2 10 băng (s2d) của bộ dữ liệu"));
+    const QN = qhNguon(); if (!MAN || !QN.man) throw new Error(qhCanAnh());
     const A = +cd$("cdA").value, B = +cd$("cdB").value; if (!(A < B)) throw new Error(T("năm đầu phải nhỏ hơn năm cuối"));
     const nam = cdNamCo().filter(y => y >= A && y <= B), cach = cd$("xhCach").value, mk = cach === "mk";
     if (mk && nam.length < 3) throw new Error(T("Mann–Kendall cần ít nhất 3 năm có ảnh trong khoảng"));
-    const c = csLay(cd$("xhCS").value); if (!c || !c.f) throw new Error(T("chưa chọn chỉ số"));
+    const c0 = csLay(cd$("xhCS").value), c = c0 && c0.f ? QN.cs(c0) : null;
+    if (!c || !c.f) throw new Error(T(c0 && c0.f ? "chỉ số này cần băng mà Landsat không có" : "chưa chọn chỉ số"));
     const t1 = Math.abs(+cd$("xhT1").value), t2 = Math.abs(+cd$("xhT2").value); if (!(t2 > t1)) throw new Error(T("ngưỡng mạnh phải lớn hơn ngưỡng nhẹ"));
     const zc = +cd$("xhZ").value, loc = cd$("xhMask").checked;
-    const PV = cdPhamVi(), g = CORE.gridFor(PV.bb, 900, {x0: 0, y1: 0, res0: 10}), N = g.w * g.h;
+    const PV = cdPhamVi(), g = CORE.gridFor(PV.bb, 900, {x0: 0, y1: 0, res0: QN.res}), N = g.w * g.h;
     const vung = PV.mp ? CORE.rasterizeRings(CORE.polysToPixRings(g, PV.mp), g.w, g.h) : null;
     const V = [];
     for (const y of nam) { tt.textContent = T("đang đọc ảnh năm {y}…", {y}); V.push(await xhDocCS(g, y, c)); if (tok !== CD.tok) return; }
@@ -78,7 +80,7 @@ async function xhChay() {
     }
     const vs = []; const buoc = Math.max(1, Math.floor(N / 150000)); for (let i = 0; i < N; i += buoc) if (lop[i] && isFinite(R.slope[i])) vs.push(R.slope[i]);
     CD.kq = {kieu: "xh", A, B, nam, g, N, valid, slope: R.slope, r2: R.r2, z: R.z, n: R.n, lop, dt, tbS, dem, tong, theoXa, cach, zc, loc, t1, t2,
-      ngNguon: cd$("xhNg").value, cs: {id: c.id, ten: c.ten}, cap, PV, vs, r2tb: nR ? sR / nR : NaN, pSig: mk && dem.reduce((s, v) => s + v, 0) ? nSig / dem.reduce((s, v) => s + v, 0) : NaN,
+      ngNguon: cd$("xhNg").value, cs: {id: c.id, ten: c.ten}, cap, PV, vs, nguon: QN.id, r2tb: nR ? sR / nR : NaN, pSig: mk && dem.reduce((s, v) => s + v, 0) ? nSig / dem.reduce((s, v) => s + v, 0) : NaN,
       res: Math.abs(g.res * Math.cos(map.getCenter().lat * Math.PI / 180))};
     cd$("cdKQ").hidden = false; xhVe(); xhBang();
     tt.textContent = T("xong: {n} năm, {a} ha", {n: nam.length, a: tong.toFixed(1)});

@@ -1,6 +1,7 @@
 // Bản 2.9.1: cài như ứng dụng (PWA): thẻ trong <head>, manifest, biểu tượng, nút Cài ứng dụng (hộp cài của trình duyệt hoặc hướng dẫn
 // theo thiết bị), báo bản mới, mở tệp bằng ứng dụng (launchQueue: một tệp CSV, nhiều tệp tiến độ), tiếng Nga, tiếng Anh.
 const fs = require("fs"), path = require("path");
+const VER_ = /const VERSION = "([^"]+)"/.exec(require("fs").readFileSync(["LAY_MAU_DA_NAM.html", "index.html"].map(f => require("path").join(__dirname, "..", f)).find(f => require("fs").existsSync(f)), "utf8"))[1];
 const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
 const GOC = path.join(__dirname, "..");
 const WEB = ["web", "."].map(d => path.join(GOC, d)).find(d => fs.existsSync(path.join(d, "manifest.webmanifest")));
@@ -14,7 +15,7 @@ const WEB = ["web", "."].map(d => path.join(GOC, d)).find(d => fs.existsSync(pat
   const ic = M.icons.filter(i => i.type === "image/png").map(i => ({i, k: kt(i.src)}));
   ok(ic.every(q => q.k && q.i.sizes === q.k.join("x")) && ic.some(q => q.i.sizes === "512x512" && q.i.purpose === "maskable") && ic.some(q => q.i.sizes === "192x192" && q.i.purpose === "any"),
      "biểu tượng PNG đúng cỡ khai báo (192, 512, có bản maskable)");
-  ok(fs.existsSync(path.join(WEB, "sw.js")) && /hp-geoportal-2\.9\.\d/.test(fs.readFileSync(path.join(WEB, "sw.js"), "utf8")) && kt("icons/apple-touch-icon.png").join() === "180,180",
+  ok(fs.existsSync(path.join(WEB, "sw.js")) && new RegExp("hp-geoportal-" + VER_.replace(/\./g, "\\.") + "[\"']").test(fs.readFileSync(path.join(WEB, "sw.js"), "utf8")) && kt("icons/apple-touch-icon.png").join() === "180,180",
      "service worker có số phiên bản; biểu tượng iPhone 180 × 180");
   ok(M.file_handlers && M.file_handlers[0].accept["application/json"].includes(".json") && M.shortcuts.length === 3, "mở tệp .json, .csv, .geojson bằng ứng dụng; lối tắt ba ngôn ngữ");
 
@@ -25,7 +26,7 @@ const WEB = ["web", "."].map(d => path.join(GOC, d)).find(d => fs.existsSync(pat
   }});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
   const hd = w.document.head;
-  ok(E("VERSION") === "2.9.1" && hd.querySelector('link[rel="manifest"]').getAttribute("href") === "manifest.webmanifest" && hd.querySelector('meta[name="theme-color"]') &&
+  ok(E("VERSION") === VER_ && hd.querySelector('link[rel="manifest"]').getAttribute("href") === "manifest.webmanifest" && hd.querySelector('meta[name="theme-color"]') &&
      hd.querySelector('link[rel="apple-touch-icon"]') && hd.querySelector('meta[name="apple-mobile-web-app-capable"]'), "thẻ <head>: manifest, màu, biểu tượng iPhone, chế độ ứng dụng");
   ok(E("!!window.PWA && PWA.coTheCai === true && PWA.standalone === false") && !$("bCai").hidden, "trang mở qua http://localhost: cài được; nút Cài ứng dụng hiện");
   // chưa có hộp cài của trình duyệt: hiện hướng dẫn, tô dòng của thiết bị

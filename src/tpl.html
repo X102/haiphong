@@ -65,6 +65,7 @@ table.yt tr{cursor:pointer}
 #panel{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(255,255,255,.96);border:1px solid var(--ln);border-radius:8px;padding:8px;width:290px;max-height:calc(100% - 20px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.12)}
 #panel label{display:flex;gap:5px;align-items:center}
 #panel .ol{border-top:1px solid #eef0f3;padding:3px 0}
+#panel .olh{border-top:2px solid #c9d3e0;margin-top:6px;padding:4px 0 2px;font-weight:600;color:#344054;font-size:12px}
 #panel input[type=range]{width:90px}
 #vung{position:absolute;top:10px;left:56px;z-index:1001;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:400px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
 #vung details{border-top:1px solid #eef0f3;margin-top:4px;padding-top:3px}
@@ -541,6 +542,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
           <option value="cva">véc tơ thay đổi (CVA): hai năm</option><option value="irmad">IR-MAD (Nielsen 2007): hai năm</option><option value="xh">hồi quy tuyến tính chỉ số theo năm (xu hướng)</option></select>
         <span id="cdAT" data-noi18n>Năm trước</span><select id="cdA" data-noi18n></select><span id="cdBT" data-noi18n>Năm sau</span><select id="cdB" data-noi18n></select>
         <span>Phạm vi</span><select id="cdPV"><option value="nhin">khung nhìn hiện tại</option><option value="xa">các xã chọn dưới đây</option><option value="tinh">cả tỉnh đang chọn</option><option value="vung">một vùng đã lưu</option></select></div>
+      <div class="row" id="cdNguonW" hidden><span>Nguồn ảnh</span> <select id="cdNguonAnh" data-noi18n title="Sentinel-2: 10 m, 2017-2026; Landsat: 30 m, mùa khô 1987-2026 (đã chuẩn hoá tương đối giữa các năm)"></select></div>
       <div class="row" id="cdXaW" hidden><select id="cdXa" multiple size="4" style="width:100%" data-noi18n></select></div>
       <div class="row" id="cdVungW" hidden><select id="cdVung" style="width:100%" data-noi18n></select></div>
       <details open id="cdDLW"><summary>Dữ liệu so sánh</summary>
@@ -920,6 +922,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Xuất sản phẩm</b>: báo cáo HTML có bản đồ đủ khung, lưới toạ độ, chú giải; vùng đang chọn hoặc vùng đã lưu xuất thành HTML, GeoTIFF, GeoJSON, bản đồ; rê chuột lên một biểu đồ để lưu SVG hoặc PNG; dải ảnh theo năm lưu thành PNG.</li>
     <li><b>Gộp tiến độ</b>: "Tải tệp…" hoặc "Xuất và lưu → Gộp nhiều tệp tiến độ…" chọn cùng lúc nhiều tệp JSON; nhãn khác nhau giữa các tệp được giải theo cách chọn, đánh dấu xem lại và liệt kê thành CSV.</li>
     <li><b>⤓ Cài ứng dụng</b>: cài geoportal thành ứng dụng trên điện thoại, máy tính bảng, máy tính (biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng); nút hiện hướng dẫn cho đúng thiết bị.</li>
+    <li><b>Landsat 1987-2026</b>: nhóm lớp cuối bảng lớp (khi bộ dữ liệu có Landsat). Lớp "Landsat 6 băng" tính trong trình duyệt: tổ hợp màu theo tên băng, chỉ số (chỉ những chỉ số cần đúng 6 băng BLUE, GREEN, RED, NIR, SWIR1, SWIR2), nhiệt độ bề mặt mùa khô, nguồn điểm ảnh (mùa khô đủ ảnh, nới tháng, một quan sát, mượn năm lân cận), cảm biến (TM, ETM+, OLI, OLI-2); chọn năm 1987-2026 ngay trong lớp. Thêm các lớp màu thật, PC1-5 của PCA phổ chuỗi năm, embedding. Dải ảnh theo năm, giá trị tại điểm và đồ thị theo năm có nhóm Landsat riêng; PC tính đúng từ phản xạ. Ở phát hiện thay đổi, IR-MAD và xu hướng: chọn "Nguồn ảnh" Landsat để so sánh hai năm bất kỳ từ 1987 hoặc tính xu hướng nhiều thập kỷ (30 m).</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2229,7 +2232,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.9.1";
+const VERSION = "3.0";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2501,21 +2504,26 @@ function layerYear(L0, y) {
 function buildOverlays() {
   const box = $("ols"); box.innerHTML = "";
   if (!MAN) { box.innerHTML = '<div class="mu sm">' + T("chưa nạp manifest") + '</div>'; return; }
-  const ds = (MAN.s2d ? [s2dL0()] : []).concat(MAN.dem && typeof demL0 === "function" ? [demL0()] : [], MAN.layers);
+  const coL = typeof coLS === "function" && coLS(), lsL = MAN.layers.filter(l => l.nguon === "ls");
+  const ds = (MAN.s2d ? [s2dL0()] : []).concat(MAN.dem && typeof demL0 === "function" ? [demL0()] : [], MAN.layers.filter(l => l.nguon !== "ls"),
+    coL || lsL.length ? [{tieu_de: "Landsat 1987-2026"}] : [], coL ? [lsdL0()] : [], lsL);      // bản 3.0: nhóm Landsat cuối danh sách
   ds.forEach(L0 => {
+    if (L0.tieu_de) { const h = document.createElement("div"); h.className = "olh"; h.textContent = T(L0.tieu_de); box.appendChild(h); return; }
     const pref = olPref[L0.id] || {on: false, op: L0.kieu === "lop" ? 0.55 : 0.9};
     OVL[L0.id] = OVL[L0.id] || {layer: null, on: pref.on, op: pref.op, L0: L0};
     const o = OVL[L0.id];
     const div = document.createElement("div"); div.className = "ol";
     div.innerHTML = `<label><input type="checkbox" ${o.on ? "checked" : ""}> ${lname(L0)}</label>
       <div class="row sm"><input type="range" min="0" max="1" step="0.05" value="${o.op}"> <span class="mu" data-y></span></div>` +
-      (L0.kieu === "s2d" ? '<div class="s2v" data-s2v></div>' : "") + (L0.kieu === "dem" ? '<div class="s2v" data-dem></div>' : "");
+      (L0.kieu === "s2d" ? '<div class="s2v" data-s2v></div>' : "") + (L0.kieu === "dem" ? '<div class="s2v" data-dem></div>' : "") +
+      (L0.kieu === "lsd" ? '<div class="s2v" data-lsv></div>' : "");
     const [cb, rg] = div.querySelectorAll("input");
     cb.onchange = () => { o.on = cb.checked; savePref(); refreshOverlays(); };
     rg.oninput = () => { o.op = +rg.value; if (o.layer) o.layer.setOpacity(o.op); savePref(); };
     o.span = div.querySelector("[data-y]");
     if (L0.kieu === "s2d") s2vUI(div.querySelector("[data-s2v]"));
     if (L0.kieu === "dem" && typeof demUI === "function") demUI(div.querySelector("[data-dem]"));
+    if (L0.kieu === "lsd" && typeof lsvUI === "function") lsvUI(div.querySelector("[data-lsv]"));
     box.appendChild(div);
   });
   refreshOverlays();
@@ -2530,6 +2538,7 @@ function refreshOverlays() {
     if (o.on && url && !blinkOff && !o.layer) {
       o.layer = o.L0.kieu === "dem" ? new DEMLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 4})
         : o.L0.kieu === "s2d" ? new S2DLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
+        : o.L0.kieu === "lsd" ? new LSDLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
         : new COGLayer(url, o.L0, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 5});
       o.layer.addTo(map);
     }
@@ -2715,7 +2724,7 @@ function stripTieuDe() {
 }
 function buildStripSelect() {
   const s = $("selStrip"); s.innerHTML = "";
-  (MAN ? (MAN.s2d ? [s2dL0()] : []).concat(MAN.layers.filter(L0 => L0.kieu === "rgb" || L0.kieu === "xam")) : []).forEach(L0 => { const o = document.createElement("option"); o.value = L0.id; o.textContent = L0.kieu === "s2d" ? lname(L0) + " " + T("(như đang đặt ở bảng lớp)") : lname(L0); s.appendChild(o); });
+  (MAN ? (MAN.s2d ? [s2dL0()] : []).concat(typeof coLS === "function" && coLS() ? [lsdL0()] : [], MAN.layers.filter(L0 => L0.kieu === "rgb" || L0.kieu === "xam")) : []).forEach(L0 => { const o = document.createElement("option"); o.value = L0.id; o.textContent = L0.kieu === "s2d" || L0.kieu === "lsd" ? lname(L0) + " " + T("(như đang đặt ở bảng lớp)") : lname(L0); s.appendChild(o); });
   if (!s.options.length) { const o = document.createElement("option"); o.textContent = T("(cần manifest)"); s.appendChild(o); }
   const pref = ls("laymau_hp_strip_v1"); if (pref && [...s.options].some(o => o.value === pref)) s.value = pref;
 }
@@ -2725,10 +2734,11 @@ async function renderStrip() {
   box.innerHTML = ""; $("stripmsg").textContent = "";
   if (typeof vzNguon === "function") vzNguon();
   if (!p || !MAN) return;
-  const L0 = $("selStrip").value === "s2d" && MAN.s2d ? s2dL0() : MAN.layers.find(l => l.id === $("selStrip").value); if (!L0) return;
+  const sv = $("selStrip").value, L0 = sv === "s2d" && MAN.s2d ? s2dL0() : sv === "lsd" && typeof lsdL0 === "function" ? lsdL0() : MAN.layers.find(l => l.id === sv); if (!L0) return;
   const c = CORE.to3857(p.lon, p.lat), half = stripNua(), bb = [c[0] - half, c[1] - half, c[0] + half, c[1] + half], WS = stripCo();
   const ys = Array.from(new Set(L0.nam.concat(years()))).sort();
   if (L0.kieu === "s2d") { renderStripS2D(L0, p, bb, ys, tok); return; }
+  if (L0.kieu === "lsd") { renderStripLSD(L0, p, bb, ys, tok); return; }
   for (const y of ys) {
     const it = document.createElement("div"); it.className = "it" + (y === ST.nam ? " cur" : "");
     const cv = document.createElement("canvas"); cv.width = cv.height = WS;
@@ -3292,6 +3302,7 @@ function setLang(l) {
 /*__XH__*/
 /*__XB__*/
 /*__V29__*/
+/*__V30__*/
 /*__PWA__*/
 </script>
 </body>

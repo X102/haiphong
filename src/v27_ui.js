@@ -68,7 +68,7 @@ async function v27Ve(ng, y, bb, W, cv) {       // vẽ khung bb (3857) cỡ W ×
 }
 async function v27Phu(L0, p) {                 // lớp dữ liệu có phủ điểm không (hộp bao của ảnh năm đầu)
   const k = L0.id; if (!(k in V27.phu)) {
-    try { const t = await tiffOf(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", L0.nam[0]))); V27.phu[k] = {bb: t._bb, utm: L0.kieu === "s2d"}; }
+    try { const t = await tiffOf(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", L0.nam[0]))); V27.phu[k] = {bb: t._bb, utm: L0.kieu === "s2d" || L0.kieu === "lsd"}; }
     catch (e) { V27.phu[k] = null; }
   }
   const P = V27.phu[k]; if (!P) return false;
@@ -79,7 +79,7 @@ async function v27Nguon(p) {                   // nguồn dải ảnh cho điể
   const s = $("selStrip").value;
   if (s === "wb" || s === "eox") return {ng: s};
   if (!MAN) return {ng: "eox", tu: true};
-  const L0 = s === "s2d" && MAN.s2d ? s2dL0() : MAN.layers.find(l => l.id === s);
+  const L0 = s === "s2d" && MAN.s2d ? s2dL0() : s === "lsd" && typeof lsdL0 === "function" ? lsdL0() : MAN.layers.find(l => l.id === s);
   if (!L0) return {ng: "eox", tu: true};
   return (await v27Phu(L0, p)) ? {ng: s} : {ng: "eox", tu: true};
 }
