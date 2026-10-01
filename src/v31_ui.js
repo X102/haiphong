@@ -378,12 +378,8 @@ if (typeof giaTriTai === "function") {
 document.addEventListener("click", async e => {
   const b = e.target.closest && e.target.closest("[data-s2odoc]"); if (!b) return;
   e.preventDefault(); const sp = b.closest("[data-s2ogt]"), [lon, lat] = sp.dataset.s2ogt.split(",").map(Number); b.disabled = true; b.textContent = T("đang đọc…");
-  try {
-    const v = await s2oGiaTri({lon, lat}, ST.nam); if (!v) throw new Error(T("không có cảnh"));
-    const bs = S2OC.BANG, ds = (typeof csDS === "function" ? csDS() : []), vv = s2Bang().map(n => { const i = bs.indexOf(n); return i >= 0 ? v[i] : NaN; });
-    sp.innerHTML = bs.map((n, i) => `${n} ${isFinite(v[i]) ? Math.round(v[i]) : "-"}`).join(" · ") +
-      (ds.length ? "<br>" + ds.map(c => `${esc(c.ten)} <b>${gtSo(csTinh(c, vv))}</b>`).join(" · ") : "");
-  } catch (er) { sp.textContent = T("không đọc được: ") + (er.message || er); }
+  try { sp.innerHTML = await s2oDiemHTML(lon, lat, ST.nam); }        // bản 3.2: từng cảnh, quang đãng hay mây tại điểm
+  catch (er) { sp.textContent = T("không đọc được: ") + (er.message || er); }
 });
 /* bảng kế hoạch */
 function s2oCfgDoc() {

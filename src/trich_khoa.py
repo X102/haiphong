@@ -24,7 +24,7 @@ for x in re.findall(r">([^<>]+)<", body2):
     k = re.sub(r"\s+", " ", H.unescape(x)).strip()
     if k and VI.search(k): static.append(k)
 attrs = [H.unescape(a) for a in re.findall(r'(?:title|placeholder)="([^"]+)"', body2) if VI.search(a)]
-src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js", "v28_ui.js", "xh_ui.js", "xb_ui.js", "v29_ui.js", "v30_ui.js", "pwa_ui.js", "xh_core.js", "s2o_core.js", "v31_ui.js")) + open("wayback_core.js", encoding="utf-8").read()
+src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js", "v28_ui.js", "xh_ui.js", "xb_ui.js", "v29_ui.js", "v30_ui.js", "pwa_ui.js", "xh_core.js", "s2o_core.js", "v31_ui.js", "v32_ui.js")) + open("wayback_core.js", encoding="utf-8").read()
 dyn = []
 for m in re.finditer(r'\b(?:T|msg|vgTrang|confirm|Error)\(\s*(["\'])((?:\\.|(?!\1).)*)\1', src):
     k = m.group(2).replace('\\"', '"').replace("\\'", "'")
@@ -35,10 +35,10 @@ for name, mau in [("XH_TEN", r'"([^"]+)"'), ("XH_XEM", r'\["\w+", "([^"]+)"\]'),
     m = re.search(name + r" = (\[.*?\]|\{.*?\});\n", src, re.S)
     dyn += [v for v in re.findall(mau, m.group(1)) if VI.search(v)]
 # giá trị của các bảng chữ
-for name in ["GOI_Y", "LINK_LBL", "S2_PRE_TEN", "PV_GIAI", "HL_GIAI", "LS_PRE_TEN"]:
+for name in ["GOI_Y", "LINK_LBL", "S2_PRE_TEN", "PV_GIAI", "HL_GIAI", "LS_PRE_TEN", "S2O_SCL"]:
     m = re.search(name + r" = \{(.*?)\};", src, re.S)
     dyn += [v for v in re.findall(r':\s*"([^"]+)"', m.group(1)) if VI.search(v)]
-dyn += [v for f in ("v21_ui.js", "osm_ui.js", "v30_ui.js", "v31_ui.js") for v in re.findall(r'ten: "([^"]+)"', open(f, encoding="utf-8").read()) if VI.search(v)]
+dyn += [v for f in ("v21_ui.js", "osm_ui.js", "v30_ui.js", "v31_ui.js", "v32_ui.js") for v in re.findall(r'ten: "([^"]+)"', open(f, encoding="utf-8").read()) if VI.search(v)]
 m = re.search(r"var LS_NGUON = \{(.*?)\};", src, re.S); dyn += [v for v in re.findall(r'\["([^"]+)", "#', m.group(1)) if VI.search(v)]
 dyn += ["Landsat 1987-2026"]
 dyn += ["thực vật", "nước", "xây dựng", "đất trống", "thấp", "vừa", "cao", "tự động", "theo ranh giới đã sửa", "theo ranh giới",

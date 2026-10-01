@@ -980,6 +980,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Landsat 1987-2026</b>: nhóm lớp cuối bảng lớp (khi bộ dữ liệu có Landsat). Lớp "Landsat 6 băng" tính trong trình duyệt: tổ hợp màu theo tên băng, chỉ số (chỉ những chỉ số cần đúng 6 băng BLUE, GREEN, RED, NIR, SWIR1, SWIR2), nhiệt độ bề mặt mùa khô, nguồn điểm ảnh (mùa khô đủ ảnh, nới tháng, một quan sát, mượn năm lân cận), cảm biến (TM, ETM+, OLI, OLI-2); chọn năm 1987-2026 ngay trong lớp. Thêm các lớp màu thật, PC1-5 của PCA phổ chuỗi năm, embedding. Dải ảnh theo năm, giá trị tại điểm và đồ thị theo năm có nhóm Landsat riêng; PC tính đúng từ phản xạ. Ở phát hiện thay đổi, IR-MAD và xu hướng: chọn "Nguồn ảnh" Landsat để so sánh hai năm bất kỳ từ 1987 hoặc tính xu hướng nhiều thập kỷ (30 m).</li>
     <li><b>Hành chính 3.1</b>: mục "Màu ranh giới, tên xã" chỉnh màu, độ dày, kiểu nét, nền của ranh giới xã và tỉnh, hiện tên xã từ mức phóng chọn được (kiểu "sáng" mặc định, nhìn rõ trên ảnh vệ tinh). <b>⊕ Gộp xã thành vùng</b>: thêm xã bằng cách gõ tên (không dấu cũng được), dán danh sách tên (mỗi dòng một xã, ghi kèm tỉnh nếu trùng tên) hoặc nhấp trên bản đồ; "Gộp và lưu vùng" hoà tan ranh giới thành một vùng, dùng làm phạm vi ở Thay đổi, Lớp phủ, Phân loại, Tạo bộ điểm, Xuất bản đồ, S2 trực tuyến; tải GeoJSON được.</li>
     <li><b>🛰 S2 trực tuyến</b>: cho vùng chưa có dữ liệu sẵn. Chọn phạm vi (khung nhìn, cả tỉnh, vùng gộp), tháng (qua năm được, như mùa khô tháng 11 đến 4), các năm từ 2017; "Tìm cảnh" tìm ảnh Sentinel-2 L2A trên Earth Search, chấm từng cảnh theo tỉ lệ điểm ảnh quang đãng trong phạm vi (lớp SCL) và chọn ít cảnh nhất để mỗi chỗ có đủ số lần quang đãng. Lớp "Sentinel-2 trực tuyến" ghép ảnh trung vị ngay trong trình duyệt (màu thật, tổ hợp màu, chỉ số), dải ảnh theo năm và giá trị 10 băng tại điểm (nút đọc) dùng cùng kế hoạch; lấy mẫu như với lớp có sẵn. Kế hoạch cảnh lưu trong trình duyệt, tệp tiến độ, tải CSV hoặc JSON để dùng lại.</li>
+    <li><b>S2 trực tuyến 3.2</b>: trong lớp chọn được R-G-B tuỳ ý từ 10 băng và nguồn ảnh: ảnh ghép trung vị hoặc <b>một cảnh</b> của ngày chọn (thấy cả mây), để biết nhãn lấy trên ảnh nào. Giá trị tại điểm liệt kê các cảnh đã ghép và cảnh nào quang đãng đúng tại điểm (theo SCL). Đồ thị "theo năm" có nhóm "S2 trực tuyến": điểm của năm là trung vị các cảnh đã ghép quang đãng tại điểm; nếu các cảnh đó đều mây tại điểm thì lấy cảnh ứng viên quang đãng (vòng đứt), nên năm nào có cảnh quang đãng cũng có giá trị; chấm nhỏ là từng cảnh theo ngày trong năm, để thấy điểm đổi giữa năm; tải CSV từng cảnh. Khi gán nhãn, trang ghi ảnh đã xem (cảnh S2 và ngày, quang đãng hay mây tại điểm, bản Wayback, lớp đang bật): cột "anh" trong CSV và trong bảng các năm của điểm. Dải ảnh EOX báo rõ năm không có ảnh (như 2017 ở Việt Nam) thay vì ô trắng; điểm ngoài vùng dữ liệu sẵn nhưng trong vùng kế hoạch S2 trực tuyến thì dải ảnh tự dùng S2 trực tuyến.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -1207,6 +1208,8 @@ var CORE = (function () {
         if (p.nhan[y] == null || (q.tg && p.tg && (q.tg[y] || 0) > (p.tg[y] || 0))) {
           p.nhan[y] = q.nhan[y]; p.tg[y] = (q.tg || {})[y] || Date.now();
           if (q.tin && q.tin[y] != null) p.tin[y] = q.tin[y];
+          if (p.anh) delete p.anh[y];                                         // bản 3.2: ảnh đã xem khi gán đi cùng nhãn
+          if (q.anh && q.anh[y]) { p.anh = p.anh || {}; p.anh[y] = q.anh[y]; }
         }
       });
       if (q.ghi_chu && q.ghi_chu !== p.ghi_chu) p.ghi_chu = p.ghi_chu ? p.ghi_chu + " | " + q.ghi_chu : q.ghi_chu;
@@ -1223,7 +1226,7 @@ var CORE = (function () {
         rows.push({id: p.id, bo_diem: p.bo, lon: p.lon, lat: p.lat, x_utm: p.x, y_utm: p.y, tang: p.tang, nam: y,
                    ma_lop: ma, id_lop: c.id, nhom: c.nhom || "", lop3: idx.lop3(ma), tin_cay: p.tin[y] || "",
                    goi_y_3lop: p.goi_y[y] == null ? "" : p.goi_y[y], xem_lai: p.xem_lai ? 1 : 0,
-                   ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : ""});
+                   ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : "", anh: p.anh && p.anh[y] ? p.anh[y].s || "" : ""});
       });
     });
     return rows;
@@ -1232,7 +1235,7 @@ var CORE = (function () {
     return points.map(function (p) {
       var r = {id: p.id, bo_diem: p.bo, lon: p.lon, lat: p.lat, x_utm: p.x, y_utm: p.y, tang: p.tang,
                so_nam_co_nhan: nDone(p, years), so_lan_doi: changes(p, years), xem_lai: p.xem_lai ? 1 : 0, ghi_chu: p.ghi_chu};
-      years.forEach(function (y) { r["ma_" + y] = p.nhan[y] || ""; r["lop3_" + y] = p.nhan[y] ? (idx.lop3(p.nhan[y]) || "") : ""; });
+      years.forEach(function (y) { r["ma_" + y] = p.nhan[y] || ""; r["lop3_" + y] = p.nhan[y] ? (idx.lop3(p.nhan[y]) || "") : ""; r["anh_" + y] = p.anh && p.anh[y] ? p.anh[y].s || "" : ""; });
       return r;
     });
   }
@@ -2290,7 +2293,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.1";
+const VERSION = "3.2";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3211,12 +3214,12 @@ const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
 function allPts() { return Object.values(ST.diem); }
 $("eLong").onclick = () => {
   const rows = CORE.exportLong(allPts(), allYears(), IDX);
-  download(`laymau_dai_${stamp()}.csv`, CORE.toCSV(rows, ["id", "bo_diem", "lon", "lat", "x_utm", "y_utm", "tang", "nam", "ma_lop", "id_lop", "nhom", "lop3", "tin_cay", "goi_y_3lop", "xem_lai", "ghi_chu", "cap_nhat"]), "text/csv");
+  download(`laymau_dai_${stamp()}.csv`, CORE.toCSV(rows, ["id", "bo_diem", "lon", "lat", "x_utm", "y_utm", "tang", "nam", "ma_lop", "id_lop", "nhom", "lop3", "tin_cay", "goi_y_3lop", "xem_lai", "ghi_chu", "cap_nhat", "anh"]), "text/csv");
 };
 $("eWide").onclick = () => {
   const ys = allYears(), rows = CORE.exportWide(allPts(), ys, IDX);
   const cols = ["id", "bo_diem", "lon", "lat", "x_utm", "y_utm", "tang", "so_nam_co_nhan", "so_lan_doi", "xem_lai", "ghi_chu"]
-    .concat(ys.map(y => "ma_" + y)).concat(ys.map(y => "lop3_" + y));
+    .concat(ys.map(y => "ma_" + y)).concat(ys.map(y => "lop3_" + y)).concat(ys.map(y => "anh_" + y));
   download(`laymau_rong_${stamp()}.csv`, CORE.toCSV(rows, cols), "text/csv");
 };
 $("eGeo").onclick = () => {
@@ -3367,6 +3370,7 @@ function setLang(l) {
 /*__V30__*/
 /*__S2OCORE__*/
 /*__V31__*/
+/*__V32__*/
 /*__PWA__*/
 </script>
 </body>

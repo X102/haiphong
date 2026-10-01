@@ -257,7 +257,7 @@ async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của
   if (!VG.xa && MAN && MAN.ranh_gioi_xa) { try { await vgTaiXaHF(); } catch (e) { /* không có */ } }
   const x = VG.xa ? vgXaTai(ll.lng, ll.lat) : null; if (x) rows.push([T("xã, phường"), esc(x.ten)]);
   for (const o of Object.values(OVL).filter(o => o.on)) {
-    const L0 = o.L0; if (L0.kieu === "dem" || L0.kieu === "lsd") continue;          // Landsat: dòng riêng (bản 3.0, lsGiaTri)
+    const L0 = o.L0; if (L0.kieu === "dem" || L0.kieu === "lsd" || L0.kieu === "s2o") continue;          // Landsat (bản 3.0, lsGiaTri), S2 trực tuyến (bản 3.1): dòng riêng
     const y = layerYear(L0, ST.nam);
     if (!y) { rows.push([esc(lname(L0)), `<span class="mu">${T("không có năm {y}", {y: ST.nam})}</span>`]); continue; }
     try {

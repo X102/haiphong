@@ -81,8 +81,14 @@ async function v27Nguon(p) {                   // nguồn dải ảnh cho điể
   if (!MAN) return {ng: "eox", tu: true};
   if (s === "s2o" && typeof s2oL0 === "function" && s2oL0()) return {ng: s};
   const L0 = s === "s2d" && MAN.s2d ? s2dL0() : s === "lsd" && typeof lsdL0 === "function" ? lsdL0() : MAN.layers.find(l => l.id === s);
-  if (!L0) return {ng: "eox", tu: true};
-  return (await v27Phu(L0, p)) ? {ng: s} : {ng: "eox", tu: true};
+  const s2o = typeof s2oTrongKH === "function" && s2oTrongKH(p);      // bản 3.2: điểm trong vùng của kế hoạch S2 trực tuyến
+  if (!L0) return s2o ? {ng: "s2o", tu: true} : {ng: "eox", tu: true};
+  return (await v27Phu(L0, p)) ? {ng: s} : s2o ? {ng: "s2o", tu: true} : {ng: "eox", tu: true};
+}
+function v27Trang(cv) {                         // bản 3.2: ô EOX trắng (máy chủ không có ảnh năm đó ở đây, như s2cloudless 2017 ở Việt Nam)
+  try { const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] > 247 && d[i + 1] > 247 && d[i + 2] > 247) n++;
+    return n > 0.97 * d.length / 4; } catch (e) { return false; }
 }
 function v27NamDai(ng) {
   const ys = new Set(years());
@@ -95,6 +101,13 @@ renderStrip = async function () {
   const p = vizPt(), rq = V27.rq = (V27.rq || 0) + 1;
   const N = p ? await v27Nguon(p) : null;
   if (rq !== V27.rq) return;                   // đã có lần vẽ mới hơn
+  if (N && N.ng === "s2o" && N.tu && typeof renderStripS2O === "function") {        // bản 3.2
+    const box = $("strip"), tok = ++stripTok; stripTieuDe(); box.innerHTML = "";
+    if (typeof vzNguon === "function") vzNguon();
+    $("stripmsg").textContent = T("điểm ngoài vùng có dữ liệu của bộ ảnh: dùng ") + T("Sentinel-2 trực tuyến (AWS), theo kế hoạch cảnh");
+    const L0 = s2oL0(), c = CORE.to3857(p.lon, p.lat), half = stripNua();
+    renderStripS2O(L0, p, [c[0] - half, c[1] - half, c[0] + half, c[1] + half], Array.from(new Set(L0.nam.concat(years()))).sort(), tok); return;
+  }
   if (!N || (N.ng !== "wb" && N.ng !== "eox")) return _renderStrip27.apply(this, arguments);
   const box = $("strip"), tok = ++stripTok; stripTieuDe(); box.innerHTML = "";
   if (typeof vzNguon === "function") vzNguon();
@@ -107,7 +120,14 @@ renderStrip = async function () {
     it.insertAdjacentHTML("beforeend", `<span class="lb">${y}${N.ng === "wb" ? " · " + REL[ri][0].slice(2) : ""}</span>` + (p.nhan && p.nhan[y] ? `<span class="lc" style="background:${color(p.nhan[y])}"></span>` : ""));
     it.onclick = () => setYear(y); box.appendChild(it);
     if (N.ng === "eox" && !EOX_NAM.includes(y)) { const g = cv.getContext && cv.getContext("2d"); if (g) { g.fillStyle = "#555"; g.fillText(T("không có"), WS / 2 - 22, WS / 2); } continue; }
-    v27Ve(N.ng, y, bb, WS, cv).then(r => { if (tok === stripTok && r.n) stripDanh(cv, WS, half); });
+    v27Ve(N.ng, y, bb, WS, cv).then(r => {
+      if (tok !== stripTok || !r.n) return;
+      if (N.ng === "eox" && v27Trang(cv)) {      // bản 3.2: báo rõ thay vì để ô trắng
+        const g = cv.getContext("2d"); g.fillStyle = "#e9ecf0"; g.fillRect(0, 0, WS, WS); g.fillStyle = "#475467"; g.font = "11px sans-serif"; g.textAlign = "center";
+        g.fillText(T("EOX không có"), WS / 2, WS / 2 - 6); g.fillText(T("ảnh năm này ở đây"), WS / 2, WS / 2 + 8); it.title = T("EOX không có ảnh năm này ở đây");
+        it.classList.add("trong");
+      } else stripDanh(cv, WS, half);
+    });
   }
   try { if (typeof aiCapNhatDiem === "function") aiCapNhatDiem(); } catch (e) { /* bỏ */ }
 };

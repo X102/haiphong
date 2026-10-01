@@ -36,6 +36,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 - Cài như ứng dụng (PWA) trên điện thoại, máy tính bảng, máy tính: biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng (giao diện, điểm, nhãn đã lưu), báo bản mới, mở tệp tiến độ bằng ứng dụng; nút "⤓ Cài ứng dụng" hiện hộp cài của trình duyệt hoặc hướng dẫn theo thiết bị. Các tệp `manifest.webmanifest`, `sw.js`, `icons/` cần đưa lên cùng `index.html`.
 - Landsat 1987-2026 (bản 3.0): nguồn ảnh quang học thứ hai; lớp Landsat 6 băng tính trong trình duyệt (tổ hợp màu theo tên băng, chỉ số dùng được với 6 băng, nhiệt độ bề mặt, nguồn điểm ảnh, cảm biến) chọn năm ngay trong lớp; màu thật, PC1-5 của PCA phổ chuỗi năm, embedding Landsat; dải ảnh, giá trị tại điểm, đồ thị theo năm; phát hiện thay đổi, IR-MAD và xu hướng chọn được nguồn ảnh Landsat (30 m, so hai năm bất kỳ từ 1987).
 - Bản 3.1: ranh giới hành chính chỉnh được màu, độ dày, kiểu nét, nền, hiện tên xã và tên tỉnh (mặc định kiểu sáng, rõ trên ảnh vệ tinh); gộp nhiều xã thành một vùng (gõ tên không dấu, dán danh sách tên kèm tỉnh, nhấp trên bản đồ), hoà tan ranh giới, dùng làm phạm vi ở mọi bảng phân tích và xuất GeoJSON; Sentinel-2 trực tuyến cho vùng chưa có dữ liệu sẵn: tìm cảnh L2A trên Element 84 Earth Search theo tháng tự chọn (qua năm được), chấm cảnh theo lớp SCL trong phạm vi, chọn ít cảnh nhất, ghép trung vị ngay trong trình duyệt từ COG trên AWS (màu thật, tổ hợp màu, chỉ số), dải ảnh và giá trị tại điểm, kế hoạch cảnh lưu CSV, JSON.
+- Bản 3.2: S2 trực tuyến có R-G-B tuỳ chọn và xem một cảnh theo ngày; giá trị tại điểm ghi cảnh nào quang đãng, cảnh nào mây đúng tại điểm; đồ thị theo năm và theo cảnh tại điểm (mỗi năm có giá trị khi có cảnh quang đãng, chấm từng cảnh trong năm, CSV); khi gán nhãn ghi ảnh đã xem (cảnh S2 và ngày, Wayback, lớp đang bật), xuất cột `anh` trong CSV; dải ảnh EOX báo rõ năm không có ảnh (như 2017 ở Việt Nam).
 
 ## Cấu trúc kho
 
@@ -56,6 +57,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/BAN_2_9_1.md` | cài như ứng dụng (PWA): manifest, service worker, biểu tượng, nút cài, mở tệp bằng ứng dụng, chạy khi mất mạng |
 | `docs/BAN_3_0.md` | Landsat 1987-2026 trên trang: lớp 6 băng, nhóm lớp, dải ảnh, giá trị tại điểm, đồ thị, nguồn ảnh cho phát hiện thay đổi và xu hướng |
 | `docs/BAN_3_1.md` | ranh giới hành chính (màu, tên xã), gộp xã thành vùng, Sentinel-2 trực tuyến từ AWS (tìm cảnh, chấm SCL, ghép trung vị, offset theo cờ `boa_offset_applied`) |
+| `docs/BAN_3_2.md` | S2 trực tuyến: đổi băng, một cảnh, chuỗi tại điểm theo năm và theo cảnh, ghi ảnh đã xem khi gán; sửa 'Request failed', ô trắng EOX 2017 |
 | `docs/LANDSAT_PHUONG_AN.md` | phương án dữ liệu Landsat: dựng lại trên GEE (chính sách cảm biến, lọc, mùa khô, cờ nguồn), chuẩn hoá IR-MAD, PCA, embedding; notebook `colab/ls_HF_LANDSAT.ipynb`, `colab/ls_GEE_tk1..4.ipynb` |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
