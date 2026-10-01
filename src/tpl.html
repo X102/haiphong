@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Hai Phong land-cover geoportal: multi-year labelling on Wayback and Sentinel-2 imagery, annual-series PCA, embedding, CTX and OpenStreetMap">
 <title>Hai Phong Land Cover Geoportal</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f4c5c">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HP Geoportal">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script id="pwa">/*__PWA_DAU__*/</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.2/proj4.js"></script>
@@ -320,6 +330,9 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 #bdTai{position:fixed;z-index:3000;display:flex;gap:2px}#bdTai[hidden]{display:none}#bdTai button{font-size:11px;padding:1px 6px;opacity:.92}
 #dlgGopTep{width:min(720px,96vw);max-height:92vh;overflow:auto}#dlgGopTep table{font-size:12px;border-collapse:collapse}#dlgGopTep td,#dlgGopTep th{border:1px solid #e4e7ec;padding:2px 6px}
 #vgDS select[data-vx]{font-size:11px;max-width:84px}
+#dlgCai{width:min(620px,96vw)}#dlgCai li{margin:4px 0}#dlgCai li.on{background:#eef4ff;border-left:3px solid var(--ac);padding-left:6px}
+#pwaMoi{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:4000;background:#0f4c5c;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#pwaMoi button{margin-left:6px}
 @media (max-width: 760px){ #dlgXB .vg-o{grid-template-columns:auto minmax(0,1fr)} }
 </style>
 </head>
@@ -338,6 +351,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <button id="bVung" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)">Chọn vùng <kbd>o</kbd></button>
     <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang">🐞 Báo lỗi</button>
     <button id="bGT" type="button" title="Giới thiệu geoportal, tác giả, liên hệ">ⓘ Giới thiệu</button>
+    <button id="bCai" type="button" title="Cài geoportal thành ứng dụng trên điện thoại, máy tính bảng, máy tính: có biểu tượng riêng, mở trong cửa sổ riêng, mở được khi mất mạng">⤓ Cài ứng dụng</button>
     <button id="bCD" type="button" title="Phát hiện thay đổi giữa hai năm: bản đồ, bảng, ma trận, nhận định">Δ Thay đổi</button>
     <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt">🤖 AI</button>
     <button id="bPL" type="button" title="Tạo bản đồ lớp phủ từ các điểm mẫu, kèm kiểm định và cảnh báo chỗ cần thêm mẫu">🧭 Phân loại</button>
@@ -763,6 +777,24 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div><canvas id="xbXem" width="10" height="10"></canvas></div>
   <div class="mu sm">Diện tích trong chú giải đếm trên đúng các điểm ảnh của kết quả nằm trong khung (hoặc trong ranh giới cắt); lớp dữ liệu dạng lớp đọc lại ở độ phân giải khoảng 1/1200 cạnh khung. GeoTIFF: chỉ khung bản đồ, 4 băng RGBA, EPSG:3857, cỡ điểm ảnh theo khổ và dpi. PDF có toạ độ: cả trang là ảnh, khung bản đồ khai báo theo ISO 32000 (Viewport, Measure GEO) để QGIS, Avenza Maps, Adobe đọc toạ độ. Ảnh nền phải cho phép tải chéo (Esri, Wayback, OpenStreetMap, EOX thường cho phép); lớp nào không lấy được sẽ bị bỏ và được báo lại.</div>
 </dialog>
+<dialog id="dlgCai">
+  <h3>Cài ứng dụng</h3>
+  <p id="caiTT" data-noi18n></p>
+  <div data-i18n-html="caiHD">
+  <ul class="sm">
+    <li data-nen="android"><b>Android (Chrome, Edge, Samsung Internet)</b>: bấm "Cài ngay" ở dưới, hoặc menu ⋮ → "Cài đặt ứng dụng" (hoặc "Thêm vào màn hình chính").</li>
+    <li data-nen="ios"><b>iPhone, iPad (Safari)</b>: nút Chia sẻ (ô vuông có mũi tên lên) → "Thêm vào MH chính" → "Thêm".</li>
+    <li data-nen="desktop"><b>Windows, Linux, ChromeOS (Chrome, Edge)</b>: bấm "Cài ngay", hoặc biểu tượng cài đặt ở cuối thanh địa chỉ, hoặc menu → "Cài đặt…" (Edge: "Ứng dụng" → "Cài đặt trang này dưới dạng ứng dụng").</li>
+    <li data-nen="mac"><b>macOS</b>: Chrome, Edge như trên; Safari 17 trở lên: menu Tệp → "Thêm vào Dock".</li>
+    <li><b>Firefox</b>: tuỳ phiên bản và hệ điều hành; nếu không thấy mục cài, mở trang bằng Chrome hoặc Edge.</li>
+  </ul>
+  <p class="sm">Ứng dụng là chính trang web này mở trong cửa sổ riêng, có biểu tượng riêng và tự cập nhật khi trang có bản mới. Mở được khi mất mạng: giao diện, điểm và nhãn đã lưu trong máy; ảnh nền và dữ liệu ảnh vẫn cần mạng.</p>
+  <p class="sm">Trên Android và máy tính (Chrome, Edge), ứng dụng dùng chung dữ liệu đã lưu với trang web cùng địa chỉ. Trên iPhone, iPad, ứng dụng có bộ nhớ riêng: chuyển điểm, nhãn sang bằng tệp tiến độ JSON (Xuất… → Tệp tiến độ, rồi Tải tệp… trong ứng dụng).</p>
+  <p class="sm">Trên máy tính (Chrome, Edge), sau khi cài có thể mở tệp tiến độ JSON, CSV, GeoJSON bằng ứng dụng (chuột phải lên tệp → Mở bằng); chọn nhiều tệp tiến độ thì ứng dụng mở hộp thoại gộp.</p>
+  </div>
+  <div class="row"><button id="caiNgay" type="button" class="on" hidden>Cài ngay</button><button id="caiDong" type="button">Đóng</button></div>
+</dialog>
+<div id="pwaMoi" hidden><span>Có bản mới của geoportal.</span> <button id="pwaCapNhat" type="button" class="on">Cập nhật</button> <button id="pwaBo" type="button" title="để sau">✕</button></div>
 <dialog id="dlgGT">
   <h3>Giới thiệu</h3>
   <div data-i18n-html="gtBody">
@@ -887,6 +919,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>🖨 Xuất bản đồ</b>: chọn bản đồ cần xuất (phân loại, thay đổi, xu hướng, lớp phủ, vùng, một lớp dữ liệu, hoặc như màn hình); danh sách lớp ngay trong hộp thoại để bật tắt, đặt độ trong suốt, năm, thứ tự mà không đổi bản đồ đang xem; khung theo khung nhìn, phạm vi kết quả, cả tỉnh hoặc một vùng, cắt được theo ranh giới; chú giải kèm diện tích (ha, km²) và tỉ lệ %; JPEG, PNG 150, 300, 600 dpi (kèm world file trong ZIP), PDF có toạ độ, GeoTIFF khung bản đồ; lưới toạ độ (độ phút giây, độ thập phân, UTM 48N), thước tỉ lệ kèm tỉ lệ số, mũi tên bắc, tiêu đề, dòng nguồn.</li>
     <li><b>Xuất sản phẩm</b>: báo cáo HTML có bản đồ đủ khung, lưới toạ độ, chú giải; vùng đang chọn hoặc vùng đã lưu xuất thành HTML, GeoTIFF, GeoJSON, bản đồ; rê chuột lên một biểu đồ để lưu SVG hoặc PNG; dải ảnh theo năm lưu thành PNG.</li>
     <li><b>Gộp tiến độ</b>: "Tải tệp…" hoặc "Xuất và lưu → Gộp nhiều tệp tiến độ…" chọn cùng lúc nhiều tệp JSON; nhãn khác nhau giữa các tệp được giải theo cách chọn, đánh dấu xem lại và liệt kê thành CSV.</li>
+    <li><b>⤓ Cài ứng dụng</b>: cài geoportal thành ứng dụng trên điện thoại, máy tính bảng, máy tính (biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng); nút hiện hướng dẫn cho đúng thiết bị.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2196,7 +2229,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "2.9";
+const VERSION = "2.9.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3259,6 +3292,7 @@ function setLang(l) {
 /*__XH__*/
 /*__XB__*/
 /*__V29__*/
+/*__PWA__*/
 </script>
 </body>
 </html>

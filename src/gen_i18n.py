@@ -537,6 +537,12 @@ _co = {r[0] for r in R}
 R = R + [r for r in R29 if r[0] not in _co]              # bản 2.9
 for L_, (moc, moi) in HELP29.items():                    # bản 2.9: thay mục xuất bản đồ
     h = HTML[L_]["helpBody"]; i = h.index(moc); j = h.index("</li>", i) + 5; HTML[L_]["helpBody"] = h[:i] + moi + h[j:]
+from gen_i18n_v291 import R291, HTML291, HELP291
+_co = {r[0] for r in R}
+R = R + [r for r in R291 if r[0] not in _co]            # bản 2.9.1: ứng dụng cài được
+for L_ in HTML291: HTML[L_].update(HTML291[L_])
+for L_, (moc, them) in HELP291.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

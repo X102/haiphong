@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Hai Phong Land Cover Geoportal",
+  "short_name": "HP Geoportal",
+  "description": "Multi-year land-cover labelling, change detection, classification and map export for Hai Phong (Sentinel-2, annual-series PCA, embedding, OpenStreetMap).",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0f4c5c",
+  "categories": ["education", "utilities", "productivity"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ],
+  "shortcuts": [
+    {"name": "Tiếng Việt", "url": "./?lang=vi", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Русский", "url": "./?lang=ru", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "English", "url": "./?lang=en", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ],
+  "file_handlers": [
+    {"action": "./", "accept": {"application/json": [".json"], "application/geo+json": [".geojson"], "text/csv": [".csv"]}}
+  ],
+  "launch_handler": {"client_mode": ["focus-existing", "auto"]}
+}

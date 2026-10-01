@@ -33,6 +33,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 - GeoTIFF bản đồ lớp có nodata 255, bảng màu và tệp kiểu QGIS .qml; độ trong suốt cho mọi lớp đang hiện; kéo giãn cột, dải dưới bản đồ, các bảng nổi.
 - Lưu kết quả thành tệp HTML tự chứa (phát hiện thay đổi, thống kê lớp phủ, phân loại, vùng chọn, câu trả lời của trợ lý AI): số liệu, bảng, biểu đồ, bản đồ có khung, lưới toạ độ và chú giải, nhận định; vùng chọn còn xuất được GeoTIFF, GeoJSON; biểu đồ lưu SVG, PNG; dải ảnh theo năm lưu PNG.
 - Gộp nhiều tệp tiến độ JSON (nhiều người, nhiều lần làm) một lần; nhãn khác nhau được giải theo cách chọn, đánh dấu xem lại, liệt kê CSV.
+- Cài như ứng dụng (PWA) trên điện thoại, máy tính bảng, máy tính: biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng (giao diện, điểm, nhãn đã lưu), báo bản mới, mở tệp tiến độ bằng ứng dụng; nút "⤓ Cài ứng dụng" hiện hộp cài của trình duyệt hoặc hướng dẫn theo thiết bị. Các tệp `manifest.webmanifest`, `sw.js`, `icons/` cần đưa lên cùng `index.html`.
 
 ## Cấu trúc kho
 
@@ -50,6 +51,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/DU_LIEU_2_7.md` | ranh giới Việt Nam, bản đồ lớp phủ toàn cầu (ô Colab, dùng lại ảnh GL_* trên Drive không cần GEE), thống kê, phân loại, ảnh nền mới, thay đổi 2.7.1 |
 | `docs/BAN_2_8.md` | GeoTIFF có nodata, hồi quy xu hướng, IR-MAD, xuất bản đồ in ấn, độ trong suốt, kéo giãn bảng |
 | `docs/BAN_2_9.md` | sửa lỗi 'offset' khi phát hiện thay đổi cả tỉnh; xuất bản đồ có quản lý lớp, chú giải kèm diện tích, PDF có toạ độ, GeoTIFF; báo cáo HTML có bản đồ đầy đủ; xuất vùng, biểu đồ, dải ảnh; gộp nhiều tệp tiến độ |
+| `docs/BAN_2_9_1.md` | cài như ứng dụng (PWA): manifest, service worker, biểu tượng, nút cài, mở tệp bằng ứng dụng, chạy khi mất mạng |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
 ## Cấu hình web (`cau_hinh.json`)

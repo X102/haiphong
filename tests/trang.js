@@ -61,6 +61,7 @@ function moTrang(opt = {}) {
       w.confirm = () => true;
       w.addEventListener("error", e => errs.push("window: " + (e.error && e.error.stack || e.message)));
       w.addEventListener("unhandledrejection", e => errs.push("reject: " + (e.reason && e.reason.stack || e.reason)));
+      if (opt.truoc) opt.truoc(w);              // bản 2.9.1: bài thử cài thêm API giả (launchQueue...) trước khi trang chạy
     }});
   const w = dom.window, $ = id => w.document.getElementById(id), E = s => w.eval(s);
   const sleep = ms => new Promise(r => setTimeout(r, ms));

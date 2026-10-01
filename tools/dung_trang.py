@@ -26,9 +26,19 @@ for k, v in [("/*__SCHEME__*/null", json.dumps(sc, ensure_ascii=False)),
              ("/*__XH__*/", (S / "xh_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__XB__*/", (S / "xb_ui.js").read_text(encoding="utf-8").strip()),
              ("/*__V29__*/", (S / "v29_ui.js").read_text(encoding="utf-8").strip()),
+             ("/*__PWA__*/", (S / "pwa_ui.js").read_text(encoding="utf-8").strip()),
+             ("/*__PWA_DAU__*/", (S / "pwa" / "pwa_dau.js").read_text(encoding="utf-8").strip()),
              ("/*__CHISO__*/null", (S / "chiso_s2.json").read_text(encoding="utf-8").strip()),
              ("/*__I18N__*/{}", json.dumps(json.loads((S / "i18n.json").read_text(encoding="utf-8")), ensure_ascii=False))]:
     assert s.count(k) == 1, k
     s = s.replace(k, v)
 (R / "index.html").write_text(s, encoding="utf-8")
 print("index.html:", len(s), "ký tự")
+# bản 2.9.1: các tệp của ứng dụng cài được (PWA) đặt cạnh index.html: manifest, service worker có số phiên bản, biểu tượng
+import re, shutil
+V = re.search(r'const VERSION = "([^"]+)"', s).group(1)
+shutil.copyfile(S / "pwa" / "manifest.webmanifest", R / "manifest.webmanifest")
+(R / "sw.js").write_text((S / "pwa" / "sw_tpl.js").read_text(encoding="utf-8").replace("__VERSION__", V), encoding="utf-8")
+(R / "icons").mkdir(exist_ok=True)
+for f in (S / "pwa" / "icons").iterdir(): shutil.copyfile(f, R / "icons" / f.name)
+print("ứng dụng cài được: manifest.webmanifest, sw.js (bản " + V + "), icons/")

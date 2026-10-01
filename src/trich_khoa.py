@@ -24,7 +24,7 @@ for x in re.findall(r">([^<>]+)<", body2):
     k = re.sub(r"\s+", " ", H.unescape(x)).strip()
     if k and VI.search(k): static.append(k)
 attrs = [H.unescape(a) for a in re.findall(r'(?:title|placeholder)="([^"]+)"', body2) if VI.search(a)]
-src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js", "v28_ui.js", "xh_ui.js", "xb_ui.js", "v29_ui.js", "xh_core.js")) + open("wayback_core.js", encoding="utf-8").read()
+src = t[t.index('<script id="ui">'):] + open("vung_ui.js", encoding="utf-8").read() + open("v21_ui.js", encoding="utf-8").read() + open("osm_ui.js", encoding="utf-8").read() + open("v22_ui.js", encoding="utf-8").read() + open("v23_ui.js", encoding="utf-8").read() + open("v24_ui.js", encoding="utf-8").read() + open("v25_ui.js", encoding="utf-8").read() + open("v26_ui.js", encoding="utf-8").read() + open("ai_ui.js", encoding="utf-8").read() + "".join(open(f, encoding="utf-8").read() for f in ("v27_ui.js", "tk_ui.js", "pl_ui.js", "bc_ui.js", "v28_ui.js", "xh_ui.js", "xb_ui.js", "v29_ui.js", "pwa_ui.js", "xh_core.js")) + open("wayback_core.js", encoding="utf-8").read()
 dyn = []
 for m in re.finditer(r'\b(?:T|msg|vgTrang|confirm|Error)\(\s*(["\'])((?:\\.|(?!\1).)*)\1', src):
     k = m.group(2).replace('\\"', '"').replace("\\'", "'")
