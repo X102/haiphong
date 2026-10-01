@@ -471,6 +471,8 @@ function boPhamVi() {                     // -> {mp: MultiPolygon (lon, lat) cá
   } else if (pv === "vung") {
     const v = ST.vung && ST.vung[$("boVung").value]; if (!v) throw new Error(T("chưa có vùng đã lưu"));
     parts = [v.geom.coordinates]; ten = T("vùng {id}", {id: v.id});
+  } else if (/^gop:/.test(pv) && typeof xgPV === "function") {      // bản 3.1: vùng gộp nhiều xã
+    const G = xgPV(pv.slice(4)); parts = [G.mp]; ten = G.ten;
   }
   const P = parts.map(mp => {                // hộp bao (lon, lat) từng phần để lọc nhanh trước khi kiểm điểm trong đa giác
     let b = [Infinity, Infinity, -Infinity, -Infinity];

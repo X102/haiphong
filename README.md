@@ -35,6 +35,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 - Gộp nhiều tệp tiến độ JSON (nhiều người, nhiều lần làm) một lần; nhãn khác nhau được giải theo cách chọn, đánh dấu xem lại, liệt kê CSV.
 - Cài như ứng dụng (PWA) trên điện thoại, máy tính bảng, máy tính: biểu tượng riêng, cửa sổ riêng, mở được khi mất mạng (giao diện, điểm, nhãn đã lưu), báo bản mới, mở tệp tiến độ bằng ứng dụng; nút "⤓ Cài ứng dụng" hiện hộp cài của trình duyệt hoặc hướng dẫn theo thiết bị. Các tệp `manifest.webmanifest`, `sw.js`, `icons/` cần đưa lên cùng `index.html`.
 - Landsat 1987-2026 (bản 3.0): nguồn ảnh quang học thứ hai; lớp Landsat 6 băng tính trong trình duyệt (tổ hợp màu theo tên băng, chỉ số dùng được với 6 băng, nhiệt độ bề mặt, nguồn điểm ảnh, cảm biến) chọn năm ngay trong lớp; màu thật, PC1-5 của PCA phổ chuỗi năm, embedding Landsat; dải ảnh, giá trị tại điểm, đồ thị theo năm; phát hiện thay đổi, IR-MAD và xu hướng chọn được nguồn ảnh Landsat (30 m, so hai năm bất kỳ từ 1987).
+- Bản 3.1: ranh giới hành chính chỉnh được màu, độ dày, kiểu nét, nền, hiện tên xã và tên tỉnh (mặc định kiểu sáng, rõ trên ảnh vệ tinh); gộp nhiều xã thành một vùng (gõ tên không dấu, dán danh sách tên kèm tỉnh, nhấp trên bản đồ), hoà tan ranh giới, dùng làm phạm vi ở mọi bảng phân tích và xuất GeoJSON; Sentinel-2 trực tuyến cho vùng chưa có dữ liệu sẵn: tìm cảnh L2A trên Element 84 Earth Search theo tháng tự chọn (qua năm được), chấm cảnh theo lớp SCL trong phạm vi, chọn ít cảnh nhất, ghép trung vị ngay trong trình duyệt từ COG trên AWS (màu thật, tổ hợp màu, chỉ số), dải ảnh và giá trị tại điểm, kế hoạch cảnh lưu CSV, JSON.
 
 ## Cấu trúc kho
 
@@ -54,6 +55,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/BAN_2_9.md` | sửa lỗi 'offset' khi phát hiện thay đổi cả tỉnh; xuất bản đồ có quản lý lớp, chú giải kèm diện tích, PDF có toạ độ, GeoTIFF; báo cáo HTML có bản đồ đầy đủ; xuất vùng, biểu đồ, dải ảnh; gộp nhiều tệp tiến độ |
 | `docs/BAN_2_9_1.md` | cài như ứng dụng (PWA): manifest, service worker, biểu tượng, nút cài, mở tệp bằng ứng dụng, chạy khi mất mạng |
 | `docs/BAN_3_0.md` | Landsat 1987-2026 trên trang: lớp 6 băng, nhóm lớp, dải ảnh, giá trị tại điểm, đồ thị, nguồn ảnh cho phát hiện thay đổi và xu hướng |
+| `docs/BAN_3_1.md` | ranh giới hành chính (màu, tên xã), gộp xã thành vùng, Sentinel-2 trực tuyến từ AWS (tìm cảnh, chấm SCL, ghép trung vị, offset theo cờ `boa_offset_applied`) |
 | `docs/LANDSAT_PHUONG_AN.md` | phương án dữ liệu Landsat: dựng lại trên GEE (chính sách cảm biến, lọc, mùa khô, cờ nguồn), chuẩn hoá IR-MAD, PCA, embedding; notebook `colab/ls_HF_LANDSAT.ipynb`, `colab/ls_GEE_tk1..4.ipynb` |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
@@ -87,6 +89,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 ## Nguồn dữ liệu và ghi công
 
 - Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
+- Sentinel-2 trực tuyến (bản 3.1): Copernicus Sentinel-2 L2A (ESA), ảnh COG trên AWS Open Data (Sentinel-2 Cloud-Optimized GeoTIFFs), chỉ mục Element 84 Earth Search.
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

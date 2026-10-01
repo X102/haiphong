@@ -79,6 +79,7 @@ async function v27Nguon(p) {                   // nguồn dải ảnh cho điể
   const s = $("selStrip").value;
   if (s === "wb" || s === "eox") return {ng: s};
   if (!MAN) return {ng: "eox", tu: true};
+  if (s === "s2o" && typeof s2oL0 === "function" && s2oL0()) return {ng: s};
   const L0 = s === "s2d" && MAN.s2d ? s2dL0() : s === "lsd" && typeof lsdL0 === "function" ? lsdL0() : MAN.layers.find(l => l.id === s);
   if (!L0) return {ng: "eox", tu: true};
   return (await v27Phu(L0, p)) ? {ng: s} : {ng: "eox", tu: true};
@@ -213,6 +214,7 @@ async function v27Den(r) {
 }
 /* phạm vi dùng chung cho các bảng phân tích: nhìn, xa (các xã chọn), tinh (cả tỉnh đang chọn), vung (một vùng đã lưu) */
 function v27PhamVi(pv, xaIds, vungId) {
+  if (/^gop:/.test(pv || "") && typeof xgPV === "function") return xgPV(pv.slice(4));      // bản 3.1: vùng gộp nhiều xã
   if (pv === "nhin") { const b = map.getBounds(), a = CORE.to3857(b.getWest(), b.getSouth()), c = CORE.to3857(b.getEast(), b.getNorth()); return {bb: [a[0], a[1], c[0], c[1]], mp: null, kieu: "nhin"}; }
   if (pv === "xa") { const xs = (VG.xa || []).filter(x => xaIds.includes(x.i)); if (!xs.length) throw new Error(T("chưa chọn xã nào"));
     const mp = [].concat(...xs.map(x => x.mp)); return {bb: vgBB3857(mp), mp, kieu: "xa", ten: xs.map(x => x.ten).join(", ")}; }
@@ -226,7 +228,7 @@ function v27DSVung() { return Object.values(ST.vung).map(v => `<option value="${
 function v27DSXa() { return (VG.xa || []).slice().sort((a, b) => a.ten.localeCompare(b.ten, "vi")).map(x => `<option value="${x.i}">${esc(x.ten)}</option>`).join(""); }
 if (typeof cdPhamVi === "function") {            // phát hiện thay đổi: thêm phạm vi cả tỉnh
   const _cdPV27 = cdPhamVi;
-  cdPhamVi = function () { return cd$("cdPV").value === "tinh" ? v27PhamVi("tinh") : _cdPV27(); };
+  cdPhamVi = function () { const v = cd$("cdPV").value; return v === "tinh" || /^gop:/.test(v) ? v27PhamVi(v) : _cdPV27(); };
 }
 if (typeof giaTriTai === "function") {           // giá trị tại điểm: thêm tỉnh
   const _gtt27 = giaTriTai;

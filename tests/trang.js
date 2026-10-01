@@ -10,6 +10,7 @@ function moTrang(opt = {}) {
              .replace(/<script src="[^"]*proj4[^"]*"><\/script>/, () => inl(NM + "/proj4/dist/proj4.js"))
              .replace(/<script src="[^"]*geotiff[^"]*"><\/script>/, () => inl(NM + "/geotiff/dist-browser/geotiff.js"))
              .replace(/<script src="[^"]*flatgeobuf[^"]*"><\/script>/, "")   // jsdom: dùng bản ESM của node (xem beforeParse)
+             .replace(/<script src="[^"]*polygon-clipping[^"]*"><\/script>/, () => fs.existsSync(NM + "/polygon-clipping/dist/polygon-clipping.umd.min.js") ? inl(NM + "/polygon-clipping/dist/polygon-clipping.umd.min.js") : "")   // bản 3.1
              .replace(/<script src="[^"]*osmtogeojson[^"]*"><\/script>/, () => inl(NM + "/osmtogeojson/osmtogeojson.js"))
              .replace(/<script src="[^"]*leaflet-geoman[^"]*"><\/script>/, () => opt.geoman ? inl(NM + "/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.js") : "")
              .replace(/<link[^>]*(leaflet|geoman)[^>]*>/g, "");

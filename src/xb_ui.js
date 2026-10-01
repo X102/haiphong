@@ -202,7 +202,7 @@ function xbTamLop(o, y) {                       // lớp dữ liệu năm y: dù
   const url = CORE.dataUrl(CFG, o.L0.duong_dan.replace("{y}", y));
   if (o.layer && o.layer._url === url) return o.layer;
   if (!XB.tam[url]) { const op = {opacity: 1, minZoom: 8, maxZoom: 21, maxNativeZoom: 17};
-    XB.tam[url] = o.L0.kieu === "dem" ? new DEMLayer(url, op) : o.L0.kieu === "s2d" ? new S2DLayer(url, op) : o.L0.kieu === "lsd" ? new LSDLayer(url, op) : new COGLayer(url, o.L0, op); }
+    XB.tam[url] = o.L0.kieu === "dem" ? new DEMLayer(url, op) : o.L0.kieu === "s2d" ? new S2DLayer(url, op) : o.L0.kieu === "lsd" ? new LSDLayer(url, op) : o.L0.kieu === "s2o" ? new S2OLayer(url, op) : new COGLayer(url, o.L0, op); }
   return XB.tam[url];
 }
 function xbNamDS(L0) { return Array.isArray(L0.nam) && L0.nam.length ? L0.nam.slice().sort((a, b) => a - b) : [-1]; }
@@ -394,6 +394,7 @@ function xbPhamDS() {                            // [[giá trị, tên]] các c�
   if (XB.them && XB.them.pv) out.push(["them", XB.them.pv.ten]);
   if (VG.poly && VG.poly.length) out.push(["vg", T("vùng đang chọn (ranh giới đã sửa)")]);
   Object.values(ST.vung || {}).forEach(v => out.push(["vung:" + v.id, T("vùng {id}", {id: v.id}) + (v.ma ? " · " + vgTenLop(v.ma) : "")]));
+  Object.values(ST.vgop || {}).forEach(g => out.push(["gop:" + g.id, T("vùng gộp: {t}", {t: g.ten})]));
   return out;
 }
 function xbPhamVi(pham) {                        // -> {bb 3857 | null, mp | null, ten}
@@ -403,6 +404,7 @@ function xbPhamVi(pham) {                        // -> {bb 3857 | null, mp | nul
   if (pham === "them" && XB.them && XB.them.pv) return XB.them.pv;
   if (pham === "vg" && VG.poly && VG.poly.length) return {bb: vgBB3857(VG.poly), mp: VG.poly, ten: T("vùng đang chọn")};
   if (/^vung:/.test(pham)) { const v = ST.vung[pham.slice(5)]; if (v) { const mp = vgMP(v.geom); return {bb: vgBB3857(mp), mp, ten: T("vùng {id}", {id: v.id})}; } }
+  if (/^gop:/.test(pham) && ST.vgop && ST.vgop[pham.slice(4)] && typeof xgPV === "function") return xgPV(pham.slice(4));
   return {bb: null, mp: null, ten: ""};
 }
 function xbCatPath(g, E, mp) {                   // đường cắt theo đa giác (lon, lat) trên canvas
