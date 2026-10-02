@@ -314,7 +314,10 @@ function annualSVG(A, p, W, H) {
       yy += 11; const v = Lx.map[y], c = v && Lx.L0.bang_mau ? Lx.L0.bang_mau[v] : null, tn = v ? T(((Lx.L0.ten_lop || {})[v]) || String(v)) : T("không có");
       s += `<rect x="${(x0 + 1).toFixed(1)}" y="${yy}" width="${Math.max(1, dx - 2).toFixed(1)}" height="9" rx="2" fill="${c || "#f2f4f7"}"><title>${lname(Lx.L0)} ${y}: ${tn}</title></rect>`;
     });
-    s += `<text x="${x.toFixed(1)}" y="${H - 3}" font-size="9" text-anchor="middle" fill="${y === ST.nam ? "#0b63ce" : "#667085"}" font-weight="${y === ST.nam ? 700 : 400}">${y}</text>`;
+    // bản 3.4.1: nhiều năm (Landsat 1984-2026) thì nhãn năm thưa ra cho khỏi đè nhau; năm đang chọn luôn hiện
+    const buoc = dx >= 26 ? 1 : dx >= 13 ? 2 : dx >= 6 ? 5 : 10, gan = y !== ST.nam && Math.abs(y - ST.nam) < buoc * 0.8 && yrs.includes(ST.nam);
+    if (y === ST.nam || (y % buoc === 0 && !gan)) s += `<text x="${x.toFixed(1)}" y="${H - 3}" font-size="9" text-anchor="middle" fill="${y === ST.nam ? "#0b63ce" : "#667085"}" font-weight="${y === ST.nam ? 700 : 400}">${y}</text>`;
+    else if (buoc > 1) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${H - 10}" y2="${H - 7}" stroke="#d0d5dd"/>`;
   });
   s += `<text x="2" y="${H - B0 + 11}" font-size="8" fill="#98a2b3">${T("nhãn")}</text>`;
   lops.forEach((Lx, q) => { s += `<text x="2" y="${H - B0 + 22 + q * 11}" font-size="8" fill="#98a2b3">${Lx.L0.id.replace("lulc_", "")}</text>`; });
@@ -323,7 +326,7 @@ function annualSVG(A, p, W, H) {
     if (pts.length > 1) s += `<polyline points="${pts.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/>`;
     pts.forEach(t => {
       const y = yrs[t[0]], raw = A.ys[y][i], z = yrs.length >= 4 ? anZ(S, i, raw) : 0, lech = Math.abs(z) >= 3.5;
-      s += `<circle cx="${X(t[0]).toFixed(1)}" cy="${Y(t[1]).toFixed(1)}" r="${lech ? 3.6 : 2.4}" fill="${c}"${lech ? ' stroke="#d92d20" stroke-width="1.6"' : ""}>` +
+      s += `<circle cx="${X(t[0]).toFixed(1)}" cy="${Y(t[1]).toFixed(1)}" r="${(lech ? 3.6 : 2.4) * (dx < 12 ? 0.7 : 1)}" fill="${c}"${lech ? ' stroke="#d92d20" stroke-width="1.6"' : ""}>` +
            `<title>${A.names[i]} ${y}: ${fmtV(raw)}${S.med[i] != null ? " (" + T("trung vị") + " " + fmtV(S.med[i]) + (yrs.length >= 4 ? ", z " + z.toFixed(1) : "") + ")" : ""}</title></circle>`;
     });
   });

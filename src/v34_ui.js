@@ -86,9 +86,10 @@ s2oTo = function (vals, bang, w, h) {               // giá trị ghép -> RGBA 
 };
 /* tên lớp mặt nạ tại điểm theo nguồn */
 var _s2oSclTen34 = s2oSclTen;
-s2oSclTen = function (v) {
+s2oSclTen = function (v, r) {
   const ng = s2oNg();
   if (ng === "s2") return _s2oSclTen34(v);
+  if (ng === "ls" && r && r.v && r.v.B2 > S2OC.SANG && S2OC.quang("ls", v)) return T("mây sáng (QA_PIXEL bỏ sót)");
   if (!(v > 0)) return T("không có dữ liệu");
   if (ng === "s1") return T("có dữ liệu");
   return (v & 1) ? T("không có dữ liệu") : (v & 8) ? T("mây") : (v & 16) ? T("bóng mây") : (v & 4) ? T("mây ti") : (v & 2) ? T("mây (vùng giãn)") : (v & 32) ? T("tuyết") : (v & 128) ? T("nước") : T("quang đãng");
@@ -198,3 +199,42 @@ if (typeof phienNhap === "function") {              // tệp tiến độ: nhậ
     return _phienNhap34(j);
   };
 }
+
+/* ---------- bản 3.4.1: dải ảnh nhanh chọn cảnh quang đãng nhất CẢ KHUNG quanh điểm, không chỉ đúng điểm ---------- */
+/* Trước: lấy cảnh đầu tiên quang đãng đúng tại điểm rồi vẽ không che mây, nên khung quanh điểm vẫn có thể trắng mây; cảnh Landsat
+   có hộp bao rộng hơn phần có dữ liệu (ảnh xoay) nên có khi vẽ ra ô trống. Nay chấm 7 × 7 điểm trong khung (mặt nạ + độ sáng lam
+   với Landsat) cho cảnh đã ghép, thiếu thì xét thêm cảnh ứng viên; cảnh tốt nhất quang ≥ 85 % khung thì vẽ đúng cảnh đó, không thì
+   ghép trung vị có che mây vài cảnh tốt nhất. Không cảnh nào phủ khung: ghi chữ thay vì để ô trắng. */
+var S2O_CHON_DAI = new Map();
+async function s2oChonDai(y, bb, diem) {
+  const K = s2oKH(), N = K && K.nam[y]; if (!N) return [];
+  const key = [s2oKyKH(), y, bb.map(v => Math.round(v)).join()].join("|"); if (S2O_CHON_DAI.has(key)) return S2O_CHON_DAI.get(key);
+  const a = S2OC.m2ll(bb[0], bb[1]), c = S2OC.m2ll(bb[2], bb[3]), pts = [];
+  for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) pts.push([a[0] + (i + 0.5) / 7 * (c[0] - a[0]), a[1] + (j + 0.5) / 7 * (c[1] - a[1])]);
+  const luoi = {pts, o: (bb[2] - bb[0]) / 7}, iTam = 24;
+  const by = {}; (N.ung || []).forEach(s => { by[s.id] = s; });
+  const phu = s => !s.bb || (s.bb[0] <= c[0] && s.bb[2] >= a[0] && s.bb[1] <= c[1] && s.bb[3] >= a[1]);
+  const chon = (N.chon || []).map(id => by[id]).filter(s => s && phu(s)), khac = (N.ung || []).filter(s => !N.chon.includes(s.id) && phu(s)).sort((x, z) => (z.ro || 0) - (x.ro || 0));
+  const kq = [];
+  const cham = async ds => { for (let i = 0; i < ds.length; i += 4) await Promise.all(ds.slice(i, i + 4).map(async sc => {
+    try { const m = await S2OC.matNa(sc, luoi); let q = 0, co = 0; for (const v of m) { if (v) co++; if (v === 2) q++; }
+      kq.push({sc, q: q / m.length, co: co / m.length, tam: m[iTam] === 2}); } catch (e) { /* bỏ cảnh lỗi */ } })); };
+  await cham(chon);
+  const tot = () => kq.slice().sort((x, z) => (z.q - x.q) || (z.tam - x.tam))[0];
+  if (!tot() || tot().q < 0.85) await cham(khac.slice(0, 10));
+  const xep = kq.filter(r => r.co > 0).sort((x, z) => (z.q - x.q) || (z.tam - x.tam) || (x.sc.ngay < z.sc.ngay ? -1 : 1));
+  S2O_CHON_DAI.set(key, xep); if (S2O_CHON_DAI.size > 600) S2O_CHON_DAI.delete(S2O_CHON_DAI.keys().next().value);
+  return xep;
+}
+var _s2oVe34 = s2oVe;
+s2oVe = async function (y, bb, w, h, canvas, opt) {
+  if (!(opt && opt.diem) || s2oMotCanh(y)) return _s2oVe34.apply(this, arguments);
+  const xep = await s2oChonDai(y, bb, opt.diem), ctx = canvas && canvas.getContext && canvas.getContext("2d");
+  if (!xep.length) { if (ctx) { ctx.fillStyle = "#667085"; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.fillText(T("không có cảnh phủ"), w / 2, h / 2 - 8); } return null; }
+  const mot = xep[0].q >= 0.85, ds = mot ? [xep[0].sc] : xep.filter(r => r.q > 0).slice(0, 4).map(r => r.sc);
+  const bang = s2oCanBang(), vals = await S2OC.ghep(ds.length ? ds : [xep[0].sc], bang, bb, w, h, !mot && ds.length > 0);
+  const px = s2oTo(vals, bang, w, h);
+  if (ctx) { const img = ctx.createImageData(w, h); img.data.set(px); ctx.putImageData(img, 0, 0);
+    if (!mot) { ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillRect(w - 16, h - 12, 16, 12); ctx.fillStyle = "#fff"; ctx.font = "9px sans-serif"; ctx.textAlign = "center"; ctx.fillText("∑" + ds.length, w - 8, h - 3); } }
+  return px;
+};

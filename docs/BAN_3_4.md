@@ -79,3 +79,35 @@ Chạy trong trình duyệt từ trang x102.github.io (khác nguồn với Plane
 - ghi ảnh đã xem; bản dịch tiếng Nga.
 
 Toàn bộ bài thử cũ vẫn đạt. `t_v28_dom.js` chờ ranh giới xã nạp xong trước khi dùng (trước đây đôi khi chạy trước).
+
+## Bản 3.4.1 (02.10.2026): bỏ mây Landsat mà QA_PIXEL sót; đồ thị nhiều năm thưa ra
+
+### Vì sao vẫn lọt ô trắng vì mây
+Hai nguyên nhân:
+
+1. **QA_PIXEL (Fmask) bỏ sót cả mảng mây.** Em đo trên dữ liệu thật quanh 105.75° E, 19.93° N, khung khoảng 10 × 10 km, so phần QA_PIXEL ghi "quang đãng" với phản xạ lam B2:
+
+   | cảnh | mây cả cảnh (siêu dữ liệu) | QA ghi quang đãng | trong đó lam > 0.25 (thực ra là mây) |
+   |---|---|---|---|
+   | Landsat 5, 11.02.1990 | 2 % | 99 % | 99 % |
+   | Landsat 8, 13.04.2024 | 7.8 % | 92 % | 90 % |
+   | Landsat 8, 04.04.2024 | 22 % | 100 % | 0 % |
+   | Landsat 8, 20.04.2024 | 8.9 % | 82 % | 0 % |
+
+   Như vậy có cảnh phủ mây gần kín vùng mà cả siêu dữ liệu lẫn QA_PIXEL đều ghi là quang đãng. Các cảnh quang đãng thật thì không có điểm nào vượt ngưỡng.
+2. **Dải ảnh nhanh chỉ xét đúng một điểm.** Trước đây trang lấy cảnh đầu tiên quang đãng tại điểm rồi vẽ nguyên cảnh, không che mây. Khung quanh điểm vì thế vẫn có thể trắng. Cảnh Landsat lại xoay, hộp bao rộng hơn phần có dữ liệu, nên có khi chọn phải cảnh không phủ điểm và vẽ ra ô trống.
+
+### Đã sửa
+- **Phép thử độ sáng cho Landsat**: phản xạ lam > 0.25 thì coi là mây. Áp dụng ở mọi chỗ: chấm điểm cảnh khi lập kế hoạch, ghép ảnh, đọc tại điểm, đồ thị theo năm. Tại điểm, cảnh bị loại theo cách này ghi "mây sáng (QA_PIXEL bỏ sót)".
+- **Dải ảnh nhanh**:
+  - chấm 7 × 7 điểm trong cả khung (mặt nạ + độ sáng), xét cảnh đã ghép trước, thiếu thì xét thêm cảnh ứng viên;
+  - cảnh tốt nhất quang đãng ≥ 85 % khung thì vẽ đúng cảnh đó;
+  - không thì ghép trung vị có che mây tối đa 4 cảnh tốt nhất, góc ô ghi "∑n";
+  - không cảnh nào phủ khung thì ghi "không có cảnh phủ" thay vì để ô trắng.
+- **Đồ thị theo năm nhiều năm** (như Landsat 1984-2026):
+  - nhãn năm thưa ra (mỗi 2, 5 hoặc 10 năm tuỳ bề rộng), năm đang xem luôn hiện;
+  - chấm từng cảnh nhỏ hơn, nét nối mờ hơn, dấu × nhỏ hơn.
+
+  Nút "Phóng to" cho đồ thị rộng hơn khi cần xem kỹ.
+
+Kế hoạch Landsat đã lập ở bản 3.4 nên bấm **Tìm cảnh** lại để chấm điểm cảnh bằng mặt nạ mới. Dải ảnh và đồ thị thì dùng phép thử mới ngay.

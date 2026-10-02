@@ -1772,6 +1772,8 @@
 "Sentinel-1 trực tuyến: VV, VH (dB) theo năm và theo cảnh (tại điểm)": "Sentinel-1 онлайн: VV, VH (дБ) по годам и по сценам (в точке)",
 "{t} trực tuyến {y}": "{t} онлайн {y}",
 "đọc các băng tại điểm": "прочитать каналы в точке",
+"mây sáng (QA_PIXEL bỏ sót)": "яркое облако (пропущено QA_PIXEL)",
+"không có cảnh phủ": "нет покрывающей сцены",
 "900 điểm kiểm định E0 (gợi ý = nhãn 3 lớp cũ)": "900 контрольных точек E0 (подсказка = прежняя метка 3 классов)",
 "__lop": {
 "N1": {
@@ -3714,6 +3716,8 @@
 "Sentinel-1 trực tuyến: VV, VH (dB) theo năm và theo cảnh (tại điểm)": "Sentinel-1 online: VV, VH (dB) by year and by scene (at the point)",
 "{t} trực tuyến {y}": "{t} online {y}",
 "đọc các băng tại điểm": "read the bands at the point",
+"mây sáng (QA_PIXEL bỏ sót)": "bright cloud (missed by QA_PIXEL)",
+"không có cảnh phủ": "no covering scene",
 "900 điểm kiểm định E0 (gợi ý = nhãn 3 lớp cũ)": "900 E0 validation points (hint = old 3-class label)",
 "__lop": {
 "N1": {

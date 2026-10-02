@@ -34,6 +34,12 @@ var S2OC = (function () {
     return !!TRONG[v];
   }
   function nguonCua(sc) { return sc.ng || "s2"; }
+  /* bản 3.4.1: Fmask (QA_PIXEL) bỏ sót mây mỏng, mây nhỏ khá thường gặp ở Landsat 5, 7 vùng nhiệt đới; thêm phép thử độ sáng:
+     phản xạ lam (B2) > 0.25 thì coi là mây (mặt đất, nước, thực vật, mái nhà hầu như đều dưới mức này; mây thì trên 0.3). */
+  var SANG = 2500;
+  function canThem(sc) { return nguonCua(sc) === "ls" ? ["B2"] : []; }
+  function sangMay(sc, dn) { return nguonCua(sc) === "ls" && dn > 0 && (dn * sc.s + sc.o) * 10000 > SANG; }
+  function quangDiem(sc, scl, v) { return quang(nguonCua(sc), scl) && !(nguonCua(sc) === "ls" && v && v.B2 > SANG); }
   async function chuanBi(ds) {                          // có vé SAS còn hạn cho mọi cảnh Planetary Computer trước khi đọc
     var cs = {}; (ds || []).forEach(function (sc) { if (sc && sc.ky) cs[sc.ky] = 1; });
     await Promise.all(Object.keys(cs).map(function (c) { return kyPC(c); }));
@@ -205,7 +211,8 @@ var S2OC = (function () {
     await chuanBi([sc]);
     var c = toaDo(sc.epsg, luoi.pts), G = {X: Float64Array.from(c, function (q) { return q[0]; }), Y: Float64Array.from(c, function (q) { return q[1]; }), px: Math.max(20, luoi.o / 2)};
     var v = await layMau(url(sc, "SCL"), G, [0]), m = new Uint8Array(v.length);
-    for (var k = 0; k < v.length; k++) m[k] = !(v[k] > 0) ? 0 : quang(nguonCua(sc), v[k]) ? 2 : 1;
+    var lam = canThem(sc).length && url(sc, "B2") ? await layMau(url(sc, "B2"), G, [0]) : null;
+    for (var k = 0; k < v.length; k++) m[k] = !(v[k] > 0) ? 0 : quang(nguonCua(sc), v[k]) && !(lam && sangMay(sc, lam[k])) ? 2 : 1;
     return m;
   }
   function chon(ds, N, tran) {                          // ds: [{m}] -> chỉ số cảnh chọn: mỗi ô tới N lần quang đãng, tối đa `tran` cảnh
@@ -232,8 +239,10 @@ var S2OC = (function () {
       var scl = che ? await layMau(url(sc, "SCL"), G, [0]) : null;
       var lay = tci ? [layMau(url(sc, "TCI"), G, [0, 1, 2])] : bang.map(function (b) { return url(sc, b) ? layMau(url(sc, b), G, [0]) : Promise.resolve(null); });
       var vs = await Promise.all(lay);
+      var iL = bang.indexOf("B2"), lam = che && canThem(sc).length ? (iL >= 0 ? vs[iL] : url(sc, "B2") ? await layMau(url(sc, "B2"), G, [0]) : null) : null;
       for (var k = 0; k < n; k++) {
         if (scl && !quang(nguonCua(sc), scl[k])) continue;
+        if (lam && sangMay(sc, lam[k])) continue;
         for (var q = 0; q < nb; q++) {
           var v = tci ? vs[0][k * 3 + q] : (vs[q] ? vs[q][k] : 0); if (!(v > 0)) continue;           // 0, −32768 (S1), NaN: không có dữ liệu
           gom[(s * n + k) * nb + q] = tci ? v : (v * sc.s + sc.o) * 10000;
@@ -250,7 +259,7 @@ var S2OC = (function () {
   async function trongTaiDiem(sc, lon, lat) {           // cảnh có quang đãng tại điểm không (SCL)
     var m = await matNa(sc, {pts: [[lon, lat]], o: 40}); return m[0] === 2;
   }
-  return {API: API, TAI: TAI, BANG: BANG, TRONG: TRONG, NGUON: NGUON, kyPC: kyPC, quang: quang, VE: VE, chuanBi: chuanBi, nguonCua: nguonCua, m2ll: m2ll, ll2m: ll2m, projUTM: projUTM, epsgCua: epsgCua, cuaSo: cuaSo,
+  return {API: API, TAI: TAI, BANG: BANG, TRONG: TRONG, NGUON: NGUON, kyPC: kyPC, quang: quang, VE: VE, chuanBi: chuanBi, nguonCua: nguonCua, canThem: canThem, quangDiem: quangDiem, SANG: SANG, m2ll: m2ll, ll2m: ll2m, projUTM: projUTM, epsgCua: epsgCua, cuaSo: cuaSo,
           thuGon: thuGon, url: url, tim: tim, tiff: tiff, luoiAnh: luoiAnh, layMau: layMau, luoiPhamVi: luoiPhamVi, trongDaGiac: trongDaGiac,
           matNa: matNa, chon: chon, trungVi: trungVi, ghep: ghep, trongTaiDiem: trongTaiDiem};
 })();

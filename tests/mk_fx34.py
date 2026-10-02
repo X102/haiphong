@@ -2,6 +2,7 @@
 #   Landsat (DN = (phản xạ + 0.2) / 0.0000275, QA_PIXEL 21824 = quang đãng, 22280 = mây):
 #     L1 1995-01-15 landsat-5: mây ở phía tây lon < 106.60; B4 = 0.06
 #     L2 1995-02-20 landsat-5: quang đãng; B4 = 0.08
+#     L3 1995-03-10: QA_PIXEL ghi quang đãng nhưng lam 0.35 (mây Fmask bỏ sót), phải bị loại bằng phép thử độ sáng
 #     L7 2005-01-10 landsat-7: sau hỏng SLC, phải bị bỏ
 #     L8 2005-03-01 landsat-5: quang đãng; B4 = 0.05, B8 = 0.20
 #   Sentinel-1 (float32 tuyến tính, nodata −32768):
@@ -40,6 +41,7 @@ def ls(id_, ngay, nen, qa, doi):
                   "properties": {"datetime": ngay + "T03:00:00Z", "eo:cloud_cover": 20.0, "proj:epsg": 32648, "platform": nen, "landsat:wrs_path": "127", "landsat:wrs_row": "046"}})
 ls("L1", "1995-01-15", "landsat-5", np.where(tay, 22280, 21824), {})
 ls("L2", "1995-02-20", "landsat-5", 21824 * ones, {"B4": 0.08})
+ls("L3", "1995-03-10", "landsat-5", 21824 * ones, {"B2": 0.35, "B3": 0.36, "B4": 0.38, "B8": 0.40})   # mây mà QA_PIXEL bỏ sót (lam 0.35)
 ls("L7", "2005-01-10", "landsat-7", 21824 * ones, {})
 ls("L8", "2005-03-01", "landsat-5", 21824 * ones, {"B4": 0.05, "B8": 0.20})
 def s1(id_, ngay, vv, vh, trong):

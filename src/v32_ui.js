@@ -79,14 +79,14 @@ async function s2oDocCanh(sc, lon, lat, bang, px) {
   px = px || 10;
   const key = sc.id + "|" + px + "|" + lon.toFixed(6) + "," + lat.toFixed(6);
   let r = S2OD.get(key); if (!r) { r = {scl: null, v: {}}; S2OD.set(key, r); if (S2OD.size > 8000) S2OD.delete(S2OD.keys().next().value); }
-  const can = ["SCL"].concat(bang || []).filter((b, i, a) => a.indexOf(b) === i && (b === "SCL" ? r.scl == null : !(b in r.v)));
+  const can = ["SCL"].concat(S2OC.canThem(sc), bang || []).filter((b, i, a) => a.indexOf(b) === i && (b === "SCL" ? r.scl == null : !(b in r.v)));
   if (can.length) {
     const m = S2OC.ll2m(lon, lat), G = S2OC.luoiAnh(sc.epsg, [m[0] - px / 2, m[1] - px / 2, m[0] + px / 2, m[1] + px / 2], 1, 1);
     await S2OC.chuanBi([sc]);
     const vs = await Promise.all(can.map(b => S2OC.url(sc, b) ? S2OC.layMau(S2OC.url(sc, b), G, [0], true) : Promise.resolve(null)));
     can.forEach((b, i) => { const d = vs[i] ? vs[i][0] : 0; if (b === "SCL") r.scl = d; else r.v[b] = d > 0 ? (d * sc.s + sc.o) * 10000 : null; });
   }
-  return {sc, scl: r.scl, quang: S2OC.quang(S2OC.nguonCua(sc), r.scl), v: r.v};
+  return {sc, scl: r.scl, quang: S2OC.quangDiem(sc, r.scl, r.v), v: r.v};
 }
 async function s2oDocNhieu(ds, lon, lat, bang, px, lim) {   // đọc nhiều cảnh, mỗi lượt `lim` cảnh
   const out = new Array(ds.length); lim = lim || 4;
@@ -103,7 +103,7 @@ async function s2oDiemHTML(lon, lat, y) {          // dòng giá trị tại đi
   const rs = await s2oDocNhieu(ds, lon, lat, S2OC.BANG, 10), q = mot ? rs : rs.filter(r => r.quang);
   const med = {}; S2OC.BANG.forEach(b => { med[b] = s2oTrung(q, b); });
   const cs = s2oCS();
-  const canh = rs.map(r => `${r.sc.ngay}${N.chon.includes(r.sc.id) ? "" : "*"} <span style="color:${r.quang ? "#067647" : "#b42318"}">${r.quang ? "✓" : "✗"} ${esc(s2oSclTen(r.scl))}</span>`).join(" · ");
+  const canh = rs.map(r => `${r.sc.ngay}${N.chon.includes(r.sc.id) ? "" : "*"} <span style="color:${r.quang ? "#067647" : "#b42318"}">${r.quang ? "✓" : "✗"} ${esc(s2oSclTen(r.scl, r))}</span>`).join(" · ");
   if (!q.length) return `<span class="mu">${T("mọi cảnh đã ghép đều mây tại điểm: xem đồ thị theo năm (có thay bằng cảnh ứng viên)")}</span><br>${canh}`;
   return (mot ? `<b>${T("một cảnh")} ${mot.ngay}</b> · ` : `<b>${T("trung vị {n} cảnh quang đãng", {n: q.length})}</b> · `) +
     S2OC.BANG.map(b => `${b} ${s2oFmtB(b, med[b])}`).join(" · ") +
@@ -168,23 +168,24 @@ annualSVG = function (A, p, W, H) {                 // thêm chấm từng cản
   let s = _annualSVG32(Object.assign({}, A2, {ys: Object.assign({}, A2.ys)}), p, W, H);
   if (hi - lo < 1e-9) { lo -= 1; hi += 1; } const pd = (hi - lo) * 0.06; lo -= pd; hi += pd;
   const n = yrs.length, dx = (W - L0 - R0) / Math.max(1, n), Y = v => T0 + (1 - (v - lo) / (hi - lo)) * (H - T0 - B0);
+  const day = dx < 14, rC = day ? 1.2 : 1.9, rN = day ? 2 : 3;   // bản 3.4.1: nhiều năm thì chấm nhỏ, nét cảnh mờ hơn cho khỏi chi chít
   // vẽ lại phần dữ liệu theo thang mới: bỏ các đường, chấm cũ của đồ thị gốc
   s = s.replace(/<polyline[^>]*\/>/g, "").replace(/<circle[^>]*>.*?<\/circle>/g, "").replace(/<line x1="46"[^>]*\/>\s*<text[^>]*text-anchor="end">[^<]*<\/text>/g, "");
   let g = "";
   niceTicks(lo, hi, 5).forEach(t => { g += `<line x1="${L0}" x2="${W - R0}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="${t === 0 ? "#c9ced6" : "#e9ecf0"}"/><text x="${L0 - 3}" y="${(Y(t) + 3).toFixed(1)}" font-size="9" fill="#98a2b3" text-anchor="end">${fmtV(t)}</text>`; });
   yrs.forEach((y, k) => {                            // vạch mây: cảnh mây tại điểm
     A.s2o.canh.filter(c => c.y === y && !c.quang).forEach(c => { const x = L0 + k * dx + (0.08 + 0.84 * c.t) * dx, yy = H - B0 - 4;
-      g += `<text x="${x.toFixed(1)}" y="${yy}" font-size="8" text-anchor="middle" fill="#98a2b3">×<title>${c.ngay}: ${esc(s2oSclTen(c.scl))}</title></text>`; });
+      g += `<text x="${x.toFixed(1)}" y="${yy}" font-size="${day ? 6 : 8}" text-anchor="middle" fill="#98a2b3">×<title>${c.ngay}: ${esc(s2oSclTen(c.scl))}</title></text>`; });
   });
   vis.forEach(i => {
     const c = anCol(A, i), pts = yrs.map((y, k) => [k, A2.ys[y][i], y]).filter(t => t[1] != null && isFinite(t[1]));
     const theoNgay = A.s2o.canh.filter(cn => cn.v && cn.v[i] != null && isFinite(cn.v[i])).sort((a, z) => a.ngay < z.ngay ? -1 : 1);     // bản 3.2.3: nối các cảnh theo ngày
-    if (theoNgay.length > 1) g += `<polyline points="${theoNgay.map(cn => (L0 + yrs.indexOf(cn.y) * dx + (0.08 + 0.84 * cn.t) * dx).toFixed(1) + "," + Y(cn.v[i]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="1" stroke-dasharray="3 2" opacity=".55"/>`;
+    if (theoNgay.length > 1) g += `<polyline points="${theoNgay.map(cn => (L0 + yrs.indexOf(cn.y) * dx + (0.08 + 0.84 * cn.t) * dx).toFixed(1) + "," + Y(cn.v[i]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="${day ? 0.6 : 1}" stroke-dasharray="3 2" opacity="${day ? 0.3 : 0.55}"/>`;
     A.s2o.canh.forEach(cn => { if (!cn.v || cn.v[i] == null) return; const k = yrs.indexOf(cn.y), x = L0 + k * dx + (0.08 + 0.84 * cn.t) * dx;
-      g += `<circle cx="${x.toFixed(1)}" cy="${Y(cn.v[i]).toFixed(1)}" r="1.9" fill="${cn.chon ? c : "#fff"}" stroke="${c}" stroke-width="1" opacity=".75"><title>${A.names[i]} ${cn.ngay}${cn.chon ? "" : " (" + T("ứng viên") + ")"}: ${fmtV(cn.v[i])}</title></circle>`; });
+      g += `<circle cx="${x.toFixed(1)}" cy="${Y(cn.v[i]).toFixed(1)}" r="${rC}" fill="${cn.chon ? c : "#fff"}" stroke="${c}" stroke-width="${day ? 0.6 : 1}" opacity="${day ? 0.5 : 0.75}"><title>${A.names[i]} ${cn.ngay}${cn.chon ? "" : " (" + T("ứng viên") + ")"}: ${fmtV(cn.v[i])}</title></circle>`; });
     if (pts.length > 1) g += `<polyline points="${pts.map(t => (L0 + (t[0] + 0.5) * dx).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/>`;
     pts.forEach(t => { const th = A.s2o.thay[t[2]];
-      g += `<circle cx="${(L0 + (t[0] + 0.5) * dx).toFixed(1)}" cy="${Y(t[1]).toFixed(1)}" r="3" fill="${th ? "#fff" : c}" stroke="${c}" stroke-width="1.6"${th ? ' stroke-dasharray="2 1.5"' : ""}><title>${A.names[i]} ${t[2]}: ${fmtV(t[1])}${th ? " · " + T("thay bằng cảnh {d} (cảnh đã ghép mây tại điểm)", {d: th}) : ""}</title></circle>`; });
+      g += `<circle cx="${(L0 + (t[0] + 0.5) * dx).toFixed(1)}" cy="${Y(t[1]).toFixed(1)}" r="${rN}" fill="${th ? "#fff" : c}" stroke="${c}" stroke-width="${day ? 1.2 : 1.6}"${th ? ' stroke-dasharray="2 1.5"' : ""}><title>${A.names[i]} ${t[2]}: ${fmtV(t[1])}${th ? " · " + T("thay bằng cảnh {d} (cảnh đã ghép mây tại điểm)", {d: th}) : ""}</title></circle>`; });
   });
   return s.replace("</svg>", g + "</svg>");
 };

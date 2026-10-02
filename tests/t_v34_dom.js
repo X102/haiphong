@@ -46,6 +46,14 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   const ve = async (lon, lat) => E(`(async () => { const m = S2OC.ll2m(${lon}, ${lat}); return Array.from(await S2OC.ghep(s2oCanh(1995), ["B4", "B8"], [m[0] - 20, m[1] - 20, m[0] + 20, m[1] + 20], 1, 1, true)); })()`);
   const dong = await ve(106.70, 20.92), tay = await ve(106.55, 20.92);
   ok(gan(dong[0], 700, 2) && gan(dong[1], 3000, 2) && gan(tay[0], 800, 2), `ghép trung vị: phía đông B4 ${dong[0].toFixed(0)} (0.06 và 0.08), phía tây chỉ cảnh quang đãng ${tay[0].toFixed(0)}`);
+  const l3 = E(`ST.s2o.nam[1995].ung.find(s => s.id === "L3")`);
+  ok(l3 && l3.ro === 0 && !E(`ST.s2o.nam[1995].chon.includes("L3")`), "mây QA_PIXEL bỏ sót (lam 0.35) bị loại nhờ phép thử độ sáng: L3 quang đãng " + (l3 && l3.ro));
+  const g3 = await E(`(async () => { const m = S2OC.ll2m(106.70, 20.92); return Array.from(await S2OC.ghep(ST.s2o.nam[1995].ung.filter(s => s.id !== "L7"), ["B4"], [m[0] - 20, m[1] - 20, m[0] + 20, m[1] + 20], 1, 1, true)); })()`);
+  ok(Math.abs(g3[0] - 700) <= 2, "ghép có L3: điểm ảnh sáng bị bỏ, B4 vẫn " + g3[0].toFixed(0));
+  const dai = await E(`(async () => { const m = S2OC.ll2m(106.56, 20.92), bb = [m[0] - 250, m[1] - 250, m[0] + 250, m[1] + 250];
+    const xep = await s2oChonDai(1995, bb, [106.56, 20.92]); const px = await s2oVe(1995, bb, 16, 16, null, {diem: [106.56, 20.92]});
+    let co = 0; for (let k = 3; k < px.length; k += 4) if (px[k]) co++; return {dau: xep[0].sc.id, q: xep[0].q, co}; })()`);
+  ok(dai.dau === "L2" && dai.q === 1 && dai.co === 256, `dải ảnh nhanh: chọn cảnh quang đãng cả khung (${dai.dau}, ${dai.q}), không phải cảnh mây`);
   const h = await E(`s2oDiemHTML(106.55, 20.92, 1995)`);
   ok(/1995-01-15[^·]*✗ mây/.test(h) && /1995-02-20[^·]*✓/.test(h) && /NDVI/.test(h), "giá trị tại điểm: cảnh mây theo QA_PIXEL, NDVI");
   const A = await E(`(async () => { const A = await annualFor(CORE.newPoint("⌖", 106.70, 20.92, {bo: ""}), "s2oidx"); return {names: A.names, ys: A.ys, nguon: A.nguon}; })()`);
@@ -60,6 +68,9 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   ok(/^landsat:ghep:1995/.test(E(`ST.diem.E0001.anh[1995].s`)), "gán nhãn: ghi ảnh Landsat đã xem: " + E(`ST.diem.E0001.anh[1995].s`));
   const taoLS = K.tao_luc;
 
+  const svg = E(`(() => { const ys = {}; for (let y = 1984; y <= 2026; y++) ys[y] = [0.3 + 0.001 * y % 0.1]; return annualSVG({names: ["NDVI"], ys, lop: {}}, null, 700, 200); })()`);
+  const nhan = (svg.match(/<text[^>]*text-anchor="middle"[^>]*>(19|20)\d\d</g) || []).length;
+  ok(nhan > 4 && nhan <= 22, "đồ thị 43 năm: nhãn năm thưa ra (" + nhan + " nhãn) cho khỏi đè nhau");
   // ---------- 2. Sentinel-1
   d("s2oNguon", "s1"); await sleep(30);
   ok(!E("s2oKH()") && E("ST.s2oKho.ls.tao_luc") === taoLS && $("s2oN1").options[0].value === "2015" && an("s2oMay") && an("s2oChe") && an("s2oL7"),

@@ -30,3 +30,7 @@ HELP34 = {
   "en": ("<li><b>World boundaries (3.3)</b>", """
     <li><b>Landsat and Sentinel-1 online (3.4)</b>: the scene plan (🛰) has an "Imagery source" field: Sentinel-2 (AWS, 10 m, from 2017), Landsat 4-9 Collection 2 Level-2 (30 m, from 1984) or Sentinel-1 RTC radar (VV, VH, 10 m, from 2015). Landsat and Sentinel-1 come from Microsoft Planetary Computer without an account and are read and composited in the browser like Sentinel-2. Landsat clouds are masked with QA_PIXEL and Landsat 7 after 31.05.2003 is skipped by default; Landsat bands carry the matching S2 band names, so indices are shared. Sentinel-1 is cloud-free, the composite is the median of several scenes (speckle reduction), point values and the yearly chart are in dB, with radar indices VH/VV, RVI, VV−VH. Each source keeps its own plan; switching source switches the layer, the image strip, the yearly chart and the imagery recorded with labels ("landsat:", "s1:" in the anh column).</li>"""),
 }
+R34 += [
+("mây sáng (QA_PIXEL bỏ sót)", "яркое облако (пропущено QA_PIXEL)", "bright cloud (missed by QA_PIXEL)"),
+("không có cảnh phủ", "нет покрывающей сцены", "no covering scene"),
+]
