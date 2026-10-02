@@ -9,7 +9,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") === "3.2", "bản " + E("VERSION"));
+  ok(E("VERSION") >= "3.2", "bản " + E("VERSION"));
   await until(() => !$("vnW").hidden && E("V27.tinh === '31' && VG.xa && VG.xa.length === 2"), 6000, "hành chính tỉnh 31");
 
   // ---------- chuẩn bị: vùng gộp Tây + Đông + Xa Bac, kế hoạch cảnh qua STAC giả (như t_v31_dom)

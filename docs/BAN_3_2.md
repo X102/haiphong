@@ -123,3 +123,23 @@ Vì một điểm có thể đổi ngay trong năm, nên gán trên **một cả
 - **Dịch**: tiếng Nga.
 
 Toàn bộ bài thử cũ vẫn đạt. Chromium: chụp lớp một cảnh với R-G-B tuỳ chọn.
+
+## Bản 3.2.1 (02.10.2026): nhẹ và mượt hơn
+Đo trên trang thật (x102.github.io/haiphong), vẽ 12 ô CTX 15 × 15 ở mức 14:
+
+| | trước | sau |
+|---|---|---|
+| tác vụ dài làm đứng trang | 1 lần, 1 443 ms | không có |
+| thời gian vẽ xong 12 ô | 5.5 s | 4.4 s |
+
+Thay đổi:
+
+- **Giải nén ô ảnh trong luồng phụ.** Ô COG (deflate) được giải nén bằng Web Worker (GeoTIFF Pool, tối đa 4 luồng), không còn làm đứng luồng chính khi kéo, phóng bản đồ. Không tạo được luồng phụ thì trang tự quay về cách cũ.
+- **Giới hạn bộ nhớ đệm:**
+  - lớp bản đồ giữ tối đa 32 tệp COG mở, bộ đệm mỗi tệp 240 khối (khoảng 15 MB);
+  - phân tích giữ tối đa 12 tệp;
+  - S2 trực tuyến giữ tối đa 40 tệp, mỗi tệp 96 khối.
+
+  Tệp dùng lâu nhất bị bỏ trước, nên bộ nhớ không phình mãi khi xem nhiều năm, nhiều lớp.
+- **Các lớp tính trong trình duyệt** (S2 10 băng, CTX, chỉ số, Landsat, DEM, S2 trực tuyến, COG) không tính ô trong lúc đang phóng, và chỉ giữ 1 hàng ô ngoài khung nhìn.
+- **Tô chỉ số không tạo mảng mới cho từng điểm ảnh**, đỡ việc dọn bộ nhớ.

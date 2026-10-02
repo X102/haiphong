@@ -28,6 +28,7 @@ function moTrang(opt = {}) {
       w.localStorage.setItem("laymau_hp_ol_v1", JSON.stringify(opt.olPref || {}));
       if (opt.lang !== null) w.localStorage.setItem("laymau_hp_lang_v2", JSON.stringify(opt.lang || "vi"));   // bài thử viết theo chữ tiếng Việt; lang: null = để trang tự chọn (mặc định tiếng Anh)
       const noop = () => {};
+      w.KHONG_POOL = true;                 // bản 3.2.1: Worker giả của jsdom không giải nén được
       w.Worker = class { postMessage() {} terminate() {} addEventListener() {} };
       w.TextDecoder = require("util").TextDecoder; w.TextEncoder = require("util").TextEncoder;
       // bản UMD của flatgeobuf chạy đúng trong Chromium (kiểm bằng ảnh chụp) nhưng vấp lỗi "cõi" của jsdom khi giải hình học;

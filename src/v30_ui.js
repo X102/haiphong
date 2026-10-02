@@ -73,7 +73,7 @@ function lsdRGBA(R, w, h, need) {
     let z = false; for (let q = 0; q < nb; q++) if (R.src[j * nb + q] === LS_ND) { z = true; break; }
     if (z) continue;
     if (m === "idx") {
-      bs.forEach((b, q) => { buf[b] = R.src[j * nb + q] / 10000; });
+      for (let q = 0; q < bs.length; q++) buf[bs[q]] = R.src[j * nb + q] / 10000;
       const x = cs && cs.f ? cs.f(buf) : null; if (x == null) continue;
       const t = Math.max(0, Math.min(1, (x - cs.lo) / (cs.hi - cs.lo))), c = lt[1 + Math.round(t * 254)];
       out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; continue;

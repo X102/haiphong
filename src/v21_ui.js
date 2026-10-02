@@ -66,14 +66,14 @@ function s2dRGBA(R, w, h, need) {
   if (S2V.mode === "ctx") box = bs.map((b, q) => CORE.boxImage(R.src, R.sw, R.sh, nb, q, need.pad));
   const st = S2V.tk === "m" ? "m" : "s", sHi = +S2V.cs === 5 ? K.s5 : K.s15;
   const cs = S2V.mode === "idx" && typeof csLay === "function" ? (csLay(S2V.chi) || csLay("NDVI")) : null;
-  const lt = lut2(S2V.mode === "idx" ? (cs ? cs.mau : "ndvi") : "magma");
+  const lt = lut2(S2V.mode === "idx" ? (cs ? cs.mau : "ndvi") : "magma"), v = new Array(s2Bang().length).fill(0), nbs = bs.length;
   for (let k = 0; k < w * h; k++) {
     const j = R.idx[k]; if (j < 0) continue;
     let z = true; for (let q = 0; q < nb; q++) if (R.src[j * nb + q]) { z = false; break; }
     if (z) continue;
     const o = k * 4;
     if (S2V.mode === "idx") {
-      const v = new Array(s2Bang().length).fill(0); bs.forEach((b, q) => { v[b] = R.src[j * nb + q] / 10000; });
+      for (let q = 0; q < nbs; q++) v[bs[q]] = R.src[j * nb + q] / 10000;          // bản 3.2.1: dùng lại một mảng, không tạo mới mỗi điểm ảnh
       const x = cs && cs.f ? cs.f(v) : null; if (x == null) continue;
       const t = Math.max(0, Math.min(1, (x - cs.lo) / (cs.hi - cs.lo))), c = lt[1 + Math.round(t * 254)];
       out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; continue;

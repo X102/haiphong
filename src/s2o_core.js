@@ -59,7 +59,7 @@ var S2OC = (function () {
   var MO = new Map(), DUNG = [];
   function tiff(u) {                                    // mở COG một lần (giữ tối đa 64 tệp, bỏ tệp dùng lâu nhất)
     if (!MO.has(u)) {
-      var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 160}).then(function (t) {
+      var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 96}).then(function (t) {
         return t.getImage().then(async function (im0) {
           var bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
           for (var i = 0; i < n; i++) {
@@ -75,7 +75,7 @@ var S2OC = (function () {
       MO.set(u, pr);
     }
     DUNG = DUNG.filter(function (x) { return x !== u; }); DUNG.push(u);
-    while (DUNG.length > 64) MO.delete(DUNG.shift());
+    while (DUNG.length > 40) MO.delete(DUNG.shift());
     return MO.get(u);
   }
   function chonAnh(list, want) { var use = list[0]; for (var i = 1; i < list.length; i++) if (list[i].rx <= want * 1.0001) use = list[i]; return use; }

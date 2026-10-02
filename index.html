@@ -2785,7 +2785,7 @@ const WaybackLayer = L.GridLayer.extend({
   },
 });
 
-const VERSION = "3.2";
+const VERSION = "3.2.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2945,7 +2945,23 @@ map.on("zoomstart", () => { PHONG.n = 0; PHONG.z = null; phongNote(); });
    hàm đòi thêm một khối không được tải -> "Cannot read properties of undefined (reading 'offset')". Lỗi hiếm với từng ô nhưng gần
    như chắc gặp khi đọc hàng nghìn ô (phát hiện thay đổi cả tỉnh). Bản vá tính khối cuối là floor((top - 1) / blockSize).
    (Hàm đặt ngay sau dòng khai báo bộ đệm TIFF để bài thử t_cog.js cắt đúng đoạn mã.) */
-const TIFF = new Map(), TIFF_PT = new Map(), TIFF_BD = TIFF;  // bản 2.5: TIFF_PT mở riêng cho phân tích (chọn vùng, so sánh năm), không chung bộ đệm với lớp bản đồ
+/* bản 3.2.1: giải nén ô COG (deflate) trong các luồng phụ (Web Worker) thay vì luồng chính: một cửa sổ 768 × 768 × 10 băng
+   giải nén ở luồng chính mất khoảng 0.4 s và làm đứng trang; có luồng phụ thì không còn tác vụ dài. Không tạo được luồng thì
+   tự quay về cách cũ. */
+(function () {
+  if (typeof GeoTIFF === "undefined" || !GeoTIFF.Pool || !GeoTIFF.GeoTIFFImage || window.KHONG_POOL || typeof Worker === "undefined") return;
+  const goc = GeoTIFF.GeoTIFFImage.prototype.readRasters; let pool = null, hong = false;
+  GeoTIFF.GeoTIFFImage.prototype.readRasters = async function (o) {
+    if (!hong && !(o && o.pool)) {
+      try { pool = pool || new GeoTIFF.Pool(Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 4) - 1)));
+            return await goc.call(this, Object.assign({}, o, {pool})); }
+      catch (e) { hong = true; }
+    }
+    return goc.call(this, o);
+  };
+})();
+const TIFF = new Map(), TIFF_PT = new Map(), TIFF_BD = TIFF;
+const TIFF_TRAN = {bd: 32, pt: 12};          // bản 3.2.1: số tệp COG giữ mở (mỗi tệp có bộ đệm khối riêng), bỏ tệp dùng lâu nhất  // bản 2.5: TIFF_PT mở riêng cho phân tích (chọn vùng, so sánh năm), không chung bộ đệm với lớp bản đồ
 function vaGeoTIFF(t) {
   const S = t && t.source;
   if (!S || typeof S.readSliceData !== "function" || S._va29) return t;
@@ -2969,8 +2985,10 @@ function vaGeoTIFF(t) {
 }
 function tiffOf(url, rieng) {               // mở COG một lần: hộp bao + danh sách ảnh (gốc và overview)
   const TIFF = rieng ? TIFF_PT : TIFF_BD;
+  if (TIFF.has(url)) { const p = TIFF.get(url); TIFF.delete(url); TIFF.set(url, p); }      // dùng lại: đưa về cuối hàng
   if (!TIFF.has(url)) {
-    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: rieng ? 1500 : 400}).then(vaGeoTIFF).then(async t => {
+    while (TIFF.size >= (rieng ? TIFF_TRAN.pt : TIFF_TRAN.bd)) TIFF.delete(TIFF.keys().next().value);
+    const pr = GeoTIFF.fromUrl(url, {allowFullFile: false, cacheSize: rieng ? 1500 : 240}).then(vaGeoTIFF).then(async t => {
       const im0 = await t.getImage(), bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
       for (let i = 0; i < n; i++) {
         const im = i ? await t.getImage(i) : im0, fd = im.fileDirectory;
@@ -3091,11 +3109,12 @@ function refreshOverlays() {
     if (o.span) o.span.textContent = y === -1 ? T("không đổi theo năm") : y ? String(y) : T("không có năm {y}", {y: ST.nam});
     if (o.layer && (o.layer._url !== url || !o.on || blinkOff)) { map.removeLayer(o.layer); o.layer = null; }
     if (o.on && url && !blinkOff && !o.layer) {
-      o.layer = o.L0.kieu === "dem" ? new DEMLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 4})
-        : o.L0.kieu === "s2d" ? new S2DLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
-        : o.L0.kieu === "lsd" ? new LSDLayer(url, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
-        : o.L0.kieu === "s2o" ? new S2OLayer(url, {opacity: o.op, minZoom: 9, maxZoom: 21, maxNativeZoom: 17, zIndex: 6})
-        : new COGLayer(url, o.L0, {opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 5});
+      const nhe = {keepBuffer: 1, updateWhenZooming: false};      // bản 3.2.1: không tính ô trong lúc đang phóng, giữ ít ô ngoài khung
+      o.layer = o.L0.kieu === "dem" ? new DEMLayer(url, Object.assign({opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 4}, nhe))
+        : o.L0.kieu === "s2d" ? new S2DLayer(url, Object.assign({opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6}, nhe))
+        : o.L0.kieu === "lsd" ? new LSDLayer(url, Object.assign({opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 6}, nhe))
+        : o.L0.kieu === "s2o" ? new S2OLayer(url, Object.assign({opacity: o.op, minZoom: 9, maxZoom: 21, maxNativeZoom: 17, zIndex: 6}, nhe))
+        : new COGLayer(url, o.L0, Object.assign({opacity: o.op, minZoom: 8, maxZoom: 21, maxNativeZoom: 17, zIndex: 5}, nhe));
       o.layer.addTo(map);
     }
   });
@@ -3884,14 +3903,14 @@ function s2dRGBA(R, w, h, need) {
   if (S2V.mode === "ctx") box = bs.map((b, q) => CORE.boxImage(R.src, R.sw, R.sh, nb, q, need.pad));
   const st = S2V.tk === "m" ? "m" : "s", sHi = +S2V.cs === 5 ? K.s5 : K.s15;
   const cs = S2V.mode === "idx" && typeof csLay === "function" ? (csLay(S2V.chi) || csLay("NDVI")) : null;
-  const lt = lut2(S2V.mode === "idx" ? (cs ? cs.mau : "ndvi") : "magma");
+  const lt = lut2(S2V.mode === "idx" ? (cs ? cs.mau : "ndvi") : "magma"), v = new Array(s2Bang().length).fill(0), nbs = bs.length;
   for (let k = 0; k < w * h; k++) {
     const j = R.idx[k]; if (j < 0) continue;
     let z = true; for (let q = 0; q < nb; q++) if (R.src[j * nb + q]) { z = false; break; }
     if (z) continue;
     const o = k * 4;
     if (S2V.mode === "idx") {
-      const v = new Array(s2Bang().length).fill(0); bs.forEach((b, q) => { v[b] = R.src[j * nb + q] / 10000; });
+      for (let q = 0; q < nbs; q++) v[bs[q]] = R.src[j * nb + q] / 10000;          // bản 3.2.1: dùng lại một mảng, không tạo mới mỗi điểm ảnh
       const x = cs && cs.f ? cs.f(v) : null; if (x == null) continue;
       const t = Math.max(0, Math.min(1, (x - cs.lo) / (cs.hi - cs.lo))), c = lt[1 + Math.round(t * 254)];
       out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; continue;
@@ -10413,7 +10432,7 @@ function lsdRGBA(R, w, h, need) {
     let z = false; for (let q = 0; q < nb; q++) if (R.src[j * nb + q] === LS_ND) { z = true; break; }
     if (z) continue;
     if (m === "idx") {
-      bs.forEach((b, q) => { buf[b] = R.src[j * nb + q] / 10000; });
+      for (let q = 0; q < bs.length; q++) buf[bs[q]] = R.src[j * nb + q] / 10000;
       const x = cs && cs.f ? cs.f(buf) : null; if (x == null) continue;
       const t = Math.max(0, Math.min(1, (x - cs.lo) / (cs.hi - cs.lo))), c = lt[1 + Math.round(t * 254)];
       out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; continue;
@@ -10705,7 +10724,7 @@ var S2OC = (function () {
   var MO = new Map(), DUNG = [];
   function tiff(u) {                                    // mở COG một lần (giữ tối đa 64 tệp, bỏ tệp dùng lâu nhất)
     if (!MO.has(u)) {
-      var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 160}).then(function (t) {
+      var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 96}).then(function (t) {
         return t.getImage().then(async function (im0) {
           var bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
           for (var i = 0; i < n; i++) {
@@ -10721,7 +10740,7 @@ var S2OC = (function () {
       MO.set(u, pr);
     }
     DUNG = DUNG.filter(function (x) { return x !== u; }); DUNG.push(u);
-    while (DUNG.length > 64) MO.delete(DUNG.shift());
+    while (DUNG.length > 40) MO.delete(DUNG.shift());
     return MO.get(u);
   }
   function chonAnh(list, want) { var use = list[0]; for (var i = 1; i < list.length; i++) if (list[i].rx <= want * 1.0001) use = list[i]; return use; }
