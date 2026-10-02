@@ -30,6 +30,8 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   const rows = await E(`giaTriTai(L.latLng(20.92, 106.65))`);
   ok(!rows.some(r => /không đọc được/.test(r[1])) && rows.some(r => /S2 trực tuyến 2024/.test(r[0])), "giá trị tại điểm: chỉ còn dòng S2 trực tuyến có nút đọc, không còn 'Request failed'");
 
+  const n1 = (await E(`giaTriTai(L.latLng(20.92, 106.65))`)).length, n2 = (await E(`giaTriTai(L.latLng(20.92, 106.65))`)).length;
+  ok(n1 === rows.length && n2 === rows.length, `gọi lại nhiều lần không nhân đôi dòng (${rows.length}, ${n1}, ${n2})`);
   // ---------- 2. ô trắng EOX, dải ảnh ngoài vùng dữ liệu
   const trang = E(`(() => { const mk = v => ({width: 2, height: 2, getContext: () => ({getImageData: () => ({data: new Uint8ClampedArray(16).fill(v)})})});
     const pha = {width: 2, height: 2, getContext: () => ({getImageData: () => ({data: Uint8ClampedArray.from([255,255,255,255, 30,60,40,255, 255,255,255,255, 255,255,255,255])})})};
@@ -90,7 +92,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   $("curve").querySelector("[data-s2ocv]").click();
   await until(() => !!$("curve").querySelector("svg"), 15000, "đồ thị S2 theo năm");
   const svg = $("curve").querySelector("svg");
-  ok(E("CVS.kind") === "nam" && E("CVS.grp") === "s2oidx" && svg.querySelectorAll("circle").length >= 5 && /Chấm nhỏ: từng cảnh/.test($("curve").textContent),
+  ok(E("CVS.kind") === "nam" && E("CVS.grp") === "s2oidx" && svg.querySelectorAll("circle").length >= 5 && svg.querySelectorAll("polyline[stroke-dasharray]").length >= 1 && /Chấm nhỏ nối nét đứt/.test($("curve").textContent),
      `điểm chỉ có ảnh S2 trực tuyến: nút sang đồ thị theo năm, ${svg.querySelectorAll("circle").length} chấm (năm và từng cảnh)`);
   const nb = blobs.length; $("curve").querySelector("[data-s2ocsv]").click(); await sleep(20);
   const csv = (await docBlob(blobs[nb])).trim().split("\n");

@@ -178,6 +178,8 @@ annualSVG = function (A, p, W, H) {                 // thêm chấm từng cản
   });
   vis.forEach(i => {
     const c = anCol(A, i), pts = yrs.map((y, k) => [k, A2.ys[y][i], y]).filter(t => t[1] != null && isFinite(t[1]));
+    const theoNgay = A.s2o.canh.filter(cn => cn.v && cn.v[i] != null && isFinite(cn.v[i])).sort((a, z) => a.ngay < z.ngay ? -1 : 1);     // bản 3.2.3: nối các cảnh theo ngày
+    if (theoNgay.length > 1) g += `<polyline points="${theoNgay.map(cn => (L0 + yrs.indexOf(cn.y) * dx + (0.08 + 0.84 * cn.t) * dx).toFixed(1) + "," + Y(cn.v[i]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="1" stroke-dasharray="3 2" opacity=".55"/>`;
     A.s2o.canh.forEach(cn => { if (!cn.v || cn.v[i] == null) return; const k = yrs.indexOf(cn.y), x = L0 + k * dx + (0.08 + 0.84 * cn.t) * dx;
       g += `<circle cx="${x.toFixed(1)}" cy="${Y(cn.v[i]).toFixed(1)}" r="1.9" fill="${cn.chon ? c : "#fff"}" stroke="${c}" stroke-width="1" opacity=".75"><title>${A.names[i]} ${cn.ngay}${cn.chon ? "" : " (" + T("ứng viên") + ")"}: ${fmtV(cn.v[i])}</title></circle>`; });
     if (pts.length > 1) g += `<polyline points="${pts.map(t => (L0 + (t[0] + 0.5) * dx).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/>`;
@@ -190,7 +192,7 @@ var _annualLegend32 = annualLegend;
 annualLegend = function (A, p) {
   let h = _annualLegend32(A, p);
   if (A.s2o) {
-    h += `<div class="cvnote">${T("Chấm nhỏ: từng cảnh theo ngày trong khoảng tháng của năm (đặc: cảnh đã ghép; rỗng: cảnh ứng viên); ×: cảnh mây tại điểm; chấm lớn: trung vị các cảnh đã ghép quang đãng; vòng đứt: năm thay bằng cảnh ứng viên.")}</div>`;
+    h += `<div class="cvnote">${T("Chấm nhỏ nối nét đứt: từng cảnh theo ngày trong khoảng tháng của năm (đặc: cảnh đã ghép; rỗng: cảnh ứng viên); ×: cảnh mây tại điểm; chấm lớn: trung vị các cảnh đã ghép quang đãng; vòng đứt: năm thay bằng cảnh ứng viên.")}</div>`;
     const th = Object.entries(A.s2o.thay); if (th.length) h += `<div class="cvwarn">${T("Năm dùng cảnh thay:")} ${th.map(([y, d]) => `${y} (${d})`).join(", ")}</div>`;
     const ko = Object.keys(s2oKH().nam).filter(y => !(y in A.ys)); if (ko.length) h += `<div class="cvwarn">${T("Năm không có cảnh quang đãng tại điểm:")} ${ko.join(", ")}</div>`;
     h += `<div class="row sm"><button type="button" data-s2ocsv>${T("CSV từng cảnh tại điểm")}</button></div>`;

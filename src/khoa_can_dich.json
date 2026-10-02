@@ -1483,7 +1483,7 @@
 "Sentinel-2 L2A trên AWS, trung vị các cảnh đã ghép quang đãng tại điểm ({px} m)",
 "ứng viên",
 "thay bằng cảnh {d} (cảnh đã ghép mây tại điểm)",
-"Chấm nhỏ: từng cảnh theo ngày trong khoảng tháng của năm (đặc: cảnh đã ghép; rỗng: cảnh ứng viên); ×: cảnh mây tại điểm; chấm lớn: trung vị các cảnh đã ghép quang đãng; vòng đứt: năm thay bằng cảnh ứng viên.",
+"Chấm nhỏ nối nét đứt: từng cảnh theo ngày trong khoảng tháng của năm (đặc: cảnh đã ghép; rỗng: cảnh ứng viên); ×: cảnh mây tại điểm; chấm lớn: trung vị các cảnh đã ghép quang đãng; vòng đứt: năm thay bằng cảnh ứng viên.",
 "Năm dùng cảnh thay:",
 "Năm không có cảnh quang đãng tại điểm:",
 "CSV từng cảnh tại điểm",

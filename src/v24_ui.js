@@ -252,7 +252,7 @@ async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của
   const p = CORE.newPoint("⌖", ll.lng, ll.lat, {bo: ""});
   const on = Object.values(OVL).filter(o => o.on).map(o => o.L0.id).join();
   const key = [LANG, p.x, p.y, ST.nam, on, ST.chiso.dung.join(), JSON.stringify(ST.chiso.khoang), S2V.mode, typeof LSV !== "undefined" ? LSV.mode : "", Object.keys(ST.vung).length].join("|");
-  if (GT_CACHE.has(key)) return GT_CACHE.get(key);
+  if (GT_CACHE.has(key)) return GT_CACHE.get(key).slice();          // bản 3.2.3: trả bản sao, các lớp bọc thêm dòng không làm bẩn bộ nhớ
   const rows = [];
   if (!VG.xa && MAN && MAN.ranh_gioi_xa) { try { await vgTaiXaHF(); } catch (e) { /* không có */ } }
   const x = VG.xa ? vgXaTai(ll.lng, ll.lat) : null; if (x) rows.push([T("xã, phường"), esc(x.ten)]);
@@ -293,7 +293,7 @@ async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của
     if (ft.length) rows.push(["OSM", ft.slice(0, 4).map(f => esc(f.properties.the + (f.properties.ten ? " · " + f.properties.ten : ""))).join("; ")]);
   }
   GT_CACHE.set(key, rows); if (GT_CACHE.size > 200) GT_CACHE.delete(GT_CACHE.keys().next().value);
-  return rows;
+  return rows.slice();
 }
 function giaTriHTML(rows) {
   return rows.length ? `<table>${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join("")}</table>` : `<span class="mu sm">${T("không có lớp nào đang bật")}</span>`;
