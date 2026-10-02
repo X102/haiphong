@@ -211,12 +211,13 @@ async function embPJ(L0) {
 }
 async function lopAt(p) {                  // giá trị các bản đồ lớp tại điểm, mọi năm (dải dưới đồ thị)
   const key = p.x + "," + p.y; if (LOP_PT[key]) return LOP_PT[key];
-  const out = {};
-  for (const L0 of (MAN ? MAN.layers.filter(l => l.kieu === "lop") : [])) {
-    const mp = {};
-    for (const y of L0.nam) { try { const v = await pxAt(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), p); if (v && v[0]) mp[y] = v[0]; } catch (e) { /* bỏ */ } }
-    out[L0.id] = {L0, map: mp};
-  }
+  const out = {}, ds = MAN ? MAN.layers.filter(l => l.kieu === "lop") : [], m = CORE.to3857(p.lon, p.lat);
+  ds.forEach(L0 => { out[L0.id] = {L0, map: {}}; });
+  await Promise.all(ds.map(async L0 => {          // bản 3.3: song song; lớp không phủ điểm (xét ảnh năm đầu) thì bỏ, không mở mọi năm
+    try { const t = await tiffOf(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", L0.nam[0]))); const b = t._bb;
+          if (m[0] < b[0] || m[0] > b[2] || m[1] < b[1] || m[1] > b[3]) return; } catch (e) { return; }
+    await Promise.all(L0.nam.map(async y => { try { const v = await pxAt(CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), p); if (v && v[0]) out[L0.id].map[y] = v[0]; } catch (e) { /* bỏ */ } }));
+  }));
   return (LOP_PT[key] = out);
 }
 async function annualFor(p, grp) {

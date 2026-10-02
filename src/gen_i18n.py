@@ -558,6 +558,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R32 if r[0] not in _co]              # bản 3.2: đổi băng, một cảnh, chuỗi tại điểm, ảnh đã xem khi gán
 for L_, (moc, them) in HELP32.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v33 import R33, HELP33
+_co = {r[0] for r in R}
+R = R + [r for r in R33 if r[0] not in _co]              # bản 3.3: ranh giới toàn thế giới
+for L_, (moc, them) in HELP33.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

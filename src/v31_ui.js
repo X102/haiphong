@@ -94,8 +94,10 @@ var XG = {chon: [], id: "", ban: false, bat: null, lop: L.layerGroup(), sang: L.
 var xg$ = id => document.getElementById(id);
 function xgGon(s) { return CORE.khongDau(s).replace(/^(xa|phuong|thi tran|dac khu|thi xa)\s+/, "").replace(/\s+/g, " ").trim(); }
 function xgGonTinh(s) { return CORE.khongDau(s).replace(/^(tinh|thanh pho|tp\.?)\s+/, "").replace(/\s+/g, " ").trim(); }
+function xgTinhHT() { return typeof THG !== "undefined" && THG.dangDung ? THG.ma : (typeof V27 !== "undefined" ? V27.tinh : ""); }
 async function xgXaCuaTinh(tinh) {                 // [{ten, mp, bl}] các xã của một tỉnh (tỉnh đang chọn: dùng luôn VG.xa)
-  if (typeof V27 !== "undefined" && V27.tinh === tinh && VG.xa && VG.xa.length) return VG.xa;
+  if (xgTinhHT() === tinh && VG.xa && VG.xa.length) return VG.xa;
+  if (/^w/.test(tinh)) throw new Error(T("vùng thế giới này không còn được nạp"));
   if (!MAN || !MAN.vn) throw new Error(T("bộ dữ liệu chưa có ranh giới hành chính Việt Nam"));
   if (!XG.xaTinh[tinh]) XG.xaTinh[tinh] = getText(MAN.vn.xa.replace("{ma}", tinh)).then(t => JSON.parse(t).features.filter(f => f.geometry && /Polygon/.test(f.geometry.type)).map(f => {
     const mp = vgMP(f.geometry), bl = [Infinity, Infinity, -Infinity, -Infinity];
@@ -104,7 +106,7 @@ async function xgXaCuaTinh(tinh) {                 // [{ten, mp, bl}] các xã c
   })).catch(e => { delete XG.xaTinh[tinh]; throw e; });
   return XG.xaTinh[tinh];
 }
-function xgTinhTen(ma) { return typeof v27TinhTen === "function" ? v27TinhTen(ma) : ma; }
+function xgTinhTen(ma) { if (/^w/.test(ma || "")) return typeof THG !== "undefined" && THG.ma === ma ? THG.ten : ma; return typeof v27TinhTen === "function" ? v27TinhTen(ma) : ma; }
 function xgKhoa(c) { return c.tinh + "|" + c.ten; }
 async function xgThem(ten, tinh, im) {             // thêm một xã (theo tên đúng trong danh mục và mã tỉnh); trả về true nếu thêm mới
   if (XG.chon.some(c => c.tinh === tinh && c.ten === ten)) return false;
@@ -129,7 +131,7 @@ function xgHoaTan(mps) {                           // hợp các đa giác; khô
 function xgVe() {
   const tong = XG.chon.reduce((s, c) => s + xgDienTich(c.mp), 0);
   xg$("xgSo").textContent = XG.chon.length ? `(${XG.chon.length}, ${tong.toFixed(0)} ${T("ha")})` : "";
-  xg$("xgXa").innerHTML = XG.chon.map((c, i) => `<button type="button" data-bo="${i}" title="${esc(T("bỏ xã này"))}">${esc(c.ten)}${c.tinh !== (typeof V27 !== "undefined" ? V27.tinh : "") ? " · " + esc(xgTinhTen(c.tinh)) : ""} ×</button>`).join("") ||
+  xg$("xgXa").innerHTML = XG.chon.map((c, i) => `<button type="button" data-bo="${i}" title="${esc(T("bỏ xã này"))}">${esc(c.ten)}${c.tinh !== xgTinhHT() ? " · " + esc(xgTinhTen(c.tinh)) : ""} ×</button>`).join("") ||
     `<span class="mu">${T("chưa chọn xã nào")}</span>`;
   xg$("xgXa").querySelectorAll("[data-bo]").forEach(b => { b.onclick = () => xgBo(+b.dataset.bo); });
   XG.sang.clearLayers();
@@ -138,6 +140,12 @@ function xgVe() {
 }
 function xgTim() {
   const q = CORE.khongDau(xg$("xgTim").value), box = xg$("xgKQ"); box.innerHTML = "";
+  if (q.length >= 2 && typeof THG !== "undefined" && THG.dangDung) {        // bản 3.3: vùng thế giới đang nạp: tìm trong các đơn vị đã nạp
+    const kq = (VG.xa || []).filter(x => x.kd.includes(q)).slice(0, 12);
+    box.innerHTML = kq.map((x, i) => `<button type="button" data-k="${i}">${esc(x.ten)}</button>`).join("") || `<span class="mu sm">${T("không thấy")}</span>`;
+    box.querySelectorAll("[data-k]").forEach(b => { b.onclick = async () => { await xgThem(kq[+b.dataset.k].ten, THG.ma); xgVe(); }; });
+    return;
+  }
   if (q.length < 2 || typeof V27 === "undefined" || !V27.dm) return;
   const kq = V27.dm.xa.filter(x => CORE.khongDau(x[1]).includes(q)).sort((a, b) => (a[2] === V27.tinh ? 0 : 1) - (b[2] === V27.tinh ? 0 : 1)).slice(0, 12);
   box.innerHTML = kq.map((x, i) => `<button type="button" data-k="${i}">${esc(x[1])} · ${esc(xgTinhTen(x[2]))}</button>`).join("") || `<span class="mu sm">${T("không thấy")}</span>`;
@@ -149,6 +157,10 @@ function xgTachDong(s) {                           // "Xã A, Tỉnh B" | "Xã A
   return {ten: s.trim(), tinh: tinh && tinh.trim()};
 }
 function xgKhopDong(d) {                           // -> {loai: "dung"|"nhieu"|"khong", ung: [[ma, ten, tinh]]}
+  if (typeof THG !== "undefined" && THG.dangDung) {                          // bản 3.3: so với các đơn vị thế giới đang nạp
+    const kd = CORE.khongDau(d.ten), g = xgGon(d.ten); let u = (VG.xa || []).filter(x => x.kd === kd); if (!u.length) u = (VG.xa || []).filter(x => xgGon(x.ten) === g);
+    u = u.map(x => [String(x.i), x.ten, THG.ma]); return {loai: u.length === 1 ? "dung" : u.length ? "nhieu" : "khong", ung: u};
+  }
   const dm = V27.dm, kd = CORE.khongDau(d.ten), g = xgGon(d.ten);
   let ung = dm.xa.filter(x => CORE.khongDau(x[1]) === kd);
   if (!ung.length) ung = dm.xa.filter(x => xgGon(x[1]) === g);
@@ -157,7 +169,7 @@ function xgKhopDong(d) {                           // -> {loai: "dung"|"nhieu"|"
   return {loai: ung.length === 1 ? "dung" : ung.length ? "nhieu" : "khong", ung};
 }
 async function xgKhop() {
-  const box = xg$("xgKhopKQ"); if (typeof V27 === "undefined" || !V27.dm) { box.textContent = T("chưa nạp danh mục hành chính"); return; }
+  const box = xg$("xgKhopKQ"); if (!(typeof THG !== "undefined" && THG.dangDung) && (typeof V27 === "undefined" || !V27.dm)) { box.textContent = T("chưa nạp danh mục hành chính"); return; }
   const dong = xg$("xgDan").value.split(/[\n;]+/).map(s => s.trim()).filter(Boolean);
   let them = 0; const nhieu = [], khong = [];
   for (const s of dong) {
@@ -172,7 +184,7 @@ async function xgKhop() {
   box.querySelectorAll("[data-n]").forEach(b => { b.onclick = async () => { const [i, j] = b.dataset.n.split(":").map(Number), x = nhieu[i].ung[j]; await xgThem(x[1], x[2]); b.parentElement.remove(); xgVe(); }; });
 }
 async function xgBanNhap(ll) {                     // chế độ chọn trên bản đồ: thêm hoặc bỏ xã ở chỗ nhấp
-  let x = typeof vgXaTai === "function" ? vgXaTai(ll.lng, ll.lat) : null, tinh = typeof V27 !== "undefined" ? V27.tinh : "";
+  let x = typeof vgXaTai === "function" ? vgXaTai(ll.lng, ll.lat) : null, tinh = xgTinhHT();
   if (!x && typeof v27NapTinh === "function") {
     try { await v27NapTinh(); const t = v27TinhTai(ll.lng, ll.lat); if (t) { tinh = t.ma; const ds = await xgXaCuaTinh(tinh); x = ds.find(z => ll.lng >= z.bl[0] && ll.lng <= z.bl[2] && ll.lat >= z.bl[1] && ll.lat <= z.bl[3] && vgPIP(ll.lng, ll.lat, z.mp)) || null; } } catch (e) { /* bỏ */ }
   }
@@ -246,7 +258,7 @@ function xgGeoJSON(id) {
   xg$("xgTim").addEventListener("input", xgTim);
   xg$("xgKhop").onclick = xgKhop;
   xg$("xgBan").onclick = () => xgBatBan(!XG.ban);
-  xg$("xgCaTinh").onclick = () => { (VG.xa || []).forEach(x => { if (!XG.chon.some(c => c.tinh === V27.tinh && c.ten === x.ten)) XG.chon.push({ten: x.ten, tinh: V27.tinh, mp: x.mp, bl: x.bl}); }); xgVe(); };
+  xg$("xgCaTinh").onclick = () => { (VG.xa || []).forEach(x => { const th = xgTinhHT(); if (!XG.chon.some(c => c.tinh === th && c.ten === x.ten)) XG.chon.push({ten: x.ten, tinh: th, mp: x.mp, bl: x.bl}); }); xgVe(); };
   xg$("xgBoHet").onclick = () => { XG.chon = []; xgVe(); };
   xg$("xgLuu").onclick = xgLuu;
   xg$("xgDen").onclick = () => { if (XG.id) xgDen(XG.id); else if (XG.chon.length) { const b = XG.chon.reduce((a, c) => [Math.min(a[0], c.bl[0]), Math.min(a[1], c.bl[1]), Math.max(a[2], c.bl[2]), Math.max(a[3], c.bl[3])], [Infinity, Infinity, -Infinity, -Infinity]); map.fitBounds([[b[1], b[0]], [b[3], b[2]]]); } };

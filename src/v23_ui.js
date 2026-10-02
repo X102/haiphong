@@ -72,7 +72,7 @@ const Ctl23 = L.Control.extend({
     const d = L.DomUtil.create("div", "ctl23");
     d.innerHTML = `<button type="button" id="ctlSide" title="Mở bảng điều khiển (phím [ )" hidden>☰</button>
       <div class="tx"><button type="button" id="xaTimB" title="Tìm xã, phường theo tên">🔎</button>
-        <input id="xaTim" type="text" placeholder="tìm xã, phường…" autocomplete="off" hidden><ul id="xaGoiY" hidden></ul></div>`;
+        <input id="xaTim" type="text" placeholder="tìm xã, phường, thành phố…" autocomplete="off" hidden><ul id="xaGoiY" hidden></ul></div>`;
     L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
     return d;
   },

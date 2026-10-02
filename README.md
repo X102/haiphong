@@ -58,6 +58,7 @@ Giao diện tiếng Anh (mặc định), tiếng Việt, tiếng Nga (`?lang=en`
 | `docs/BAN_3_0.md` | Landsat 1987-2026 trên trang: lớp 6 băng, nhóm lớp, dải ảnh, giá trị tại điểm, đồ thị, nguồn ảnh cho phát hiện thay đổi và xu hướng |
 | `docs/BAN_3_1.md` | ranh giới hành chính (màu, tên xã), gộp xã thành vùng, Sentinel-2 trực tuyến từ AWS (tìm cảnh, chấm SCL, ghép trung vị, offset theo cờ `boa_offset_applied`) |
 | `docs/BAN_3_2.md` | S2 trực tuyến: đổi băng, một cảnh, chuỗi tại điểm theo năm và theo cảnh, ghi ảnh đã xem khi gán; sửa 'Request failed', ô trắng EOX 2017 |
+| `docs/BAN_3_3.md` | ranh giới toàn thế giới từ OpenStreetMap (Nominatim, Overpass), đồ thị theo năm nhanh hơn |
 | `docs/LANDSAT_PHUONG_AN.md` | phương án dữ liệu Landsat: dựng lại trên GEE (chính sách cảm biến, lọc, mùa khô, cờ nguồn), chuẩn hoá IR-MAD, PCA, embedding; notebook `colab/ls_HF_LANDSAT.ipynb`, `colab/ls_GEE_tk1..4.ipynb` |
 | `docs/AI_RELAY.md` | trợ lý AI: chọn nhà cung cấp, dựng relay không cần VPN, cách lưu khoá, dữ liệu gửi đi |
 
@@ -92,6 +93,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 
 - Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
 - Sentinel-2 trực tuyến (bản 3.1): Copernicus Sentinel-2 L2A (ESA), ảnh COG trên AWS Open Data (Sentinel-2 Cloud-Optimized GeoTIFFs), chỉ mục Element 84 Earth Search.
+- Bản 3.3: ranh giới toàn thế giới © OpenStreetMap contributors (ODbL), tìm qua Nominatim, các cấp hành chính qua Overpass API.
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

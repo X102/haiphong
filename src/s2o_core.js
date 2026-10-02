@@ -57,7 +57,8 @@ var S2OC = (function () {
   }
   /* ---------- đọc COG ---------- */
   var MO = new Map(), DUNG = [];
-  function tiff(u) {                                    // mở COG một lần (giữ tối đa 64 tệp, bỏ tệp dùng lâu nhất)
+  function tiff(u, nho) {                               // mở COG một lần, bỏ tệp dùng lâu nhất; nho: kho riêng cho đọc tại điểm (nhiều tệp, bộ đệm nhỏ)
+    if (nho) return tiffNho(u);
     if (!MO.has(u)) {
       var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 96}).then(function (t) {
         return t.getImage().then(async function (im0) {
@@ -77,6 +78,20 @@ var S2OC = (function () {
     DUNG = DUNG.filter(function (x) { return x !== u; }); DUNG.push(u);
     while (DUNG.length > 40) MO.delete(DUNG.shift());
     return MO.get(u);
+  }
+  var MO2 = new Map();                                  // bản 3.3: đọc tại điểm giữ tới 160 tệp, mỗi tệp đệm 32 khối (2 MB): chuyển điểm không phải mở lại tệp
+  function tiffNho(u) {
+    if (MO2.has(u)) { var p0 = MO2.get(u); MO2.delete(u); MO2.set(u, p0); return p0; }
+    while (MO2.size >= 160) MO2.delete(MO2.keys().next().value);
+    var pr = GeoTIFF.fromUrl(u, {allowFullFile: false, cacheSize: 32}).then(function (t) {
+      return t.getImage().then(async function (im0) {
+        var bb = im0.getBoundingBox(), n = await t.getImageCount(), L1 = [];
+        for (var i = 0; i < n; i++) { var im = i ? await t.getImage(i) : im0, fd = im.fileDirectory; if (i && !((fd.NewSubfileType || 0) & 1)) continue;
+          L1.push({im: im, w: im.getWidth(), h: im.getHeight(), rx: (bb[2] - bb[0]) / im.getWidth(), ry: (bb[3] - bb[1]) / im.getHeight()}); }
+        L1.sort(function (a, b) { return a.rx - b.rx; }); t._bb = bb; t._imgs = L1; t._n = im0.getSamplesPerPixel(); return t;
+      });
+    });
+    pr.catch(function () { MO2.delete(u); }); MO2.set(u, pr); return pr;
   }
   function chonAnh(list, want) { var use = list[0]; for (var i = 1; i < list.length; i++) if (list[i].rx <= want * 1.0001) use = list[i]; return use; }
   async function docCuaSo(I, win, samples) {            // đọc theo dải hàng ô khi cửa sổ lớn (tránh lỗi bộ đệm của geotiff.js)
@@ -103,8 +118,8 @@ var S2OC = (function () {
         X[k] = a * c[0][0] + b * c[1][0] + cc * c[2][0] + d * c[3][0]; Y[k] = a * c[0][1] + b * c[1][1] + cc * c[2][1] + d * c[3][1]; } }
     return {X: X, Y: Y, px: Math.hypot(c[1][0] - c[0][0], c[1][1] - c[0][1]) / w};
   }
-  async function layMau(u, G, samples) {                // giá trị (nearest) tại các điểm G = {X, Y, px} -> mảng (n × số băng), 0 = trống
-    var t = await tiff(u), I = chonAnh(t._imgs, G.px), ox = t._bb[0], oy = t._bb[3], n = G.X.length, nb = samples.length;
+  async function layMau(u, G, samples, nho) {           // giá trị (nearest) tại các điểm G = {X, Y, px} -> mảng (n × số băng), 0 = trống
+    var t = await tiff(u, nho), I = chonAnh(t._imgs, G.px), ox = t._bb[0], oy = t._bb[3], n = G.X.length, nb = samples.length;
     var c0 = Infinity, c1 = -Infinity, r0 = Infinity, r1 = -Infinity;
     for (var k = 0; k < n; k++) { var cx = Math.floor((G.X[k] - ox) / I.rx), ry = Math.floor((oy - G.Y[k]) / I.ry);
       if (cx < c0) c0 = cx; if (cx > c1) c1 = cx; if (ry < r0) r0 = ry; if (ry > r1) r1 = ry; }

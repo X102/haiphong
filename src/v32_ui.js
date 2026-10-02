@@ -82,7 +82,7 @@ async function s2oDocCanh(sc, lon, lat, bang, px) {
   const can = ["SCL"].concat(bang || []).filter((b, i, a) => a.indexOf(b) === i && (b === "SCL" ? r.scl == null : !(b in r.v)));
   if (can.length) {
     const m = S2OC.ll2m(lon, lat), G = S2OC.luoiAnh(sc.epsg, [m[0] - px / 2, m[1] - px / 2, m[0] + px / 2, m[1] + px / 2], 1, 1);
-    const vs = await Promise.all(can.map(b => S2OC.url(sc, b) ? S2OC.layMau(S2OC.url(sc, b), G, [0]) : Promise.resolve(null)));
+    const vs = await Promise.all(can.map(b => S2OC.url(sc, b) ? S2OC.layMau(S2OC.url(sc, b), G, [0], true) : Promise.resolve(null)));
     can.forEach((b, i) => { const d = vs[i] ? vs[i][0] : 0; if (b === "SCL") r.scl = d; else r.v[b] = d ? (d * sc.s + sc.o) * 10000 : null; });
   }
   return {sc, scl: r.scl, quang: !!S2OC.TRONG[r.scl], v: r.v};
@@ -295,6 +295,7 @@ s2oDocCanh = async function () { await s2oGiu(); try { return await _s2oDocCanh3
 s2oDocNhieu = function (ds, lon, lat, bang, px) { return Promise.all(ds.map(sc => s2oDocCanh(sc, lon, lat, bang, px).catch(() => ({sc, scl: null, quang: false, v: {}, loi: true})))); };
 var _s2oChuoi322 = s2oChuoi;
 s2oChuoi = async function (p, grp) {                // đọc trước mọi năm cùng lúc (vào bộ nhớ S2OD), rồi dựng chuỗi như cũ từ bộ nhớ
+  const lopP = lopAt(p).catch(() => ({}));                                   // bản 3.3: dải bản đồ lớp đọc song song với ảnh S2
   const K = s2oKH(), DS = grp === "s2oidx" ? csDS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
   const an = s2oAnDuong(grp, names), hien = names.filter(n => !an.has(n)), px = S2OV.cv10 ? 10 : 20;
   const bang = grp === "s2oidx" ? [...new Set([].concat(...DS.filter(c => hien.includes(c.ten)).map(c => c.f.bang)))].filter(b => S2OC.BANG.includes(b)) : hien.filter(b => S2OC.BANG.includes(b));
@@ -303,5 +304,6 @@ s2oChuoi = async function (p, grp) {                // đọc trước mọi nă
     const ds = (S2OV.tatCa ? N.ung || [] : (N.chon || []).map(id => by[id]).filter(Boolean)).filter(s => s2oPhuDiem(s, p.lon, p.lat));
     return s2oDocNhieu(ds, p.lon, p.lat, bang, px);
   }));
+  await lopP;
   return _s2oChuoi322(p, grp);
 };

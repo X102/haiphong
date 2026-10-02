@@ -660,6 +660,13 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
       <div class="row"><input id="vnTim" type="search" placeholder="tìm xã, phường, tỉnh trên cả nước" style="flex:1"></div>
       <div id="vnKQ" data-noi18n></div>
       <div class="mu sm" id="vnTT" data-noi18n></div>
+      <details id="thgW"><summary>🌍 Ranh giới thế giới (OpenStreetMap)</summary>
+        <div class="row"><input id="thgTim" type="search" placeholder="thành phố, quận, phường ở bất kỳ nước nào" style="flex:1"><button id="thgTimB" type="button">Tìm</button></div>
+        <div id="thgKQ" data-noi18n></div>
+        <div id="thgCha" class="sm" data-noi18n></div>
+        <div id="thgCap" data-noi18n></div>
+        <div class="mu sm" id="thgTT" data-noi18n></div>
+        <div class="mu sm">Đơn vị cấp dưới nạp vào thay ranh giới xã: dùng được cho tìm, tên, gộp vùng, phạm vi phân tích. Dữ liệu © OpenStreetMap contributors (ODbL); tìm: Nominatim; ranh giới: Overpass API.</div></details>
       <div class="row"><button id="bGop" type="button" title="gộp nhiều xã thành một vùng: chọn theo tên, dán danh sách tên hoặc nhấp trên bản đồ">⊕ Gộp xã thành vùng…</button>
         <select id="xgDS" data-noi18n title="vùng gộp đã lưu: chọn để hiện và bay tới"></select></div>
       <details id="bgW"><summary>Màu ranh giới, tên xã</summary>
@@ -981,6 +988,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Hành chính 3.1</b>: mục "Màu ranh giới, tên xã" chỉnh màu, độ dày, kiểu nét, nền của ranh giới xã và tỉnh, hiện tên xã từ mức phóng chọn được (kiểu "sáng" mặc định, nhìn rõ trên ảnh vệ tinh). <b>⊕ Gộp xã thành vùng</b>: thêm xã bằng cách gõ tên (không dấu cũng được), dán danh sách tên (mỗi dòng một xã, ghi kèm tỉnh nếu trùng tên) hoặc nhấp trên bản đồ; "Gộp và lưu vùng" hoà tan ranh giới thành một vùng, dùng làm phạm vi ở Thay đổi, Lớp phủ, Phân loại, Tạo bộ điểm, Xuất bản đồ, S2 trực tuyến; tải GeoJSON được.</li>
     <li><b>🛰 S2 trực tuyến</b>: cho vùng chưa có dữ liệu sẵn. Chọn phạm vi (khung nhìn, cả tỉnh, vùng gộp), tháng (qua năm được, như mùa khô tháng 11 đến 4), các năm từ 2017; "Tìm cảnh" tìm ảnh Sentinel-2 L2A trên Earth Search, chấm từng cảnh theo tỉ lệ điểm ảnh quang đãng trong phạm vi (lớp SCL) và chọn ít cảnh nhất để mỗi chỗ có đủ số lần quang đãng. Lớp "Sentinel-2 trực tuyến" ghép ảnh trung vị ngay trong trình duyệt (màu thật, tổ hợp màu, chỉ số), dải ảnh theo năm và giá trị 10 băng tại điểm (nút đọc) dùng cùng kế hoạch; lấy mẫu như với lớp có sẵn. Kế hoạch cảnh lưu trong trình duyệt, tệp tiến độ, tải CSV hoặc JSON để dùng lại.</li>
     <li><b>S2 trực tuyến 3.2</b>: trong lớp chọn được R-G-B tuỳ ý từ 10 băng và nguồn ảnh: ảnh ghép trung vị hoặc <b>một cảnh</b> của ngày chọn (thấy cả mây), để biết nhãn lấy trên ảnh nào. Giá trị tại điểm liệt kê các cảnh đã ghép và cảnh nào quang đãng đúng tại điểm (theo SCL). Đồ thị "theo năm" có nhóm "S2 trực tuyến": điểm của năm là trung vị các cảnh đã ghép quang đãng tại điểm; nếu các cảnh đó đều mây tại điểm thì lấy cảnh ứng viên quang đãng (vòng đứt), nên năm nào có cảnh quang đãng cũng có giá trị; chấm nhỏ là từng cảnh theo ngày trong năm, để thấy điểm đổi giữa năm; tải CSV từng cảnh. Khi gán nhãn, trang ghi ảnh đã xem (cảnh S2 và ngày, quang đãng hay mây tại điểm, bản Wayback, lớp đang bật): cột "anh" trong CSV và trong bảng các năm của điểm. Dải ảnh EOX báo rõ năm không có ảnh (như 2017 ở Việt Nam) thay vì ô trắng; điểm ngoài vùng dữ liệu sẵn nhưng trong vùng kế hoạch S2 trực tuyến thì dải ảnh tự dùng S2 trực tuyến.</li>
+    <li><b>Ranh giới thế giới (3.3)</b>: trong mục Hành chính, tìm một thành phố, quận, phường bất kỳ ở mọi nước (Nominatim, OpenStreetMap), rồi chọn một cấp hành chính bên trong (admin_level, Overpass API) để nạp thay ranh giới xã: tìm theo tên, tên trên bản đồ, gộp vùng, phạm vi phân tích đều dùng được. Ô tìm trên bản đồ có dòng "tìm trên toàn thế giới" làm việc tương tự. Có tới cấp thấp nào là tuỳ dữ liệu OpenStreetMap của nước đó.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2293,7 +2301,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.2.4";
+const VERSION = "3.3";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3400,6 +3408,7 @@ function setLang(l) {
 /*__S2OCORE__*/
 /*__V31__*/
 /*__V32__*/
+/*__V33__*/
 /*__PWA__*/
 </script>
 </body>

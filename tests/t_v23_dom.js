@@ -68,7 +68,7 @@ const RV = require("/tmp/fx/ref_vung.json");
   $("xaTimB").click(); await sleep(50);
   await until(() => E("VG.xa && VG.xa.length") === 2, 5000, "ranh giới xã khi bấm tìm");
   $("xaTim").value = "dong"; $("xaTim").oninput(); await sleep(50);
-  ok($("xaGoiY").querySelectorAll("li[data-i]").length === 1 && /Đông/.test($("xaGoiY").textContent), "gõ không dấu 'dong' gợi ý xã Đông");
+  ok($("xaGoiY").querySelectorAll("li[data-i]:not([data-w])").length === 1 && /Đông/.test($("xaGoiY").textContent), "gõ không dấu 'dong' gợi ý xã Đông");
   $("xaTim").onkeydown(new w.KeyboardEvent("keydown", {key: "Enter"})); await sleep(50);
   const xD = E("VG.xa.find(x => x.ten === 'Đông').bl"), c0 = E("[map.getCenter().lng, map.getCenter().lat]");
   ok(E("!!XT.hl && map.hasLayer(XT.hl)") && c0[0] > xD[0] && c0[0] < xD[2] && c0[1] > xD[1] && c0[1] < xD[3], "Enter: bay tới xã Đông, tô sáng ranh giới");
