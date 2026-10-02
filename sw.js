@@ -1,8 +1,8 @@
-/* Service worker của Geoportal lớp phủ Hải Phòng (ứng dụng cài được, PWA). Bản 3.2.3.
+/* Service worker của Geoportal lớp phủ Hải Phòng (ứng dụng cài được, PWA). Bản 3.2.4.
    - Trang (index.html), manifest, biểu tượng, cấu hình: lấy mạng trước, mất mạng thì dùng bản đã lưu -> mở được khi không có mạng.
    - Thư viện từ CDN (địa chỉ có số phiên bản): lưu một lần, dùng lại.
    - Dữ liệu (COG đọc theo đoạn, ảnh nền, Hugging Face, API AI...): không đụng tới, luôn đi thẳng ra mạng. */
-const CACHE = "hp-geoportal-3.2.3", LOI = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
+const CACHE = "hp-geoportal-3.2.4", LOI = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
   "./icons/maskable-192.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png", "./icons/icon.svg"];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|unpkg\.com)\//;
 const VO = /\/(index\.html|manifest\.webmanifest|cau_hinh\.json)?$|\/icons\/[^/]+$|\.(js|css)$/;   // vỏ ứng dụng cùng nguồn (không gồm dữ liệu)

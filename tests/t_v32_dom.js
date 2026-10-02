@@ -120,6 +120,10 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   E(`setYear(2024); label(null)`);
   ok(!E(`ST.diem.E0001.anh[2024]`) && !E(`ST.diem.E0001.nhan[2024]`), "xoá nhãn: xoá luôn ảnh đã xem");
 
+  // ---------- điền về sau (phím v) khi năm đang xem chưa có nhãn
+  E(`select("E0002", false); CVS.kind = "ky"; const P2 = ST.diem.E0002; P2.nhan = {}; P2.tg = {}; setYear(2023); label("${ma}"); setYear(2024)`);
+  E(`document.dispatchEvent(new KeyboardEvent("keydown", {key: "v", bubbles: true}))`); await sleep(30);
+  ok(E(`[2023, 2024, 2025].map(y => ST.diem.E0002.nhan[y]).join()`) === [ma, ma, ma].join(), "phím v ở năm chưa gán: lấy nhãn năm trước, điền năm này và các năm sau");
   // ---------- 7. dịch
   E("setLang('ru')"); await sleep(60);
   E(`buildOverlays()`);

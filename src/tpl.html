@@ -411,7 +411,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div id="pinfo" class="sm mu">Chưa chọn điểm.</div>
   <div class="row">
     <button id="bCopy" title="Chép nhãn năm trước sang năm này (c)">Chép năm trước <kbd>c</kbd></button>
-    <button id="bFill" title="Điền nhãn năm này cho mọi năm sau chưa có nhãn (v)">Điền về sau <kbd>v</kbd></button>
+    <button id="bFill" title="Điền nhãn năm này (chưa có thì lấy năm gần nhất trước đó) cho mọi năm sau chưa có nhãn (v)">Điền về sau <kbd>v</kbd></button>
     <button id="bFlag" title="Đánh dấu cần xem lại (f)">Cần xem lại <kbd>f</kbd></button>
     <button id="bDel" title="Xoá điểm thêm tay">Xoá điểm</button>
   </div>
@@ -2293,7 +2293,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.2.3";
+const VERSION = "3.2.4";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3204,7 +3204,17 @@ function label(ma) {
 }
 function setConf(v) { const p = cur(); if (!p) return; p.tin[ST.nam] = v; save(); renderPoint(); }
 function copyPrev() { const p = cur(); if (!p) return; const v = CORE.prevLabel(p, years(), ST.nam); if (v) label(v); else msg("năm trước chưa có nhãn"); }
-function fillFwd() { const p = cur(); if (!p) return; const n = CORE.fillForward(p, years(), ST.nam); save(); render(); msg(T("đã điền {n} năm", {n: n}), "ok", 1500); }
+function fillFwd() {                      // bản 3.2.4: năm đang xem chưa có nhãn thì lấy nhãn năm gần nhất trước đó, điền từ năm này trở đi
+  const p = cur(); if (!p) { msg(T("chọn một điểm trước")); return; }
+  const ys = years(); let n = 0;
+  if (p.nhan[ST.nam] == null) {
+    const v = CORE.prevLabel(p, ys, ST.nam);
+    if (!v) { msg(T("chưa có nhãn ở năm này hay năm trước để điền"), "wa", 2500); return; }
+    CORE.setLabel(p, ST.nam, v); n = 1;
+  }
+  n += CORE.fillForward(p, ys, ST.nam); save(); render();
+  msg(n ? T("đã điền {n} năm", {n: n}) : T("các năm sau đã có nhãn"), n ? "ok" : "wa", 1800);
+}
 function toggleFlag() { const p = cur(); if (!p) return; p.xem_lai = !p.xem_lai; save(); render(); }
 function delPoint() {
   const p = cur(); if (!p) return;

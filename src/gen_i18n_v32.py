@@ -1,5 +1,8 @@
 # Bản 3.2: S2 trực tuyến đổi băng, một cảnh theo ngày, chuỗi tại điểm theo năm và theo cảnh, ghi ảnh đã xem khi gán; ô trắng EOX
 R32 = [
+("chưa có nhãn ở năm này hay năm trước để điền", "нет метки в этом или предыдущих годах для заполнения", "no label in this or earlier years to fill"),
+("các năm sau đã có nhãn", "последующие годы уже размечены", "later years are already labelled"),
+("Điền nhãn năm này (chưa có thì lấy năm gần nhất trước đó) cho mọi năm sau chưa có nhãn (v)", "Заполнить метку этого года (или ближайшего предыдущего) во все последующие годы без метки (v)", "Fill this year's label (or the nearest earlier one) into all later unlabelled years (v)"),
 ("Sentinel-2 trực tuyến (AWS), theo kế hoạch cảnh", "Sentinel-2 онлайн (AWS) по плану сцен", "Sentinel-2 online (AWS), following the scene plan"),
 ("EOX không có", "у EOX нет", "EOX has no"),
 ("ảnh năm này ở đây", "снимка за этот год здесь", "image for this year here"),
