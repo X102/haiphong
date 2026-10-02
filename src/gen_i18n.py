@@ -563,6 +563,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R33 if r[0] not in _co]              # bản 3.3: ranh giới toàn thế giới
 for L_, (moc, them) in HELP33.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v34 import R34, HELP34
+_co = {r[0] for r in R}
+R = R + [r for r in R34 if r[0] not in _co]              # bản 3.4: Landsat, Sentinel-1 trực tuyến
+for L_, (moc, them) in HELP34.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

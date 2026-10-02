@@ -11,6 +11,33 @@ var S2OC = (function () {
   var BANG = ["B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12"];
   var TRONG = {4: 1, 5: 1, 6: 1, 7: 1, 11: 1};          // SCL quang đãng: thực vật, không thực vật, nước, chưa phân loại, tuyết
   var R = 6378137;
+  /* bản 3.4: ba nguồn. Landsat C2 L2 và Sentinel-1 RTC lấy từ Microsoft Planetary Computer (STAC công khai, ảnh COG đọc được từ
+     trình duyệt bằng "vé" SAS miễn phí theo bộ dữ liệu, hết hạn sau chưa tới 1 giờ nên tự xin lại); Earth Search để ảnh Landsat,
+     Sentinel-1 trong kho AWS trả phí theo người tải nên trình duyệt không đọc được. Tên băng Landsat quy về tên S2 tương ứng để dùng
+     chung các chỉ số (B2 lam, B3 lục, B4 đỏ, B8 NIR, B11, B12 SWIR; không có B5, B6, B7, B8A). "SCL" là băng mặt nạ của mỗi nguồn. */
+  var PC = "https://planetarycomputer.microsoft.com/api";
+  var NGUON = {
+    s2: {api: API, coll: function (o) { return o.bo || "sentinel-2-l2a"; }, tai: TAI, bang: BANG, nam0: 2017, may: true, tci: true},
+    ls: {api: PC + "/stac/v1/search", coll: function () { return "landsat-c2-l2"; }, ky: true, nam0: 1984, may: true,
+         tai: {blue: "B2", green: "B3", red: "B4", nir08: "B8", swir16: "B11", swir22: "B12", qa_pixel: "SCL"}, bang: ["B2", "B3", "B4", "B8", "B11", "B12"]},
+    s1: {api: PC + "/stac/v1/search", coll: function () { return "sentinel-1-rtc"; }, ky: true, nam0: 2015, may: false,
+         tai: {vv: "VV", vh: "VH"}, bang: ["VV", "VH"]}};
+  var VE = {};                                          // vé SAS theo bộ dữ liệu: {token, het (ms)}
+  async function kyPC(coll, ep) {
+    var v = VE[coll]; if (v && !ep && v.het - Date.now() > 10 * 60e3) return v.token;
+    var r = await fetch(PC + "/sas/v1/token/" + coll); if (!r.ok) throw new Error("SAS " + r.status);
+    var j = await r.json(); VE[coll] = {token: j.token, het: Date.parse(j["msft:expiry"]) || Date.now() + 30 * 60e3}; return j.token;
+  }
+  function quang(ng, v) {                               // giá trị băng mặt nạ -> quang đãng?
+    if (ng === "ls") return v > 0 && (v & 31) === 0;   // QA_PIXEL: bit 0 không dữ liệu, 1 mây giãn, 2 ti, 3 mây, 4 bóng mây
+    if (ng === "s1") return v > 0;                     // radar: có dữ liệu là dùng được
+    return !!TRONG[v];
+  }
+  function nguonCua(sc) { return sc.ng || "s2"; }
+  async function chuanBi(ds) {                          // có vé SAS còn hạn cho mọi cảnh Planetary Computer trước khi đọc
+    var cs = {}; (ds || []).forEach(function (sc) { if (sc && sc.ky) cs[sc.ky] = 1; });
+    await Promise.all(Object.keys(cs).map(function (c) { return kyPC(c); }));
+  }
   function m2ll(x, y) { return [x / R * 180 / Math.PI, (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * 180 / Math.PI]; }
   function ll2m(lon, lat) { return [lon * Math.PI / 180 * R, Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * R]; }
   function projUTM(epsg) {
@@ -28,32 +55,57 @@ var S2OC = (function () {
     var p = function (n) { return (n < 10 ? "0" : "") + n; };
     return y0 + "-" + p(t1) + "-01T00:00:00Z/" + y + "-" + p(t2) + "-" + p(cuoi) + "T23:59:59Z";
   }
-  function thuGon(item) {                               // bản ghi gọn của một cảnh: thư mục chung + tên tệp từng băng
+  function thuGon(item, ng) {                           // bản ghi gọn của một cảnh: thư mục chung + tên tệp từng băng
+    ng = NGUON[ng] ? ng : "s2"; var TA = NGUON[ng].tai;
     var p = item.properties || {}, a = item.assets || {}, f = {}, hr = [];
-    Object.keys(TAI).forEach(function (k) { if (a[k] && a[k].href && /^https?:/.test(a[k].href)) { f[TAI[k]] = a[k].href; hr.push(a[k].href); } });
+    Object.keys(TA).forEach(function (k) { if (a[k] && a[k].href && /^https?:/.test(a[k].href)) { f[TA[k]] = a[k].href; hr.push(a[k].href); } });
     var dir = hr.length ? hr[0].slice(0, hr[0].lastIndexOf("/") + 1) : "";
     hr.forEach(function (h) { while (dir && h.indexOf(dir) !== 0) dir = dir.slice(0, dir.slice(0, -1).lastIndexOf("/") + 1); });
     Object.keys(f).forEach(function (b) { f[b] = f[b].slice(dir.length); });
-    var rb = (a.red && a.red["raster:bands"] && a.red["raster:bands"][0]) || {};
+    if (ng === "s1" && f.VV != null) f.SCL = f.VV;          // radar: băng VV làm mặt nạ (có dữ liệu hay không)
+    var rb = ng === "s1" ? {scale: 1, offset: 0} : (a.red && a.red["raster:bands"] && a.red["raster:bands"][0]) || {};
     /* earthsearch:boa_offset_applied = true: COG đã trừ sẵn offset (DN = phản xạ × 10000) dù raster:bands vẫn ghi −0.1 (đã kiểm
        trên ảnh thật 48QWJ 12/02/2024: DN rừng ~480 ở sentinel-2-l2a, ~1460 ở sentinel-2-c1-l2a cùng cảnh); không có cờ: theo raster:bands */
     var ap = p["earthsearch:boa_offset_applied"] === true;
     return {id: item.id, ngay: String(p.datetime || "").slice(0, 10), may: p["eo:cloud_cover"] != null ? Math.round(p["eo:cloud_cover"] * 10) / 10 : null,
-            epsg: epsgCua(p), bb: Array.isArray(item.bbox) && item.bbox.length === 4 ? item.bbox.map(function (v) { return Math.round(v * 1e5) / 1e5; }) : null, o_mgrs: String(p["grid:code"] || "").replace("MGRS-", ""), dir: dir, f: f,
+            epsg: epsgCua(p), bb: Array.isArray(item.bbox) && item.bbox.length === 4 ? item.bbox.map(function (v) { return Math.round(v * 1e5) / 1e5; }) : null, o_mgrs: ng === "ls" ? "WRS" + (p["landsat:wrs_path"] || "") + "/" + (p["landsat:wrs_row"] || "") : ng === "s1" ? String(item.id) : String(p["grid:code"] || "").replace("MGRS-", ""), dir: dir, f: f,
+            ng: ng, nen: p.platform || "", quy: p["sat:orbit_state"] || "", ky: NGUON[ng].ky ? NGUON[ng].coll({}) : null,
             s: rb.scale != null ? rb.scale : 0.0001, o: ap ? 0 : (rb.offset != null ? rb.offset : 0)};
   }
-  function url(sc, b) { var f = sc.f[b]; return f == null ? null : /^https?:/.test(f) ? f : sc.dir + f; }
-  async function tim(opt) {                            // opt: {bo, bbox [w,s,e,n], datetime, may, gioi_han, api}
+  function url(sc, b) {
+    var f = sc.f[b]; if (f == null) return null;
+    var u = /^https?:/.test(f) ? f : sc.dir + f;
+    if (sc.ky) { var v = VE[sc.ky]; if (!v || v.het - Date.now() < 10 * 60e3) kyPC(sc.ky, true).catch(function () {}); if (v) u += (u.indexOf("?") < 0 ? "?" : "&") + v.token; }
+    return u;
+  }
+  async function tim(opt) {                            // opt: {nguon, bo, bbox [w,s,e,n], datetime, may, gioi_han, api, boL7}
+    var ng = opt.nguon || "s2", N = NGUON[ng];
+    if (ng !== "s2") return timPC(opt, ng, N);
     var body = {collections: [opt.bo || "sentinel-2-l2a"], bbox: opt.bbox, datetime: opt.datetime, limit: opt.gioi_han || 100,
                 query: {"eo:cloud_cover": {lte: opt.may != null ? +opt.may : 60}}, sortby: [{field: "properties.eo:cloud_cover", direction: "asc"}],
                 fields: {include: ["id", "bbox", "properties.datetime", "properties.eo:cloud_cover", "properties.proj:epsg", "properties.proj:code", "properties.grid:code", "properties.earthsearch:boa_offset_applied",
                                    "assets.red.raster:bands"].concat(Object.keys(TAI).map(function (k) { return "assets." + k + ".href"; }))}};
     var r = await fetch(opt.api || API, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     if (!r.ok) throw new Error("STAC " + r.status);
-    var j = await r.json(), ds = (j.features || []).map(thuGon).filter(function (s) { return s.epsg && s.f.B4 && s.f.SCL; });
+    var j = await r.json(), ds = (j.features || []).map(function (it) { return thuGon(it, "s2"); }).filter(function (s) { return s.epsg && s.f.B4 && s.f.SCL; });
     var gap = {};                                       // cùng ngày, cùng ô MGRS (xử lý lại nhiều lần): giữ bản ít mây nhất
     ds.forEach(function (s) { var k = s.ngay + "|" + (s.o_mgrs || s.epsg); if (!gap[k] || (s.may || 0) < (gap[k].may || 0)) gap[k] = s; });
     return Object.keys(gap).map(function (k) { return gap[k]; }).sort(function (a, b) { return (a.may || 0) - (b.may || 0); });
+  }
+  async function timPC(opt, ng, N) {                    // Planetary Computer: Landsat (lọc mây cả cảnh), Sentinel-1 (không có mây)
+    var coll = N.coll(opt); await kyPC(coll);
+    var body = {collections: [coll], bbox: opt.bbox, datetime: opt.datetime, limit: opt.gioi_han || 100};
+    if (N.may) { body.query = {"eo:cloud_cover": {lte: opt.may != null ? +opt.may : 60}}; body.sortby = [{field: "eo:cloud_cover", direction: "asc"}]; }
+    var r = await fetch(opt.api || N.api, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    if (!r.ok) throw new Error("STAC " + r.status);
+    var ds = ((await r.json()).features || []).map(function (it) { return thuGon(it, ng); }).filter(function (s) {
+      if (!s.epsg || !s.f.SCL) return false;
+      if (ng === "ls" && !s.f.B4) return false;
+      if (ng === "ls" && opt.boL7 !== false && /landsat-7/.test(s.nen) && s.ngay > "2003-05-31") return false;     // Landsat 7 sau hỏng SLC: sọc mất dữ liệu
+      return true; });
+    var gap = {};
+    ds.forEach(function (s) { var k = s.ngay + "|" + s.o_mgrs; if (!gap[k] || (s.may || 0) < (gap[k].may || 0)) gap[k] = s; });
+    return Object.keys(gap).map(function (k) { return gap[k]; }).sort(function (a, b) { return (a.may || 0) - (b.may || 0) || (a.ngay < b.ngay ? -1 : 1); });
   }
   /* ---------- đọc COG ---------- */
   var MO = new Map(), DUNG = [];
@@ -124,7 +176,7 @@ var S2OC = (function () {
     for (var k = 0; k < n; k++) { var cx = Math.floor((G.X[k] - ox) / I.rx), ry = Math.floor((oy - G.Y[k]) / I.ry);
       if (cx < c0) c0 = cx; if (cx > c1) c1 = cx; if (ry < r0) r0 = ry; if (ry > r1) r1 = ry; }
     c0 = Math.max(0, c0); r0 = Math.max(0, r0); c1 = Math.min(I.w - 1, c1); r1 = Math.min(I.h - 1, r1);
-    var out = new Uint16Array(n * nb);
+    var out = new Float32Array(n * nb);
     if (c1 < c0 || r1 < r0) return out;
     var a = await docCuaSo(I, [c0, r0, c1 + 1, r1 + 1], samples), sw = c1 - c0 + 1;
     for (k = 0; k < n; k++) { var col = Math.floor((G.X[k] - ox) / I.rx) - c0, row = Math.floor((oy - G.Y[k]) / I.ry) - r0;
@@ -150,9 +202,10 @@ var S2OC = (function () {
     return tr;
   }
   async function matNa(sc, luoi) {                      // 0 ngoài cảnh, 1 mây, bóng mây, bão hoà..., 2 quang đãng (theo SCL)
+    await chuanBi([sc]);
     var c = toaDo(sc.epsg, luoi.pts), G = {X: Float64Array.from(c, function (q) { return q[0]; }), Y: Float64Array.from(c, function (q) { return q[1]; }), px: Math.max(20, luoi.o / 2)};
     var v = await layMau(url(sc, "SCL"), G, [0]), m = new Uint8Array(v.length);
-    for (var k = 0; k < v.length; k++) m[k] = !v[k] ? 0 : TRONG[v[k]] ? 2 : 1;
+    for (var k = 0; k < v.length; k++) m[k] = !(v[k] > 0) ? 0 : quang(nguonCua(sc), v[k]) ? 2 : 1;
     return m;
   }
   function chon(ds, N, tran) {                          // ds: [{m}] -> chỉ số cảnh chọn: mỗi ô tới N lần quang đãng, tối đa `tran` cảnh
@@ -173,15 +226,16 @@ var S2OC = (function () {
   async function ghep(ds, bang, bb, w, h, che) {
     var tci = bang.length === 1 && bang[0] === "TCI", nb = tci ? 3 : bang.length, n = w * h, K = ds.length;
     var gom = new Float32Array(K * n * nb).fill(NaN), luoi = {};
+    await chuanBi(ds);
     await Promise.all(ds.map(async function (sc, s) {
       var G = luoi[sc.epsg] || (luoi[sc.epsg] = luoiAnh(sc.epsg, bb, w, h));
       var scl = che ? await layMau(url(sc, "SCL"), G, [0]) : null;
       var lay = tci ? [layMau(url(sc, "TCI"), G, [0, 1, 2])] : bang.map(function (b) { return url(sc, b) ? layMau(url(sc, b), G, [0]) : Promise.resolve(null); });
       var vs = await Promise.all(lay);
       for (var k = 0; k < n; k++) {
-        if (scl && !TRONG[scl[k]]) continue;
+        if (scl && !quang(nguonCua(sc), scl[k])) continue;
         for (var q = 0; q < nb; q++) {
-          var v = tci ? vs[0][k * 3 + q] : (vs[q] ? vs[q][k] : 0); if (!v) continue;
+          var v = tci ? vs[0][k * 3 + q] : (vs[q] ? vs[q][k] : 0); if (!(v > 0)) continue;           // 0, −32768 (S1), NaN: không có dữ liệu
           gom[(s * n + k) * nb + q] = tci ? v : (v * sc.s + sc.o) * 10000;
         }
       }
@@ -196,7 +250,7 @@ var S2OC = (function () {
   async function trongTaiDiem(sc, lon, lat) {           // cảnh có quang đãng tại điểm không (SCL)
     var m = await matNa(sc, {pts: [[lon, lat]], o: 40}); return m[0] === 2;
   }
-  return {API: API, TAI: TAI, BANG: BANG, TRONG: TRONG, m2ll: m2ll, ll2m: ll2m, projUTM: projUTM, epsgCua: epsgCua, cuaSo: cuaSo,
+  return {API: API, TAI: TAI, BANG: BANG, TRONG: TRONG, NGUON: NGUON, kyPC: kyPC, quang: quang, VE: VE, chuanBi: chuanBi, nguonCua: nguonCua, m2ll: m2ll, ll2m: ll2m, projUTM: projUTM, epsgCua: epsgCua, cuaSo: cuaSo,
           thuGon: thuGon, url: url, tim: tim, tiff: tiff, luoiAnh: luoiAnh, layMau: layMau, luoiPhamVi: luoiPhamVi, trongDaGiac: trongDaGiac,
           matNa: matNa, chon: chon, trungVi: trungVi, ghep: ghep, trongTaiDiem: trongTaiDiem};
 })();

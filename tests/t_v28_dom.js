@@ -8,6 +8,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   const docTif = async b => { w.__b = b; return E(`(async () => { const ab = await new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsArrayBuffer(window.__b); });
     const t = await GeoTIFF.fromArrayBuffer(ab), im = await t.getImage(), d = await im.readRasters({interleave: true});
     return {w: im.getWidth(), h: im.getHeight(), nd: im.getGDALNoData(), fmt: im.fileDirectory.SampleFormat, spp: im.getSamplesPerPixel(), cm: !!im.fileDirectory.ColorMap, e: im.getGeoKeys().ProjectedCSTypeGeoKey, d: Array.from(d)}; })()`); };
+  await until(() => E("typeof VG !== 'undefined' && VG.xa && VG.xa.length > 0"), 8000, "ranh giới xã");
   E(`map.fitBounds(L.latLngBounds(VG.xa.flatMap(x => [[x.bl[1], x.bl[0]], [x.bl[3], x.bl[2]]])), {animate: false})`);
   const G = {x0: 660000, y0: 2320000}, pix = (c, r) => E(`(() => { const ll = CORE.toLL(${G.x0 + 10 * c + 5}, ${G.y0 - 10 * r - 5}), q = CORE.llToPix(CD.kq.g, ll[0], ll[1]); return Math.floor(q[1]) * CD.kq.g.w + Math.floor(q[0]); })()`);
 

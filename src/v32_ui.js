@@ -38,12 +38,12 @@ s2oVe = async function (y, bb, w, h, canvas, opt) {
 };
 s2ovUI = function (div) {
   const opt = (a, sel) => a.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(sel) ? " selected" : ""}>${esc(t)}</option>`).join("");
-  const chi = (typeof csDS === "function" ? csDS() : []).map(c => [c.id, c.ten]), BS = S2OC.BANG.map(b => [b, b]);
+  const chi = s2oCS().map(c => [c.id, c.ten]), BS = S2OC.BANG.map(b => [b, b]);
   const pres = Object.keys(S2O_PRE).filter(k => S2_PRE_TEN[k]).map(k => [k, T(S2_PRE_TEN[k])]).concat([["tu", T(S2_PRE_TEN.tu || "tuỳ chọn R-G-B")]]);
   const K = s2oKH(), N = K && K.nam[ST.nam], ung = N ? (N.ung || []).slice().sort((x, z) => x.ngay < z.ngay ? -1 : 1) : [], mot = s2oMotCanh(ST.nam);
-  const canhOpt = ung.length ? ung.map(s => [s.id, `${s.ngay} · ${T("mây cảnh")} ${s.may} % · ${T("quang đãng")} ${Math.round(100 * (s.ro || 0))} %${N.chon.includes(s.id) ? " ★" : ""}`]) : [["", T("không có năm {y}", {y: ST.nam})]];
+  const canhOpt = ung.length ? ung.map(s => [s.id, `${s.ngay} · ${T("mây cảnh")} ${s.may == null ? "-" : s.may} % · ${T("quang đãng")} ${Math.round(100 * (s.ro || 0))} %${N.chon.includes(s.id) ? " ★" : ""}`]) : [["", T("không có năm {y}", {y: ST.nam})]];
   div.setAttribute("data-noi18n", "");
-  div.innerHTML = `<div class="row sm"><select data-k="mode">${opt([["tci", T("màu thật của ESA (nhanh)")], ["rgb", T("tổ hợp màu")], ["idx", T("chỉ số")]], S2OV.mode)}</select>
+  div.innerHTML = `<div class="row sm"><select data-k="mode">${opt([["tci", T(s2oTenTCI())], ["rgb", T("tổ hợp màu")], ["idx", T("chỉ số")]], S2OV.mode)}</select>
     <select data-k="pre" data-show="rgb">${opt(pres, S2OV.pre)}</select>
     <span data-show="tu">R <select data-k="r">${opt(BS, S2OV.r)}</select> G <select data-k="g">${opt(BS, S2OV.g)}</select> B <select data-k="b">${opt(BS, S2OV.b)}</select></span>
     <select data-k="chi" data-show="idx">${opt(chi, S2OV.chi)}</select></div>
@@ -82,10 +82,11 @@ async function s2oDocCanh(sc, lon, lat, bang, px) {
   const can = ["SCL"].concat(bang || []).filter((b, i, a) => a.indexOf(b) === i && (b === "SCL" ? r.scl == null : !(b in r.v)));
   if (can.length) {
     const m = S2OC.ll2m(lon, lat), G = S2OC.luoiAnh(sc.epsg, [m[0] - px / 2, m[1] - px / 2, m[0] + px / 2, m[1] + px / 2], 1, 1);
+    await S2OC.chuanBi([sc]);
     const vs = await Promise.all(can.map(b => S2OC.url(sc, b) ? S2OC.layMau(S2OC.url(sc, b), G, [0], true) : Promise.resolve(null)));
-    can.forEach((b, i) => { const d = vs[i] ? vs[i][0] : 0; if (b === "SCL") r.scl = d; else r.v[b] = d ? (d * sc.s + sc.o) * 10000 : null; });
+    can.forEach((b, i) => { const d = vs[i] ? vs[i][0] : 0; if (b === "SCL") r.scl = d; else r.v[b] = d > 0 ? (d * sc.s + sc.o) * 10000 : null; });
   }
-  return {sc, scl: r.scl, quang: !!S2OC.TRONG[r.scl], v: r.v};
+  return {sc, scl: r.scl, quang: S2OC.quang(S2OC.nguonCua(sc), r.scl), v: r.v};
 }
 async function s2oDocNhieu(ds, lon, lat, bang, px, lim) {   // đọc nhiều cảnh, mỗi lượt `lim` cảnh
   const out = new Array(ds.length); lim = lim || 4;
@@ -101,12 +102,12 @@ async function s2oDiemHTML(lon, lat, y) {          // dòng giá trị tại đi
   if (!ds.length) throw new Error(T("không có cảnh"));
   const rs = await s2oDocNhieu(ds, lon, lat, S2OC.BANG, 10), q = mot ? rs : rs.filter(r => r.quang);
   const med = {}; S2OC.BANG.forEach(b => { med[b] = s2oTrung(q, b); });
-  const dn = s2Bang().map(b => med[b] == null ? NaN : med[b]), cs = typeof csDS === "function" ? csDS() : [];
+  const cs = s2oCS();
   const canh = rs.map(r => `${r.sc.ngay}${N.chon.includes(r.sc.id) ? "" : "*"} <span style="color:${r.quang ? "#067647" : "#b42318"}">${r.quang ? "✓" : "✗"} ${esc(s2oSclTen(r.scl))}</span>`).join(" · ");
   if (!q.length) return `<span class="mu">${T("mọi cảnh đã ghép đều mây tại điểm: xem đồ thị theo năm (có thay bằng cảnh ứng viên)")}</span><br>${canh}`;
   return (mot ? `<b>${T("một cảnh")} ${mot.ngay}</b> · ` : `<b>${T("trung vị {n} cảnh quang đãng", {n: q.length})}</b> · `) +
-    S2OC.BANG.map(b => `${b} ${med[b] == null ? "-" : Math.round(med[b])}`).join(" · ") +
-    (cs.length ? "<br>" + cs.map(c => `${esc(c.ten)} <b>${gtSo(csTinh(c, dn))}</b>`).join(" · ") : "") + `<br><span class="sm">${T("cảnh:")} ${canh}</span>`;
+    S2OC.BANG.map(b => `${b} ${s2oFmtB(b, med[b])}`).join(" · ") +
+    (cs.length ? "<br>" + cs.map(c => `${esc(c.ten)} <b>${gtSo(s2oTinh(c, med))}</b>`).join(" · ") : "") + `<br><span class="sm">${T("cảnh:")} ${canh}</span>`;
 }
 
 /* ---------------- ③ đồ thị theo năm: trung vị theo năm và từng cảnh ---------------- */
@@ -120,12 +121,11 @@ function s2oAnDuong(grp, names) {                  // các đường bị ẩn; 
 }
 function s2oKyKH() { const K = s2oKH(); return K ? (K.tao_luc || "") + "|" + Object.entries(K.nam).map(([y, N]) => y + ":" + (N.chon || []).join("+")).join(";") : ""; }
 async function s2oChuoi(p, grp) {
-  const K = s2oKH(), DS = grp === "s2oidx" ? csDS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
+  const K = s2oKH(), DS = grp === "s2oidx" ? s2oCS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
   const an = s2oAnDuong(grp, names), hien = names.filter(n => !an.has(n));
   const bang = grp === "s2oidx" ? [...new Set([].concat(...DS.filter(c => hien.includes(c.ten)).map(c => c.f.bang)))].filter(b => S2OC.BANG.includes(b)) : hien.filter(b => S2OC.BANG.includes(b));
   const px = S2OV.cv10 ? 10 : 20, ys = {}, canh = [], thay = {};
-  const giaTri = r => { const dn = s2Bang().map(b => r.v[b] == null ? NaN : r.v[b]);
-    return grp === "s2oidx" ? DS.map(c => hien.includes(c.ten) ? (x => x == null || !isFinite(x) ? null : x)(csTinh(c, dn)) : null) : names.map(b => hien.includes(b) && r.v[b] != null ? r.v[b] : null); };
+  const giaTri = r => grp === "s2oidx" ? DS.map(c => hien.includes(c.ten) ? (x => x == null || !isFinite(x) ? null : x)(s2oTinh(c, r.v)) : null) : names.map(b => hien.includes(b) && r.v[b] != null ? s2oBV(b, r.v[b]) : null);
   for (const y of Object.keys(K.nam).map(Number).sort((a, b) => a - b)) {
     const N = K.nam[y], by = {}; (N.ung || []).forEach(s => { by[s.id] = s; });
     const w = S2OC.cuaSo(y, K.cfg.thang).split("/").map(Date.parse), pos = s => Math.max(0, Math.min(1, (Date.parse(s.ngay + "T12:00:00Z") - w[0]) / (w[1] - w[0])));
@@ -143,13 +143,13 @@ async function s2oChuoi(p, grp) {
     rs.concat(rk).forEach(r => canh.push({y, id: r.sc.id, ngay: r.sc.ngay, t: pos(r.sc), chon: N.chon.includes(r.sc.id), quang: r.quang, scl: r.scl, v: r.quang ? giaTri(r) : null}));
     if (thay[y] && !canh.some(c => c.y === y && c.ngay === thay[y])) { const r1 = q[0]; canh.push({y, id: r1.sc.id, ngay: r1.sc.ngay, t: pos(r1.sc), chon: false, quang: true, scl: r1.scl, v: giaTri(r1)}); }
   }
-  return {names, ys, don_vi: grp === "s2oidx" ? T("không thứ nguyên") : T("phản xạ × 10000"), nguon: T("Sentinel-2 L2A trên AWS, trung vị các cảnh đã ghép quang đãng tại điểm ({px} m)", {px}),
+  return {names, ys, don_vi: grp === "s2oidx" ? T("không thứ nguyên") : T(s2oDonVi()), nguon: s2oNguonDiem(px),
           lop: await lopAt(p), s2o: {canh, thay, px}};
 }
 var _annualFor32 = annualFor;
 annualFor = async function (p, grp) {
   if (grp !== "s2o" && grp !== "s2oidx") return _annualFor32(p, grp);
-  const key = [p.x, p.y, grp, s2oKyKH(), S2OV.cv10, S2OV.tatCa, (CVS.an[grp] || []).join(), grp === "s2oidx" ? ST.chiso.dung.join() + ST.chiso.tu.map(t => t.bt).join() : ""].join("|");
+  const key = [p.x, p.y, grp, s2oKyKH(), S2OV.cv10, S2OV.tatCa, (CVS.an[grp] || []).join(), grp === "s2oidx" ? s2oNg() + ST.chiso.dung.join() + ST.chiso.tu.map(t => t.bt).join() : ""].join("|");
   if (AN_CACHE[key]) return AN_CACHE[key];
   return (AN_CACHE[key] = await s2oChuoi(p, grp));
 };
@@ -221,8 +221,8 @@ function s2oNguonAnh(p, y) {                        // {tg, s (chuỗi gọn cho
   if (N && (bat || dai === "s2o" || s2oTrongKH(p))) {
     const mot = s2oMotCanh(y), ds = (mot ? [mot] : s2oCanh(y)).filter(sc => s2oPhuDiem(sc, p.lon, p.lat));
     const q = ds.map(sc => { const r = S2OD.get(sc.id + "|10|" + p.lon.toFixed(6) + "," + p.lat.toFixed(6)) || S2OD.get(sc.id + "|20|" + p.lon.toFixed(6) + "," + p.lat.toFixed(6));
-      return r && r.scl != null ? (S2OC.TRONG[r.scl] ? 1 : 0) : null; });
-    d.s2o = {kieu: mot ? "canh" : "ghep", bo: K.cfg.bo, che: K.cfg.che !== false, canh: ds.map(sc => sc.id), ngay: ds.map(sc => sc.ngay), quang: q, xem: bat ? "lop" : "dai"};
+      return r && r.scl != null ? (S2OC.quang(S2OC.nguonCua(sc), r.scl) ? 1 : 0) : null; });
+    d.s2o = {ng: K.cfg.nguon || "s2", kieu: mot ? "canh" : "ghep", bo: K.cfg.bo, che: K.cfg.che !== false, canh: ds.map(sc => sc.id), ngay: ds.map(sc => sc.ngay), quang: q, xem: bat ? "lop" : "dai"};
   }
   const nen = $("selBase") ? $("selBase").value : "";
   if ((nen === "auto" || nen === "wb") && typeof REL !== "undefined" && REL.length) d.nen = "wayback:" + REL[CORE.releaseForYear(REL, y)][0];
@@ -234,7 +234,7 @@ function s2oNguonAnh(p, y) {                        // {tg, s (chuỗi gọn cho
 }
 function s2oChuoiNguon(d) {                         // chuỗi gọn: "s2o:ghep:2024-01-10+2024-02-15(mây); wayback:2024-02-21; lop:s2d"
   const s = [];
-  if (d.s2o) s.push("s2o:" + d.s2o.kieu + ":" + d.s2o.ngay.map((n, i) => n + (d.s2o.quang[i] === 0 ? "(mây)" : "")).join("+"));
+  if (d.s2o) s.push(({ls: "landsat:", s1: "s1:"}[d.s2o.ng] || "s2o:") + d.s2o.kieu + ":" + d.s2o.ngay.map((n, i) => n + (d.s2o.quang[i] === 0 ? "(mây)" : "")).join("+"));
   if (d.nen) s.push(d.nen);
   const lop = (d.lop || []).filter(x => x !== "s2o"); if (lop.length) s.push("lop:" + lop.join("+"));
   d.s = s.join("; ");
@@ -296,7 +296,7 @@ s2oDocNhieu = function (ds, lon, lat, bang, px) { return Promise.all(ds.map(sc =
 var _s2oChuoi322 = s2oChuoi;
 s2oChuoi = async function (p, grp) {                // đọc trước mọi năm cùng lúc (vào bộ nhớ S2OD), rồi dựng chuỗi như cũ từ bộ nhớ
   const lopP = lopAt(p).catch(() => ({}));                                   // bản 3.3: dải bản đồ lớp đọc song song với ảnh S2
-  const K = s2oKH(), DS = grp === "s2oidx" ? csDS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
+  const K = s2oKH(), DS = grp === "s2oidx" ? s2oCS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
   const an = s2oAnDuong(grp, names), hien = names.filter(n => !an.has(n)), px = S2OV.cv10 ? 10 : 20;
   const bang = grp === "s2oidx" ? [...new Set([].concat(...DS.filter(c => hien.includes(c.ten)).map(c => c.f.bang)))].filter(b => S2OC.BANG.includes(b)) : hien.filter(b => S2OC.BANG.includes(b));
   await Promise.all(Object.values(K.nam).map(N => {

@@ -94,6 +94,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Ảnh Sentinel-2: Contains modified Copernicus Sentinel data (2017-2026), xử lý trên Google Earth Engine.
 - Sentinel-2 trực tuyến (bản 3.1): Copernicus Sentinel-2 L2A (ESA), ảnh COG trên AWS Open Data (Sentinel-2 Cloud-Optimized GeoTIFFs), chỉ mục Element 84 Earth Search.
 - Bản 3.3: ranh giới toàn thế giới © OpenStreetMap contributors (ODbL), tìm qua Nominatim, các cấp hành chính qua Overpass API.
+- Bản 3.4: Landsat Collection 2 Level-2 (USGS) và Copernicus Sentinel-1 RTC (ESA, CC BY 4.0), đọc trực tuyến qua Microsoft Planetary Computer.
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

@@ -411,13 +411,13 @@ async function s2oTim() {
     const P = s2oPhamVi(cfg.pv), rong = (P.bl[2] - P.bl[0]) * 111 * Math.cos((P.bl[1] + P.bl[3]) / 2 * Math.PI / 180), cao = (P.bl[3] - P.bl[1]) * 111;
     if (rong * cao > 40000) throw new Error(T("phạm vi quá rộng ({a} km²): chọn vùng nhỏ hơn hoặc phóng to", {a: Math.round(rong * cao)}));
     const luoi = S2OC.luoiPhamVi(P.bl, P.mp, 40); if (!luoi.pts.length) throw new Error(T("phạm vi rỗng"));
-    const K = {cfg, pv: {ten: P.ten, bl: P.bl, kieu: P.kieu}, nam: {}, tao_luc: new Date().toISOString(), nguon: "Element 84 Earth Search, " + cfg.bo};
+    const K = {cfg, pv: {ten: P.ten, bl: P.bl, kieu: P.kieu}, nam: {}, tao_luc: new Date().toISOString(), nguon: typeof s2oNguonKH === "function" ? s2oNguonKH(cfg) : "Element 84 Earth Search, " + cfg.bo};
     S2O.mat = {};
     for (let y = cfg.nam[0]; y <= cfg.nam[1]; y++) {
       if (tok !== S2O.tok) return;
       tt.textContent = T("năm {y}: đang tìm cảnh…", {y});
       let ung = [];
-      try { ung = await S2OC.tim({bo: cfg.bo, bbox: P.bl, datetime: S2OC.cuaSo(y, cfg.thang), may: cfg.may}); } catch (e) { K.nam[y] = {ung: [], chon: [], loi: String(e.message || e)}; continue; }
+      try { ung = await S2OC.tim({nguon: cfg.nguon || "s2", bo: cfg.bo, bbox: P.bl, datetime: S2OC.cuaSo(y, cfg.thang), may: cfg.may, boL7: cfg.boL7 !== false}); } catch (e) { K.nam[y] = {ung: [], chon: [], loi: String(e.message || e)}; continue; }
       const soO = Math.max(1, new Set(ung.map(s => s.o_mgrs || s.epsg)).size);        // phạm vi trải nhiều ô MGRS: cần nhiều cảnh hơn
       ung = ung.slice(0, Math.min(48, 14 * soO));
       tt.textContent = T("năm {y}: chấm {n} cảnh theo lớp SCL…", {y, n: ung.length});
@@ -458,7 +458,7 @@ function s2oBang() {
   box.innerHTML = `<div class="sm">${esc(s2oTomTat())}</div><table class="sm"><tr><th>${T("năm")}</th><th>${T("cảnh")}</th><th>${T("đã chọn (ngày, % quang đãng trong phạm vi)")}</th><th>${T("phủ")}</th><th></th></tr>` +
     Object.keys(K.nam).sort().map(y => { const N = K.nam[y], by = {}; (N.ung || []).forEach(s => { by[s.id] = s; });
       return `<tr><td>${y}</td><td>${(N.ung || []).length}</td><td>${N.loi ? `<span style="color:#b42318">${esc(N.loi)}</span>` : (N.chon || []).map(id => by[id] ? `${by[id].ngay} (${pc(by[id].ro)})` : id).join(", ") || `<span class="mu">${T("không có cảnh dùng được")}</span>`}
-        <details><summary class="mu">${T("chọn lại")}</summary>${(N.ung || []).map(s => `<label style="display:block"><input type="checkbox" data-y="${y}" data-id="${esc(s.id)}"${N.chon.includes(s.id) ? " checked" : ""}> ${s.ngay} · ${T("mây cảnh")} ${s.may} % · ${T("quang đãng")} ${pc(s.ro)} · ${esc(s.o_mgrs || "")}</label>`).join("")}</details></td>
+        <details><summary class="mu">${T("chọn lại")}</summary>${(N.ung || []).map(s => `<label style="display:block"><input type="checkbox" data-y="${y}" data-id="${esc(s.id)}"${N.chon.includes(s.id) ? " checked" : ""}> ${s.ngay} · ${T("mây cảnh")} ${s.may == null ? "-" : s.may} % · ${T("quang đãng")} ${pc(s.ro)} · ${esc(s.o_mgrs || "")}</label>`).join("")}</details></td>
         <td>${pc(N.phu)}${N.tb != null ? ` · ${N.tb}×` : ""}</td><td>${(N.chon || []).length ? `<button type="button" data-xem="${y}">${T("xem")}</button>` : ""}</td></tr>`; }).join("") + "</table>";
   box.querySelectorAll("[data-xem]").forEach(b => { b.onclick = () => { if (OVL.s2o) { OVL.s2o.on = true; savePref(); buildOverlays(); } setYear(+b.dataset.xem); }; });
   box.querySelectorAll("input[data-y]").forEach(c => { c.onchange = () => s2oDoiChon(c.dataset.y, c.dataset.id, c.checked); });
@@ -471,7 +471,7 @@ function s2oCSV() {
 }
 function s2oNapKH(j) {
   if (!j || !j.nam || !j.cfg) throw new Error(T("tệp không phải kế hoạch cảnh Sentinel-2"));
-  ST.s2o = {cfg: j.cfg, pv: j.pv, nam: j.nam, tao_luc: j.tao_luc, nguon: j.nguon}; S2O.mat = {}; save(); s2oDien(); s2oBang(); s2oSauDoi(true);
+  ST.s2o = {cfg: j.cfg, pv: j.pv, nam: j.nam, tao_luc: j.tao_luc, nguon: j.nguon}; if (typeof s2oKhoLuu === "function") s2oKhoLuu(); S2O.mat = {}; save(); s2oDien(); s2oBang(); s2oSauDoi(true);
 }
 function s2oDien() {                                // đưa cấu hình kế hoạch (hoặc mặc định) lên các ô
   const K = s2oKH(), c = K ? K.cfg : {thang: [1, 12], nam: [new Date().getFullYear() - 6, new Date().getFullYear()], may: 60, so: 3, che: true, bo: "sentinel-2-l2a", pv: "nhin"};
