@@ -262,3 +262,44 @@ renderPoint = function () {                         // bảng các năm của đ
   ys.forEach((y, i) => { const r = t.rows[i + 1]; if (!r) return; const a = p.anh && p.anh[y];
     r.insertAdjacentHTML("beforeend", `<td class="mu sm" style="font-size:10px">${a && a.s ? esc(a.s) : ""}</td>`); });
 };
+
+/* ---------------- bản 3.2.2: dải ảnh S2 trực tuyến không vẽ lại ô đã vẽ; đọc chuỗi tại điểm song song ---------------- */
+var S2O_DAI = new Map();                            // khoá (năm, điểm, khung, cỡ, cách xem, kế hoạch) -> canvas đã vẽ
+function s2oDaiKhoa(y, p, half, WS, nhanh) {
+  return [y, p.lon.toFixed(6), p.lat.toFixed(6), half, WS, nhanh ? 1 : 0, s2oKyKH(), JSON.stringify(S2OV)].join("|");
+}
+renderStripS2O = async function (L0, p, bb, ys, tok) {
+  const box = $("strip"), WS = typeof stripCo === "function" ? stripCo() : 97, half = (bb[2] - bb[0]) / 2, nhanh = (s2o$("s2oDai") || {}).value !== "ghep";
+  for (const y of ys) {
+    const it = document.createElement("div"); it.className = "it" + (y === ST.nam ? " cur" : "");
+    const cv = document.createElement("canvas"); cv.width = cv.height = WS; it.appendChild(cv);
+    it.insertAdjacentHTML("beforeend", `<span class="lb">${y}</span>` + (p.nhan[y] ? `<span class="lc" style="background:${color(p.nhan[y])}"></span>` : ""));
+    it.onclick = () => setYear(y); box.appendChild(it);
+    if (!L0.nam.includes(y)) { const g = cv.getContext && cv.getContext("2d"); if (g) { g.fillStyle = "#555"; g.fillText(T("không có"), WS / 2 - 22, WS / 2); } continue; }
+    const k = s2oDaiKhoa(y, p, half, WS, nhanh), cu = S2O_DAI.get(k);
+    if (cu) { const g = cv.getContext && cv.getContext("2d"); if (g) g.drawImage(cu, 0, 0); if (typeof stripDanh === "function") stripDanh(cv, WS, half); continue; }   // đã vẽ: dùng lại, không đọc lại
+    s2oVe(y, bb, WS, WS, cv, nhanh ? {diem: [p.lon, p.lat]} : null).then(px => {
+      if (px) { const c2 = document.createElement("canvas"); c2.width = c2.height = WS; const g2 = c2.getContext && c2.getContext("2d");
+        if (g2) { g2.drawImage(cv, 0, 0); S2O_DAI.set(k, c2); if (S2O_DAI.size > 400) S2O_DAI.delete(S2O_DAI.keys().next().value); } }
+      if (tok === stripTok && typeof stripDanh === "function") stripDanh(cv, WS, half);
+    }).catch(e => { if (tok === stripTok) $("stripmsg").textContent = T("không đọc được: ") + (e.message || e); });
+  }
+};
+var S2O_HANG = {chay: 0, cho: []};                  // giới hạn số cảnh đọc cùng lúc khi các năm chạy song song
+function s2oGiu() { return new Promise(r => { if (S2O_HANG.chay < 8) { S2O_HANG.chay++; r(); } else S2O_HANG.cho.push(r); }); }
+function s2oNha() { const r = S2O_HANG.cho.shift(); if (r) r(); else S2O_HANG.chay--; }
+var _s2oDocCanh322 = s2oDocCanh;
+s2oDocCanh = async function () { await s2oGiu(); try { return await _s2oDocCanh322.apply(this, arguments); } finally { s2oNha(); } };
+s2oDocNhieu = function (ds, lon, lat, bang, px) { return Promise.all(ds.map(sc => s2oDocCanh(sc, lon, lat, bang, px).catch(() => ({sc, scl: null, quang: false, v: {}, loi: true})))); };
+var _s2oChuoi322 = s2oChuoi;
+s2oChuoi = async function (p, grp) {                // đọc trước mọi năm cùng lúc (vào bộ nhớ S2OD), rồi dựng chuỗi như cũ từ bộ nhớ
+  const K = s2oKH(), DS = grp === "s2oidx" ? csDS() : null, names = grp === "s2oidx" ? DS.map(c => c.ten) : S2OC.BANG.slice();
+  const an = s2oAnDuong(grp, names), hien = names.filter(n => !an.has(n)), px = S2OV.cv10 ? 10 : 20;
+  const bang = grp === "s2oidx" ? [...new Set([].concat(...DS.filter(c => hien.includes(c.ten)).map(c => c.f.bang)))].filter(b => S2OC.BANG.includes(b)) : hien.filter(b => S2OC.BANG.includes(b));
+  await Promise.all(Object.values(K.nam).map(N => {
+    const by = {}; (N.ung || []).forEach(s => { by[s.id] = s; });
+    const ds = (S2OV.tatCa ? N.ung || [] : (N.chon || []).map(id => by[id]).filter(Boolean)).filter(s => s2oPhuDiem(s, p.lon, p.lat));
+    return s2oDocNhieu(ds, p.lon, p.lat, bang, px);
+  }));
+  return _s2oChuoi322(p, grp);
+};

@@ -40,6 +40,12 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   await until(() => E(`$("strip").querySelectorAll(".it").length`) >= 3, 4000, "các năm");
   ok(E(`[...$("strip").querySelectorAll(".it .lb")].map(e => e.textContent).join()`) === "2023,2024,2025",
      "điểm ngoài vùng dữ liệu sẵn nhưng trong vùng kế hoạch: dải ảnh tự dùng S2 trực tuyến thay vì EOX");
+  await sleep(1500);
+  E(`window.SOVE = 0; const _v = s2oVe; s2oVe = function () { SOVE++; return _v.apply(this, arguments); }; window._vGoc = _v; renderStrip()`);
+  await until(() => E(`$("strip").querySelectorAll(".it").length`) >= 3, 4000, "vẽ lại dải");
+  await sleep(300);
+  ok(E("SOVE") === 0, "vẽ lại dải ảnh (vd. sau khi gán nhãn, sang năm khác): dùng lại ô đã vẽ, không đọc lại ảnh (" + E("SOVE") + " lần đọc)");
+  E(`s2oVe = window._vGoc`);
   E(`PROBE = CORE.newPoint("⌖", 105.0, 22.0, {bo: ""})`);
   ok((await E(`v27Nguon(PROBE)`)).ng === "eox", "điểm ngoài cả vùng kế hoạch: vẫn dùng EOX");
 
