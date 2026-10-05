@@ -205,6 +205,21 @@ body.dk-duoi #viz h2{margin-top:4px}
 #xgP details,#s2oP details{border-top:1px solid #eef0f3;margin-top:4px;padding-top:3px}
 #xgP summary,#s2oP summary{cursor:pointer;font-weight:600}
 #xgKQ button,#xgXa button{margin:1px}
+#cls button.gy{outline:2px dashed #0b63ce;outline-offset:-2px}
+#gyBox{margin:4px 0;min-height:16px}#gyBox .chip{border:1px solid #c7d7f5;background:#f3f7ff;padding:1px 6px;border-radius:10px}
+#luoiP{position:fixed;inset:0;z-index:3000;background:#f8f9fb;overflow:auto;padding:8px 10px;font-size:12px}
+#luoiP .luoi-dau{gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:-8px;background:#f8f9fb;padding:4px 0;z-index:2}
+#luoiP .luoi-tt{margin:2px 0 8px}
+#luoiP .luoi-dau label{white-space:nowrap}
+#luoiP .luoi-o{display:grid;gap:8px}
+#luoiP .lo{position:relative;border:3px solid #d0d5dd;border-radius:6px;background:#fff;cursor:pointer;line-height:0;box-sizing:content-box}
+#luoiP .lo canvas{display:block;width:100%;height:auto;border-radius:3px}
+#luoiP .lo.chon{border-color:#0b63ce!important;box-shadow:0 0 0 3px rgba(11,99,206,.35)}
+#luoiP .lo.da{opacity:.8}
+#luoiP .lo span{position:absolute;line-height:1.2;font-size:10px;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.88);color:#101828}
+#luoiP .lo .lo-id{left:2px;top:2px}#luoiP .lo .lo-gy{right:2px;top:2px;font-weight:600}#luoiP .lo .lo-gy.thap{opacity:.55;font-weight:400}
+#luoiP .lo .lo-nh{left:2px;bottom:2px;font-weight:700}#luoiP .lo .lo-nh:empty,#luoiP .lo .lo-gy:empty{display:none}
+#luoiP .lo .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:2px;position:static;padding:0}
 #s2oBang table{border-collapse:collapse;width:100%}#s2oBang td,#s2oBang th{border-bottom:1px solid #eef0f3;padding:2px 3px;text-align:left;vertical-align:top}
 .bg-ten span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-weight:600;pointer-events:none;font-family:system-ui,sans-serif}
 #bgW .vg-o input[type=range]{width:90px}
@@ -397,6 +412,9 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <span id="pos" class="mu"></span>
     <button id="bNext" title="điểm sau (n)"><kbd>n</kbd> ›</button>
     <input id="goto" type="text" placeholder="đến mã…" style="width:80px">
+    <select id="ntSo" title="Nạp trước dải ảnh, đồ thị, gợi ý của các điểm kế tiếp trong lúc gán điểm đang xem"><option value="0">nạp trước: tắt</option><option value="1">nạp trước 1 điểm</option><option value="2">nạp trước 2 điểm</option><option value="3">nạp trước 3 điểm</option></select>
+    <span id="ntTT" class="mu sm" data-noi18n></span>
+    <button id="bLuoi" type="button" title="Chế độ lưới: nhiều điểm cùng năm trên một màn, gán bằng phím cho các ô đã chọn, Enter nhận gợi ý (phím l)">▦ Lưới <kbd>l</kbd></button>
   </div>
   <div class="prog"><div id="progbar" style="width:0"></div></div>
   <div class="mu sm" id="progtxt"></div>
@@ -406,6 +424,9 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 
   <h2>Lớp <span class="mu kb">(bấm phím để gán cho năm đang chọn)</span></h2>
   <div class="cls" id="cls"></div>
+  <div id="gyBox" class="sm" data-noi18n></div>
+  <div class="row sm mu"><label title="Gợi ý lớp từ các điểm đã gán (láng giềng gần nhất trên đặc trưng theo năm)"><input type="checkbox" id="gyBat" checked> gợi ý lớp</label>
+    <span title="Tỉ lệ điểm không hiện gợi ý (cố định theo mã điểm), để đo độ đúng của gợi ý mà không bị gợi ý dẫn dắt">gán mù <input type="number" id="gyMuPT" min="0" max="50" step="1" value="10" style="width:46px"> % điểm</span></div>
 
   <h2>Điểm</h2>
   <div id="pinfo" class="sm mu">Chưa chọn điểm.</div>
@@ -562,6 +583,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
       <button id="xgGeo" type="button">GeoJSON</button><button id="xgXoa" type="button">Xoá vùng</button></div>
     <div class="mu sm">Vùng gộp dùng làm phạm vi ở Thay đổi, Lớp phủ, Phân loại, Tạo bộ điểm, Xuất bản đồ và S2 trực tuyến; lưu trong trình duyệt và trong tệp tiến độ.</div>
   </div>
+  <div id="luoiP" hidden data-noi18n></div>
   <div id="s2oP" hidden>
     <div class="vg-dau"><b title="kéo thanh này để dời bảng">⠿ Sentinel-2 trực tuyến</b><span class="mu" id="s2oTT" data-noi18n></span>
       <span style="margin-left:auto"></span><button id="s2oDong" type="button" title="đóng">×</button></div>
@@ -992,6 +1014,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>S2 trực tuyến 3.2</b>: trong lớp chọn được R-G-B tuỳ ý từ 10 băng và nguồn ảnh: ảnh ghép trung vị hoặc <b>một cảnh</b> của ngày chọn (thấy cả mây), để biết nhãn lấy trên ảnh nào. Giá trị tại điểm liệt kê các cảnh đã ghép và cảnh nào quang đãng đúng tại điểm (theo SCL). Đồ thị "theo năm" có nhóm "S2 trực tuyến": điểm của năm là trung vị các cảnh đã ghép quang đãng tại điểm; nếu các cảnh đó đều mây tại điểm thì lấy cảnh ứng viên quang đãng (vòng đứt), nên năm nào có cảnh quang đãng cũng có giá trị; chấm nhỏ là từng cảnh theo ngày trong năm, để thấy điểm đổi giữa năm; tải CSV từng cảnh. Khi gán nhãn, trang ghi ảnh đã xem (cảnh S2 và ngày, quang đãng hay mây tại điểm, bản Wayback, lớp đang bật): cột "anh" trong CSV và trong bảng các năm của điểm. Dải ảnh EOX báo rõ năm không có ảnh (như 2017 ở Việt Nam) thay vì ô trắng; điểm ngoài vùng dữ liệu sẵn nhưng trong vùng kế hoạch S2 trực tuyến thì dải ảnh tự dùng S2 trực tuyến.</li>
     <li><b>Ranh giới thế giới (3.3)</b>: trong mục Hành chính, tìm một thành phố, quận, phường bất kỳ ở mọi nước (Nominatim, OpenStreetMap), rồi chọn một cấp hành chính bên trong (admin_level, Overpass API) để nạp thay ranh giới xã: tìm theo tên, tên trên bản đồ, gộp vùng, phạm vi phân tích đều dùng được. Ô tìm trên bản đồ có dòng "tìm trên toàn thế giới" làm việc tương tự. Có tới cấp thấp nào là tuỳ dữ liệu OpenStreetMap của nước đó.</li>
     <li><b>Landsat và Sentinel-1 trực tuyến (3.4)</b>: bảng kế hoạch cảnh (🛰) có ô "Nguồn ảnh": Sentinel-2 (AWS, 10 m, từ 2017), Landsat 4-9 Collection 2 Level-2 (30 m, từ 1984) hoặc Sentinel-1 RTC radar (VV, VH, 10 m, từ 2015). Landsat và Sentinel-1 lấy từ Microsoft Planetary Computer, không cần tài khoản, đọc và ghép ngay trong trình duyệt như Sentinel-2. Landsat che mây theo QA_PIXEL, mặc định bỏ Landsat 7 sau 31.05.2003; băng Landsat mang tên băng S2 tương ứng nên các chỉ số dùng chung. Sentinel-1 không có mây, ảnh ghép là trung vị nhiều cảnh (giảm nhiễu đốm), giá trị tại điểm và đồ thị theo năm tính bằng dB, có chỉ số radar VH/VV, RVI, VV−VH. Mỗi nguồn giữ một kế hoạch riêng; đổi nguồn là đổi lớp, dải ảnh, đồ thị theo năm và ghi ảnh đã xem khi gán ("landsat:", "s1:" trong cột anh).</li>
+    <li><b>Lấy mẫu nhanh (3.5)</b>: <b>nạp trước</b> (ô cạnh nút ‹ ›): trong lúc anh gán điểm đang xem, trang đọc sẵn dải ảnh mọi năm, đồ thị theo năm, đặc trưng gợi ý và ô ảnh nền của 1-3 điểm kế tiếp (⚡ cho biết đã xong bao nhiêu); ảnh dải đã vẽ được giữ lại nên gán nhãn, đổi năm không phải đọc lại. <b>Gợi ý lớp</b>: dưới các nút lớp, lớp của các láng giềng gần nhất trong số các điểm đã gán (trên embedding, PC, S2 10 băng, Landsat có sẵn; ngoài vùng có dữ liệu thì băng và chỉ số đọc trực tuyến theo kế hoạch cảnh), kèm độ tin; <kbd>Enter</kbd> nhận gợi ý. Không dùng chính điểm đang xem; lớp U, M không tính. Một phần điểm (mặc định 10 %, cố định theo mã) là điểm gán mù, không hiện gợi ý: độ đúng của gợi ý trên các điểm này là ước lượng không bị gợi ý dẫn dắt. Mỗi nhãn ghi gợi ý lúc gán: cột goi_y_knn, tin_goi_y, gan_mu, nhan_tu_goi_y trong CSV dạng dài. <b>Chế độ lưới</b> (nút ▦ Lưới, phím <kbd>l</kbd>): nhiều điểm cùng năm trên một màn, xếp theo lớp gợi ý; nhấp để chọn ô (Shift: chọn dải, Ctrl+A: cả trang), bấm phím lớp để gán cho các ô đã chọn, Enter nhận gợi ý (ô đã chọn, hoặc mọi ô chưa gán đủ ngưỡng tin cậy), nhấp đúp mở điểm; <kbd>n</kbd> <kbd>p</kbd> sang trang, <kbd>←</kbd> <kbd>→</kbd> đổi năm; tuỳ chọn điền nhãn cho các năm sau.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -1221,6 +1244,8 @@ var CORE = (function () {
           if (q.tin && q.tin[y] != null) p.tin[y] = q.tin[y];
           if (p.anh) delete p.anh[y];                                         // bản 3.2: ảnh đã xem khi gán đi cùng nhãn
           if (q.anh && q.anh[y]) { p.anh = p.anh || {}; p.anh[y] = q.anh[y]; }
+          if (p.gy) delete p.gy[y];                                           // bản 3.5: gợi ý lúc gán đi cùng nhãn
+          if (q.gy && q.gy[y]) { p.gy = p.gy || {}; p.gy[y] = q.gy[y]; }
         }
       });
       if (q.ghi_chu && q.ghi_chu !== p.ghi_chu) p.ghi_chu = p.ghi_chu ? p.ghi_chu + " | " + q.ghi_chu : q.ghi_chu;
@@ -1233,11 +1258,12 @@ var CORE = (function () {
     points.forEach(function (p) {
       years.forEach(function (y) {
         var ma = p.nhan[y]; if (ma == null) return;
-        var c = idx.by[ma] || {};
+        var c = idx.by[ma] || {}, gy = p.gy && p.gy[y] && p.gy[y].l === ma ? p.gy[y] : null;   // bản 3.5: gợi ý kNN lúc gán (chỉ khi còn đúng nhãn đó)
         rows.push({id: p.id, bo_diem: p.bo, lon: p.lon, lat: p.lat, x_utm: p.x, y_utm: p.y, tang: p.tang, nam: y,
                    ma_lop: ma, id_lop: c.id, nhom: c.nhom || "", lop3: idx.lop3(ma), tin_cay: p.tin[y] || "",
                    goi_y_3lop: p.goi_y[y] == null ? "" : p.goi_y[y], xem_lai: p.xem_lai ? 1 : 0,
-                   ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : "", anh: p.anh && p.anh[y] ? p.anh[y].s || "" : ""});
+                   ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : "", anh: p.anh && p.anh[y] ? p.anh[y].s || "" : "",
+                   goi_y_knn: gy && gy.g ? gy.g : "", tin_goi_y: gy && gy.t != null ? gy.t : "", gan_mu: gy ? gy.mu || 0 : "", nhan_tu_goi_y: gy ? gy.n || 0 : ""});
       });
     });
     return rows;
@@ -2304,7 +2330,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.4.1";
+const VERSION = "3.5";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3413,6 +3439,7 @@ function setLang(l) {
 /*__V32__*/
 /*__V33__*/
 /*__V34__*/
+/*__V35__*/
 /*__PWA__*/
 </script>
 </body>
