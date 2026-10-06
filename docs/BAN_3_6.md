@@ -127,3 +127,42 @@ Toàn bộ bài thử cũ vẫn đạt. Hai bài thử cũ được sửa cho h�
 | `src/tpl.html` | bản 3.6; ô nạp trước 5/10/20, ô + S1, lề phải và lớp S1 trong đồ thị mùa vụ; trợ giúp |
 | `src/gen_i18n_v36.py` | bản dịch tiếng Nga, tiếng Anh |
 | `tools/dung_trang.py` | thêm `v36_ui.js` |
+
+## Bản 3.6.1 (06.10.2026): tự mở Google Earth khi sang điểm
+
+### Cách dùng
+Cạnh nút ▦ Lưới có ô **tự mở khi sang điểm**. Các lựa chọn:
+
+- tắt;
+- 🌍 Google Earth;
+- 🛰 Google Maps vệ tinh;
+- 🛰 Copernicus Browser;
+- 🕰 Esri Wayback;
+- 🅱 Bing Maps;
+- 🟡 Yandex Maps.
+
+Khi đã chọn một trang, mỗi lần sang điểm mới (bằng `n`, `p`, nhấp trên bản đồ, nhấp đúp trong lưới), trang đó mở ở **tab mới**, đúng toạ độ điểm. Google Earth có ghim tại điểm.
+
+Phím **`t`** mở trang đã chọn (mặc định Google Earth) cho điểm đang xem.
+
+Lựa chọn được nhớ trong trình duyệt.
+
+### Vì sao mỗi điểm là một tab mới
+Em đã kiểm ngày 06.10.2026: Google Earth web gửi `Cross-Origin-Opener-Policy: same-origin`. Vì thế, khi Google Earth tải xong, trình duyệt cắt mọi liên hệ giữa geoportal và tab đó. Geoportal không thể chuyển tab Google Earth cũ sang điểm mới, cũng không đóng được nó.
+
+**Cách làm nhanh nhất**: sang điểm, xem Google Earth, rồi bấm **Ctrl+W**. Tab đóng lại và trình duyệt tự quay về geoportal.
+
+Trang chỉ tự mở khi đổi điểm do anh bấm phím hay nhấp. Cách này tránh bị trình duyệt chặn cửa sổ bật lên, và không tự mở khi tải lại trang.
+
+### Kiểm thử
+`t_v36_dom.js` có thêm các phần sau:
+
+- sang điểm thì mở đúng URL Google Earth có toạ độ, kiểu `noopener`;
+- chọn lại đúng điểm đang xem thì không mở thêm;
+- phím `t`;
+- đổi sang Copernicus và trang nhớ lựa chọn;
+- tắt thì không mở;
+- đổi điểm không do người dùng thì không mở;
+- bản dịch tiếng Nga.
+
+Toàn bộ bài thử khác vẫn đạt.

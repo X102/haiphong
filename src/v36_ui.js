@@ -183,3 +183,40 @@ s2ovUI = function (div) {
     div.insertAdjacentHTML("beforeend", `<div class="mu sm s2o-nhac" style="color:#b54708">${T("Vùng này có sẵn ảnh S2 10 băng đã ghép (lớp “S2 10 băng”): nhanh hơn nhiều, vì S2 trực tuyến phải đọc từng cảnh từ AWS ở Mỹ (mỗi ô bản đồ 3 băng + lớp mây của mỗi cảnh).")}</div>`);
   }).catch(() => {});
 };
+
+/* ---------- bản 3.6.1: tự mở trang ngoài (mặc định Google Earth) khi sang điểm mới; phím t mở cho điểm đang xem ---------- */
+/* Google Earth web gửi Cross-Origin-Opener-Policy: same-origin (đã kiểm 06.10.2026), nên trình duyệt cắt liên hệ giữa geoportal
+   và tab Google Earth ngay khi trang đó tải: geoportal không thể chuyển tab cũ sang điểm mới, cũng không đóng được nó. Vì vậy mỗi
+   điểm mở một tab mới; Ctrl+W đóng tab đó và trình duyệt quay về geoportal. Chỉ mở khi đổi điểm do thao tác của người dùng (phím,
+   nhấp), để trình duyệt không chặn và không tự mở khi trang tải lại. */
+var TM = Object.assign({k: ""}, ls("laymau_hp_tumo_v1") || {});
+function tmUrl(p, k) {
+  const L_ = CORE.links(p.lat, p.lon, {year: ST.nam, wayback: REL[relIdx] ? REL[relIdx][1] : null, lang: LANG, ten: p.id});
+  const x = L_.find(l => l.k === (k || TM.k || "gearth")); return x ? x.url : null;
+}
+function tmMoDiem(p, k) {
+  if (!p) return false;
+  const u = tmUrl(p, k); if (!u) return false;
+  window.open(u, "_blank", "noopener");                 // noopener: trang ngoài không điều khiển được tab geoportal
+  TM.lan = (TM.lan || 0) + 1;
+  if (TM.lan === 1) msg(T("Đã mở {s} ở tab mới. Xem xong bấm Ctrl+W để đóng tab và quay lại geoportal.", {s: T(LINK_LBL[k || TM.k || "gearth"], {y: ST.nam})}), "ok", 6000);
+  return true;
+}
+function tmCoThaoTac() { const a = navigator.userActivation; return !a || a.isActive; }   // trình duyệt không có userActivation: coi như có
+var _select361 = select;
+select = function () {
+  const truoc = ST.cur, r = _select361.apply(this, arguments);
+  if (TM.k && ST.cur && ST.cur !== truoc && tmCoThaoTac()) tmMoDiem(cur());
+  return r;
+};
+document.addEventListener("keydown", e => {         // phím t: mở trang đã chọn (hoặc Google Earth) cho điểm đang xem
+  const t = e.target.tagName; if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (typeof LUOI !== "undefined" && LUOI.mo) return;
+  if (e.key.toLowerCase() !== "t" || IDX.key.t || (typeof VG !== "undefined" && VG.mode)) return;
+  const p = typeof vizPt === "function" ? vizPt() : cur(); if (!p) return;
+  tmMoDiem(p); e.preventDefault(); e.stopImmediatePropagation();
+}, true);
+(function () {
+  const s = $("tmMo"); if (!s) return;
+  s.value = TM.k; s.onchange = () => { TM.k = s.value; ls("laymau_hp_tumo_v1", {k: TM.k}); };
+})();

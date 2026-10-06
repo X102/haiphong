@@ -96,10 +96,28 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
     const d = document.createElement("div"); s2ovUI(d); await new Promise(r => setTimeout(r, 400)); const t = d.textContent; ST.s2o = cu; return t; })()`);
   ok(/nhanh hơn nhiều/.test(nhac), "S2 trực tuyến trong vùng có ảnh S2 sẵn: nhắc dùng lớp “S2 10 băng”");
 
+  // ---------- 3b. bản 3.6.1: tự mở Google Earth khi sang điểm
+  E(`window.MO = []; window.open = (u, n, f) => { MO.push({u, n, f}); return null; }; $("tmMo").value = "gearth"; $("tmMo").onchange(); ST.filter = "all"; select("E0000", false); MO.length = 0`);
+  E(`step(1)`);
+  const mo = E("MO");
+  ok(mo.length === 1 && /^https:\/\/earth\.google\.com\/web\/search\/20\.\d{6},106\.\d{6}\//.test(mo[0].u) && mo[0].u.includes(E(`ST.diem.E0001.lat.toFixed(6) + "," + ST.diem.E0001.lon.toFixed(6)`)) && mo[0].f === "noopener",
+     "sang điểm mới (n): mở Google Earth ở tab mới đúng toạ độ điểm: " + (mo[0] || {}).u);
+  E(`select("E0001", false)`); ok(E("MO.length") === 1, "chọn lại đúng điểm đang xem: không mở thêm");
+  w.document.body.dispatchEvent(new w.KeyboardEvent("keydown", {key: "t", bubbles: true}));
+  ok(E("MO.length") === 2 && E("ST.cur") === "E0001", "phím t: mở cho điểm đang xem");
+  E(`$("tmMo").value = "copernicus"; $("tmMo").onchange(); step(1)`);
+  ok(/browser\.dataspace\.copernicus\.eu/.test(E("MO[2].u")) && E(`JSON.parse(localStorage.getItem("laymau_hp_tumo_v1")).k`) === "copernicus", "chọn trang khác (Copernicus), nhớ trong trình duyệt");
+  E(`$("tmMo").value = ""; $("tmMo").onchange(); step(1)`);
+  ok(E("MO.length") === 3, "tắt: sang điểm không mở gì");
+  E(`window.navigator.__defineGetter__ ? 0 : 0; $("tmMo").value = "gearth"; $("tmMo").onchange()`);
+  E(`Object.defineProperty(navigator, "userActivation", {configurable: true, get: () => ({isActive: false})}); step(1)`);
+  ok(E("MO.length") === 3, "đổi điểm không do người dùng (trang tự chọn điểm): không mở, tránh bị chặn cửa sổ bật lên");
+  E(`delete navigator.userActivation; $("tmMo").value = ""; $("tmMo").onchange()`);
+
   // ---------- 4. dịch
   E("setLang('ru')"); await sleep(60);
   E(`select("E0001", false); CVS.s1 = true; renderCurve()`); await sleep(300);
-  ok(/предзагрузка 20 точек/.test([...$("ntSo").options].map(o => o.textContent).join()) && /Sentinel-1/.test($("lbCurveS1").title) && /нисходящая орбита/.test($("curve").textContent), "tiếng Nga: ô nạp trước, ô + S1, chú giải S1");
+  ok(/автооткрытие: 🌍 Google Earth/.test([...$("tmMo").options].map(o => o.textContent).join()) && /предзагрузка 20 точек/.test([...$("ntSo").options].map(o => o.textContent).join()) && /Sentinel-1/.test($("lbCurveS1").title) && /нисходящая орбита/.test($("curve").textContent), "tiếng Nga: ô nạp trước, ô + S1, chú giải S1");
   const miss = E("[...T_MISS]").filter(x => /S1|nạp trước|quỹ đạo|cảnh|dB|trục/.test(x));
   ok(miss.length === 0, "không sót khoá dịch mới" + (miss.length ? ": " + miss.slice(0, 5).join(" | ") : ""));
   E("setLang('vi'); CVS.s1 = false");
