@@ -96,6 +96,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.3: ranh giới toàn thế giới © OpenStreetMap contributors (ODbL), tìm qua Nominatim, các cấp hành chính qua Overpass API.
 - Bản 3.4: Landsat Collection 2 Level-2 (USGS) và Copernicus Sentinel-1 RTC (ESA, CC BY 4.0), đọc trực tuyến qua Microsoft Planetary Computer.
 - Bản 3.5: lấy mẫu nhanh: nạp trước điểm kế tiếp, gợi ý lớp tại chỗ (kNN, có gán mù để đo độ đúng), chế độ lưới (xem docs/BAN_3_5.md).
+- Bản 3.6: đường mùa vụ có thêm Sentinel-1 RTC (ESA, CC BY 4.0) đọc tại điểm qua API của Microsoft Planetary Computer; nạp trước tới 20 điểm (xem docs/BAN_3_6.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

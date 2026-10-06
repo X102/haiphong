@@ -230,13 +230,29 @@ var S2OC = (function () {
   function trungVi(a, n) { if (!n) return NaN; var b = a.slice(0, n).sort(function (x, y) { return x - y; }); return n % 2 ? b[(n - 1) / 2] : (b[n / 2 - 1] + b[n / 2]) / 2; }
   /* cảnh ds, các băng `bang` (tên S2 hoặc "TCI") trên lưới đích bb 3857 × w × h. Trả về Float32Array (w·h·số băng): phản xạ × 10000
      (TCI: 0..255), NaN = không có. che: chỉ lấy điểm ảnh quang đãng theo SCL. */
-  async function ghep(ds, bang, bb, w, h, che) {
-    var tci = bang.length === 1 && bang[0] === "TCI", nb = tci ? 3 : bang.length, n = w * h, K = ds.length;
-    var gom = new Float32Array(K * n * nb).fill(NaN), luoi = {};
+  /* bản 3.6: có che mây thì đọc lớp mặt nạ (SCL, QA_PIXEL: rẻ) của mọi cảnh trước, rồi chỉ đọc băng của những cảnh còn góp điểm ảnh
+     quang đãng cho khung đang vẽ: đi theo thứ tự cảnh (quang đãng nhất trước), bỏ cảnh không có điểm ảnh quang đãng nào ở khung, hoặc
+     chỉ góp cho các điểm ảnh đã đủ `du` lần quang đãng. Đo ở Hải Phòng 01-04/2024: 3/6 cảnh đã chọn hoàn toàn mây ở một ô bản đồ
+     mức 14, trước vẫn đọc 3 băng của chúng. Trung vị không đổi ở những điểm ảnh còn thiếu lần quang đãng. */
+  async function ghep(ds, bang, bb, w, h, che, du) {
+    var tci = bang.length === 1 && bang[0] === "TCI", nb = tci ? 3 : bang.length, n = w * h, luoi = {};
+    var Gc = function (sc) { return luoi[sc.epsg] || (luoi[sc.epsg] = luoiAnh(sc.epsg, bb, w, h)); };
     await chuanBi(ds);
-    await Promise.all(ds.map(async function (sc, s) {
-      var G = luoi[sc.epsg] || (luoi[sc.epsg] = luoiAnh(sc.epsg, bb, w, h));
-      var scl = che ? await layMau(url(sc, "SCL"), G, [0]) : null;
+    var scls = che ? await Promise.all(ds.map(function (sc) { return layMau(url(sc, "SCL"), Gc(sc), [0]); })) : null;
+    var giu = ds.map(function (_, i) { return i; });
+    if (che && ds.length > 1) {
+      du = du || 3; var dem = new Uint8Array(n), nho = Math.max(1, Math.floor(0.002 * n)); giu = [];
+      ds.forEach(function (sc, s) {
+        var g = 0, sv = scls[s], ng = nguonCua(sc);
+        for (var k = 0; k < n; k++) if (dem[k] < du && quang(ng, sv[k])) g++;
+        if (g < nho) return;
+        giu.push(s); for (var k2 = 0; k2 < n; k2++) if (quang(ng, sv[k2])) dem[k2]++;
+      });
+      if (!giu.length) giu = [0];
+    }
+    var K = giu.length, gom = new Float32Array(K * n * nb).fill(NaN);
+    await Promise.all(giu.map(async function (si, s) {
+      var sc = ds[si], G = Gc(sc), scl = scls ? scls[si] : null;
       var lay = tci ? [layMau(url(sc, "TCI"), G, [0, 1, 2])] : bang.map(function (b) { return url(sc, b) ? layMau(url(sc, b), G, [0]) : Promise.resolve(null); });
       var vs = await Promise.all(lay);
       var iL = bang.indexOf("B2"), lam = che && canThem(sc).length ? (iL >= 0 ? vs[iL] : url(sc, "B2") ? await layMau(url(sc, "B2"), G, [0]) : null) : null;
@@ -249,6 +265,7 @@ var S2OC = (function () {
         }
       }
     }));
+    ghep.lanCuoi = {canh: ds.length, doc: K};
     var out = new Float32Array(n * nb).fill(NaN), buf = new Float64Array(K);
     for (var k = 0; k < n; k++) for (var q = 0; q < nb; q++) {
       var c = 0; for (var s = 0; s < K; s++) { var v = gom[(s * n + k) * nb + q]; if (v === v) buf[c++] = v; }

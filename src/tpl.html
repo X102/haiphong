@@ -412,7 +412,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <span id="pos" class="mu"></span>
     <button id="bNext" title="điểm sau (n)"><kbd>n</kbd> ›</button>
     <input id="goto" type="text" placeholder="đến mã…" style="width:80px">
-    <select id="ntSo" title="Nạp trước dải ảnh, đồ thị, gợi ý của các điểm kế tiếp trong lúc gán điểm đang xem"><option value="0">nạp trước: tắt</option><option value="1">nạp trước 1 điểm</option><option value="2">nạp trước 2 điểm</option><option value="3">nạp trước 3 điểm</option></select>
+    <select id="ntSo" title="Nạp trước dải ảnh, đồ thị, gợi ý của các điểm kế tiếp trong lúc gán điểm đang xem"><option value="0">nạp trước: tắt</option><option value="1">nạp trước 1 điểm</option><option value="2">nạp trước 2 điểm</option><option value="3">nạp trước 3 điểm</option><option value="5">nạp trước 5 điểm</option><option value="10">nạp trước 10 điểm</option><option value="20">nạp trước 20 điểm</option></select>
     <span id="ntTT" class="mu sm" data-noi18n></span>
     <button id="bLuoi" type="button" title="Chế độ lưới: nhiều điểm cùng năm trên một màn, gán bằng phím cho các ô đã chọn, Enter nhận gợi ý (phím l)">▦ Lưới <kbd>l</kbd></button>
   </div>
@@ -470,6 +470,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <select id="selCurveFeat" title="chỉ số hoặc băng" data-noi18n><option value="NDVI">NDVI</option><option value="MNDWI">MNDWI</option></select>
     <select id="selCurveGrp" title="nhóm đặc trưng" data-noi18n></select>
     <label id="lbCurveZ" title="chuẩn hoá từng đường về điểm z qua các năm để so hình dạng"><input type="checkbox" id="cbCurveZ"> z</label>
+    <label id="lbCurveS1" title="thêm đường Sentinel-1 VV, VH (dB, trục phải) cùng lúc với đường Sentinel-2; đọc trực tuyến từ Planetary Computer, mỗi cảnh một giá trị tại điểm"><input type="checkbox" id="cbCurveS1"> + S1</label>
     <button id="bCurveBig" type="button" title="xem lớn">⤢ Phóng to</button>
     <button id="bCurveCS" type="button" title="thêm, bớt chỉ số (248 chỉ số Sentinel-2 hoặc công thức tự nhập)">∑ Chỉ số…</button>
   </div>
@@ -1015,6 +1016,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Ranh giới thế giới (3.3)</b>: trong mục Hành chính, tìm một thành phố, quận, phường bất kỳ ở mọi nước (Nominatim, OpenStreetMap), rồi chọn một cấp hành chính bên trong (admin_level, Overpass API) để nạp thay ranh giới xã: tìm theo tên, tên trên bản đồ, gộp vùng, phạm vi phân tích đều dùng được. Ô tìm trên bản đồ có dòng "tìm trên toàn thế giới" làm việc tương tự. Có tới cấp thấp nào là tuỳ dữ liệu OpenStreetMap của nước đó.</li>
     <li><b>Landsat và Sentinel-1 trực tuyến (3.4)</b>: bảng kế hoạch cảnh (🛰) có ô "Nguồn ảnh": Sentinel-2 (AWS, 10 m, từ 2017), Landsat 4-9 Collection 2 Level-2 (30 m, từ 1984) hoặc Sentinel-1 RTC radar (VV, VH, 10 m, từ 2015). Landsat và Sentinel-1 lấy từ Microsoft Planetary Computer, không cần tài khoản, đọc và ghép ngay trong trình duyệt như Sentinel-2. Landsat che mây theo QA_PIXEL, mặc định bỏ Landsat 7 sau 31.05.2003; băng Landsat mang tên băng S2 tương ứng nên các chỉ số dùng chung. Sentinel-1 không có mây, ảnh ghép là trung vị nhiều cảnh (giảm nhiễu đốm), giá trị tại điểm và đồ thị theo năm tính bằng dB, có chỉ số radar VH/VV, RVI, VV−VH. Mỗi nguồn giữ một kế hoạch riêng; đổi nguồn là đổi lớp, dải ảnh, đồ thị theo năm và ghi ảnh đã xem khi gán ("landsat:", "s1:" trong cột anh).</li>
     <li><b>Lấy mẫu nhanh (3.5)</b>: <b>nạp trước</b> (ô cạnh nút ‹ ›): trong lúc anh gán điểm đang xem, trang đọc sẵn dải ảnh mọi năm, đồ thị theo năm, đặc trưng gợi ý và ô ảnh nền của 1-3 điểm kế tiếp (⚡ cho biết đã xong bao nhiêu); ảnh dải đã vẽ được giữ lại nên gán nhãn, đổi năm không phải đọc lại. <b>Gợi ý lớp</b>: dưới các nút lớp, lớp của các láng giềng gần nhất trong số các điểm đã gán (trên embedding, PC, S2 10 băng, Landsat có sẵn; ngoài vùng có dữ liệu thì băng và chỉ số đọc trực tuyến theo kế hoạch cảnh), kèm độ tin; <kbd>Enter</kbd> nhận gợi ý. Không dùng chính điểm đang xem; lớp U, M không tính. Một phần điểm (mặc định 10 %, cố định theo mã) là điểm gán mù, không hiện gợi ý: độ đúng của gợi ý trên các điểm này là ước lượng không bị gợi ý dẫn dắt. Mỗi nhãn ghi gợi ý lúc gán: cột goi_y_knn, tin_goi_y, gan_mu, nhan_tu_goi_y trong CSV dạng dài. <b>Chế độ lưới</b> (nút ▦ Lưới, phím <kbd>l</kbd>): nhiều điểm cùng năm trên một màn, xếp theo lớp gợi ý; nhấp để chọn ô (Shift: chọn dải, Ctrl+A: cả trang), bấm phím lớp để gán cho các ô đã chọn, Enter nhận gợi ý (ô đã chọn, hoặc mọi ô chưa gán đủ ngưỡng tin cậy), nhấp đúp mở điểm; <kbd>n</kbd> <kbd>p</kbd> sang trang, <kbd>←</kbd> <kbd>→</kbd> đổi năm; tuỳ chọn điền nhãn cho các năm sau.</li>
+    <li><b>3.6</b>: nạp trước tới 5, 10 hoặc 20 điểm kế tiếp; nạp trước nhường bản đồ khi bản đồ đang tải ô. Ở <b>đường mùa vụ 6 kỳ</b>, ô <b>+ S1</b> thêm đường Sentinel-1 VV, VH (dB, trục phải) cùng lúc với các đường Sentinel-2: giá trị tại điểm của từng cảnh một quỹ đạo (sentinel-1-rtc, Planetary Computer), trung vị theo kỳ 2 tháng; năm đang gán đọc trước, các năm khác đọc dần, kết quả giữ trong trình duyệt. S2 trực tuyến có che mây nay chỉ đọc băng của các cảnh có góp điểm ảnh quang đãng cho ô đang vẽ (bỏ cảnh mây kín ở ô đó).</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2330,7 +2332,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.5";
+const VERSION = "3.6";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2953,7 +2955,7 @@ function curveSVG(cv, p, mode, feat, W, H) {
   const rong = lo < -1.05 || hi > 1.05;          // bản 2.4: chỉ số ngoài khoảng -1..1 (tỉ số, EVI...) không bị cắt
   if (rong) { const d = (hi - lo) * 0.06 || 0.5; lo -= d; hi += d; }
   else { lo = Math.max(-1, Math.floor((lo - 0.05) * 10) / 10); hi = Math.min(1, Math.ceil((hi + 0.05) * 10) / 10); if (hi - lo < 0.4) hi = Math.min(1, lo + 0.4); }
-  const L0 = 30, R0 = 8, T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;
+  const L0 = 30, R0 = cv.s1 ? 34 : 8, T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;   // bản 3.6: lề phải cho trục dB của S1
   const X = i => L0 + (n > 1 ? i * (W - L0 - R0) / (n - 1) : 0);
   const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
   const pl = (pts, c, w, op, dash) => {
@@ -3000,6 +3002,7 @@ function curveSVG(cv, p, mode, feat, W, H) {
       if (mode === "mot" && ys[ST.nam] && ys[ST.nam][f]) s += pl(ys[ST.nam][f].map((v, i) => [i, v]), cvCol(f), 2.5, 1);
     });
   }
+  if (cv.s1 && typeof s1SVG === "function") s += s1SVG(cv, {mode, yrs, X, W, H, L0, R0, T0, B0, nky});      // bản 3.6: đường Sentinel-1
   return s + "</svg>";
 }
 function curveLegend(cv, p, mode, feat) {
@@ -3025,9 +3028,10 @@ function curveLegend(cv, p, mode, feat) {
   }
   const d = cv.ys[ST.nam], src = cv.src || {};
   const sanF = src.kieu === "san" && (f === "NDVI" || f === "MNDWI");
-  h += `<div class="cvnote">${sanF ? T("tính sẵn, k = {k} PC", {k: src.k}) : T("đọc từ ảnh PC, k = {k}", {k: (MAN && MAN.pc && MAN.pc.k) || src.k})} · ${T("{n} năm", {n: yrs.length})}` +
+  if (src.kieu !== "s1") h += `<div class="cvnote">${sanF ? T("tính sẵn, k = {k} PC", {k: src.k}) : T("đọc từ ảnh PC, k = {k}", {k: (MAN && MAN.pc && MAN.pc.k) || src.k})} · ${T("{n} năm", {n: yrs.length})}` +
     (d ? (d.NFILL ? ` · <b style="color:#b54708">${T("năm {y} có {n} kỳ phải nội suy", {y: ST.nam, n: d.NFILL})}</b>` : "") : ` · <b>${T("không có năm {y}", {y: ST.nam})}</b>`) +
     (yrs.some(y => y <= 2018) ? ` · <b style="color:#b54708">${T("2017-2018 ảnh S2 thưa, đường kém tin cậy")}</b>` : "") + `</div>`;
+  if (cv.s1 && typeof s1ChuGiai === "function") h += s1ChuGiai(cv, mode);                                       // bản 3.6
   if (mode !== "mot") h += `<div class="cvnote">${T("Đọc hình: nét đứt xám là trung vị các năm, tức quy luật mùa vụ của điểm; năm lệch xa là năm đổi lớp, năm ảnh xấu hoặc năm bất thường.")}</div>`;
   return h;
 }
@@ -3038,13 +3042,14 @@ async function renderCurve() {
   if (CVS.kind === "nam") { renderAnnual(tok); return; }
   if (!p) { box.innerHTML = ""; lastCV = null; return; }
   box.innerHTML = `<div class="mu sm">${T("đang đọc…")}</div>`;
-  const cv = await curvesFor(p);
+  let cv = await curvesFor(p);
   if (tok !== curveTok) return;
+  if (CVS.s1 && typeof s1Gop === "function") cv = s1Gop(cv, p);           // bản 3.6: thêm đường S1 (đọc dần, vẽ lại khi có thêm năm)
   lastCV = cv;
   if (!cv || !Object.keys(cv.ys).length) {
     box.innerHTML = `<div class="mu sm">${T('không có đường mùa vụ cho điểm này (chỉ có sẵn cho hai bộ điểm, hoặc khi bộ dữ liệu có lớp "pc").')}</div>`; return;
   }
-  if (!Object.values(cv.ys).some(d => d[CVS.feat])) {
+  if (!cv.s1 && !Object.values(cv.ys).some(d => d[CVS.feat])) {
     box.innerHTML = `<div class="mu sm">${T("không có {f} cho điểm này: băng ngoài NDVI, MNDWI cần ảnh PC (lớp pc) của bộ dữ liệu.", {f: CVS.feat})}</div>`; return;
   }
   const Wc = cvW(box);
@@ -3440,6 +3445,7 @@ function setLang(l) {
 /*__V33__*/
 /*__V34__*/
 /*__V35__*/
+/*__V36__*/
 /*__PWA__*/
 </script>
 </body>

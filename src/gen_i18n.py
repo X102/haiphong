@@ -570,8 +570,13 @@ for L_, (moc, them) in HELP34.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 from gen_i18n_v35 import R35, HELP35
 _co = {r[0] for r in R}
-R = R + [r for r in R35 if r[0] not in _co]              # bản 3.4: Landsat, Sentinel-1 trực tuyến
+R = R + [r for r in R35 if r[0] not in _co]              # bản 3.5: nạp trước, gợi ý lớp, chế độ lưới
 for L_, (moc, them) in HELP35.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v36 import R36, HELP36
+_co = {r[0] for r in R}
+R = R + [r for r in R36 if r[0] not in _co]              # bản 3.6: nạp trước nhiều điểm, đường S1
+for L_, (moc, them) in HELP36.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:

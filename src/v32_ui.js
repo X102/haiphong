@@ -30,7 +30,7 @@ s2oVe = async function (y, bb, w, h, canvas, opt) {
   if (!ds.length) return null;
   const K = s2oKH();
   if (!mot && opt && opt.diem) { let m1 = null; for (const sc of ds) { try { if (await S2OC.trongTaiDiem(sc, opt.diem[0], opt.diem[1])) { m1 = sc; break; } } catch (e) { /* bỏ */ } } ds = [m1 || ds[0]]; }
-  const bang = s2oCanBang(), vals = await S2OC.ghep(ds, bang, bb, w, h, !mot && K.cfg.che !== false && !(opt && opt.diem));   // một cảnh: hiện cả mây để thấy rõ
+  const bang = s2oCanBang(), vals = await S2OC.ghep(ds, bang, bb, w, h, !mot && K.cfg.che !== false && !(opt && opt.diem), K.cfg.so);   // một cảnh: hiện cả mây để thấy rõ
   const px = s2oTo(vals, bang, w, h);
   const ctx = canvas && canvas.getContext && canvas.getContext("2d");
   if (ctx) { const img = ctx.createImageData(w, h); img.data.set(px); ctx.putImageData(img, 0, 0); }

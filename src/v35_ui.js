@@ -8,7 +8,7 @@
 /* ---------------- ① bộ nhớ ảnh dải đã vẽ ---------------- */
 /* Các hàm vẽ một khung quanh điểm (s2dVe, lsdVe, v27Ve, s2oVe) được bọc: cùng tham số và cùng cách xem thì vẽ lại từ bản đã lưu,
    không đọc lại ảnh. Chỉ áp cho khung nhỏ (dải ảnh, ô lưới: ≤ 220 px, khác 256 để không đụng ô bản đồ). Lời gọi đang chạy dùng chung. */
-var ANH = {m: new Map(), byte: 0, tran: 48e6, trung: 0, goi: 0};   // tối đa khoảng 48 MB ảnh đã vẽ
+var ANH = {m: new Map(), byte: 0, tran: 64e6, trung: 0, goi: 0};   // tối đa khoảng 64 MB ảnh đã vẽ (bản 3.6: đủ cho nạp trước 20 điểm)
 function anhChuKy(ten) {
   if (ten === "s2dVe") return JSON.stringify(typeof S2V !== "undefined" ? S2V : null) + (ST.chiso ? ST.chiso.dung.join() + ST.chiso.tu.map(t => t.bt).join() : "");
   if (ten === "lsdVe") return JSON.stringify(typeof LSV !== "undefined" ? LSV : null) + (ST.chiso ? ST.chiso.dung.join() : "");
@@ -87,7 +87,19 @@ function ntKeTiep() {
   const out = []; for (let k = 1; k <= NT.so && k < v.length; k++) out.push(v[(i + NT.dir * k + v.length * 4) % v.length]);
   return out.filter((p, j, a) => a.indexOf(p) === j && p.id !== ST.cur);
 }
-function ntKhoa(p) { return [p.id, $("selStrip").value, stripNua(), stripCo(), CVS.kind, CVS.grp, anhChuKy("s2dVe"), anhChuKy("lsdVe"), anhChuKy("s2oVe")].join("|"); }
+function ntKhoa(p) { return [p.id, $("selStrip").value, stripNua(), stripCo(), CVS.kind, CVS.grp, CVS.s1 ? 1 : 0, anhChuKy("s2dVe"), anhChuKy("lsdVe"), anhChuKy("s2oVe")].join("|"); }
+/* bản 3.6: nạp trước nhường bản đồ: đợi khi các lớp bản đồ đang tải ô (ô S2 trực tuyến của khung nhìn quan trọng hơn ảnh điểm sau);
+   đợi tối đa 4 giây mỗi lần, để một lớp tải mãi không xong (máy chủ ô hỏng) không làm nạp trước đứng hẳn */
+async function ntNhuong(tok) {
+  if (NT.boDoi === tok) return;                      // lượt này đã đợi hết 4 giây một lần: lớp tải mãi, thôi không đợi nữa
+  for (let i = 0; i < 16; i++) {
+    if (tok !== NT.tok) return;
+    let dang = false; try { map.eachLayer(l => { if (!dang && l.isLoading && l.isLoading()) dang = true; }); } catch (e) { /* bỏ */ }
+    if (!dang) return;
+    await new Promise(r => setTimeout(r, 250));
+  }
+  NT.boDoi = tok;
+}
 async function ntDai(p, tok) {                       // dải ảnh mọi năm như renderStrip sẽ vẽ (vào bộ nhớ ảnh)
   const N = await v27Nguon(p), WS = stripCo(), half = stripNua();
   let ys;
@@ -95,7 +107,8 @@ async function ntDai(p, tok) {                       // dải ảnh mọi năm n
   else if (N.ng === "wb" || N.ng === "eox") ys = v27NamDai(N.ng).filter(y => N.ng !== "eox" || EOX_NAM.includes(y));
   else { const s = $("selStrip").value, L0 = s === "s2d" && MAN.s2d ? s2dL0() : s === "lsd" && typeof lsdL0 === "function" ? lsdL0() : MAN.layers.find(l => l.id === s); ys = L0 ? L0.nam.slice() : []; }
   ys.sort((a, b) => Math.abs(a - ST.nam) - Math.abs(b - ST.nam));            // năm đang gán trước
-  await hangDoi(ys, 3, async y => {
+  await hangDoi(ys, NT.so >= 5 ? 2 : 3, async y => {
+    await ntNhuong(tok); if (tok !== NT.tok) return;
     const cv = document.createElement("canvas"); cv.width = cv.height = WS;
     await anhNam(p, y, WS, half, cv, N);
   }, () => tok !== NT.tok);
@@ -108,8 +121,9 @@ async function ntNen(p, tok) {                        // ô ảnh nền Wayback 
   if (o.length > 40) return;
   await hangDoi(o, 4, async q => { const cv = document.createElement("canvas"); cv.width = cv.height = 256; await base._ve(q, cv); }, () => tok !== NT.tok);
 }
-async function ntNap(p, tok) {
+async function ntNap(p, tok, thu) {
   if (!MAN || !p) return;
+  await ntNhuong(tok);
   await ntDai(p, tok); if (tok !== NT.tok) return;
   if (CVS.kind === "nam" && CVS.grp && typeof annualFor === "function") { try { await annualFor(p, CVS.grp); } catch (e) { /* bỏ */ } }
   else { try { if (MAN.pc) await pcAt(p); if (MAN.s2d) await s2dAt(p); } catch (e) { /* bỏ */ } }
@@ -117,7 +131,9 @@ async function ntNap(p, tok) {
   try { await lopAt(p); } catch (e) { /* bỏ */ }
   try { await gyDacTrung(p); } catch (e) { /* bỏ */ }
   if (tok !== NT.tok) return;
-  ntNen(p, tok).catch(() => {});                     // ô ảnh nền: chạy nền, không giữ chân các điểm sau
+  if (CVS.kind !== "nam" && CVS.s1 && !(thu > 4) && typeof s1Diem === "function") { try { await s1Diem(p); } catch (e) { /* bỏ */ } }   // bản 3.6: đường S1
+  if (tok !== NT.tok) return;
+  if (!(thu > 2)) ntNen(p, tok).catch(() => {});     // ô ảnh nền: chạy nền, chỉ cho 3 điểm gần nhất
 }
 function ntTT() {
   const e = $("ntTT"); if (!e) return;
@@ -129,10 +145,12 @@ function ntBatDau(tre) {                             // gọi khi đổi điểm
   clearTimeout(NT.hen); const tok = ++NT.tok;
   if (!NT.so || LUOI.mo) { ntTT(); return; }
   NT.hen = setTimeout(async () => {
-    for (const p of ntKeTiep()) {
+    const ds = ntKeTiep();
+    for (let thu = 0; thu < ds.length; thu++) {
+      const p = ds[thu];
       if (tok !== NT.tok) return;
       const k = ntKhoa(p); if (NT.xong.has(k)) continue;
-      NT.dang++; try { await ntNap(p, tok); } finally { NT.dang--; }
+      NT.dang++; try { await ntNap(p, tok, thu); } finally { NT.dang--; }
       if (tok === NT.tok) { NT.xong.add(k); if (NT.xong.size > 3000) NT.xong.clear(); }
       ntTT();
     }

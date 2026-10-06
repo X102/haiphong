@@ -113,8 +113,8 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   const cb = $("ols").querySelector("input[type=checkbox]"); cb.checked = true; cb.onchange(); await sleep(50);
   ok(E("OVL.s2d.layer instanceof S2DLayer"), "bật lớp: lớp lưới S2DLayer trên bản đồ");
   cb.checked = false; cb.onchange();
-  $("selStrip").value = "s2d"; const np0 = puts.length; $("selStrip").onchange(); await sleep(1500);
-  ok($("strip").querySelectorAll("canvas").length === 3 && puts.length >= np0 + 2, "dải ảnh theo năm bằng S2 10 băng (2023, 2025; 2024 không có)");
+  $("selStrip").value = "s2d"; const np0 = puts.length, tr0 = E("typeof ANH === 'undefined' ? 0 : ANH.trung"); $("selStrip").onchange(); await sleep(1500);
+  ok($("strip").querySelectorAll("canvas").length === 3 && (puts.length >= np0 + 2 || E("typeof ANH === 'undefined' ? 0 : ANH.trung") >= tr0 + 2), "dải ảnh theo năm bằng S2 10 băng (2023, 2025; 2024 không có)");
 
   // ---------- tạo bộ điểm mới
   await E("boMo('moi')"); await sleep(100);
