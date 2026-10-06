@@ -129,7 +129,7 @@ function s1SVG(cv, g) {                               // lớp S1 trong đồ th
   const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
   let s = "";
   for (let v = lo; v <= hi + 1e-9; v += 5) s += `<text x="${W - R0 + 3}" y="${(Y(v) + 3).toFixed(1)}" font-size="8.5" fill="#9e77a8">${v}</text>`;
-  s += `<text x="${W - 2}" y="${T0 + 2}" font-size="8" fill="#9e77a8" text-anchor="end">dB</text>`;
+  s += `<text x="${W - 2 - (cv.lst ? 28 : 0)}" y="${T0 + 2}" font-size="8" fill="#9e77a8" text-anchor="end">dB</text>`;
   const duong = (pts, mau, w, op, dash) => { const q = pts.filter(t => t[1] != null && isFinite(t[1])); if (q.length < 2) return "";
     return `<polyline points="${q.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${mau}" stroke-width="${w}" opacity="${op}" stroke-dasharray="${dash || "6 3"}" stroke-linejoin="round"/>`; };
   const tv = (b, i) => { const a = Object.values(nam).map(N => N[b][i]).filter(v => v != null).sort((x, y) => x - y); if (!a.length) return null; const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };

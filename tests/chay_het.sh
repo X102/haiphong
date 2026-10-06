@@ -9,7 +9,7 @@ PV=../phuc_vu_cuc_bo.py; [ -f $PV ] || PV=../tools/phuc_vu_cuc_bo.py
 python3 $PV /tmp/fx/data 8765 > /tmp/fx/srv.log 2>&1 & SP=$!
 sleep 1.5
 F=0
-for t in ${@:-t_core t_vung t_sai t_cog t_dom t_vung_dom t_vung2_dom t_geo_dom t_v21_dom t_v22_dom t_v23_dom t_v24_dom t_v25_dom t_v26_dom t_v27_dom t_v271_dom t_v28_dom t_v281_dom t_v282_dom t_v29_dom t_v30_dom t_v31_dom t_v32_dom t_v33_dom t_v34_dom t_v35_dom t_v36_dom t_v37_dom t_v38_dom t_v39_dom t_pwa_dom t_sw t_gas}; do
+for t in ${@:-t_core t_vung t_sai t_cog t_dom t_vung_dom t_vung2_dom t_geo_dom t_v21_dom t_v22_dom t_v23_dom t_v24_dom t_v25_dom t_v26_dom t_v27_dom t_v271_dom t_v28_dom t_v281_dom t_v282_dom t_v29_dom t_v30_dom t_v31_dom t_v32_dom t_v33_dom t_v34_dom t_v35_dom t_v36_dom t_v37_dom t_v38_dom t_v39_dom t_v310_dom t_pwa_dom t_sw t_gas}; do
   [ -n "$CHITIET" ] && { NM=${NM:-/tmp/nt/node_modules} timeout 200 node $t.js 2>&1 | grep -v "^  ok" | head -30; }
   KQ="$(NM=${NM:-/tmp/nt/node_modules} timeout 200 node $t.js 2>&1 | grep -v '^   ' | grep 'LỖI\|ĐẠT' | cut -c1-220 | tr '\n' ' ')"
   echo "== $t: $KQ"

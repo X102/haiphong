@@ -5,7 +5,7 @@ const RV = require("/tmp/fx/ref_vung.json");
 (async () => {
   const {w, $, E, sleep, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.2", "bản 2.2 trở lên");
+  ok(E("VERSION").localeCompare("2.2", undefined, {numeric: true}) >= 0, "bản 2.2 trở lên");
   ok(E("SITE.bao_loi && SITE.bao_loi.email") === "baoloi@example.org" && E("CFG.repo") === "x/y", "đọc cau_hinh.json; Cài đặt riêng của người dùng vẫn được giữ");
 
   // ---------- hàm thuần OSM

@@ -198,6 +198,12 @@ body.dk-duoi #viz h2{margin-top:4px}
 /* ---- bản 2.2: OpenStreetMap, báo lỗi ---- */
 .osm-h{display:flex;align-items:center;gap:4px;flex-wrap:wrap;border-top:1px solid #eef0f3;padding-top:4px;margin-top:4px}
 .osm-h select{max-width:170px}
+.ov-box{margin-top:4px;padding:4px 6px;border:1px solid #eef0f3;border-radius:6px;background:#fcfcfd;line-height:1.45}
+.ov-thanh{display:flex;height:7px;border-radius:3px;overflow:hidden;margin:2px 0 3px}
+.ov-thanh i{display:block;height:100%}
+.ov-cg{display:flex;flex-wrap:wrap;gap:3px 8px;font-size:11px;margin:2px 0}
+.ov-cg span{display:inline-flex;align-items:center;gap:3px}
+.ov-cg i{display:inline-block;width:10px;height:10px}
 #osmDS label{display:flex;gap:5px;align-items:center;font-size:12px}
 #osmDS .sw{width:11px;height:11px}
 #xgP,#s2oP{position:absolute;top:10px;left:520px;z-index:1002;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:420px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
@@ -475,6 +481,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <select id="selCurveGrp" title="nhóm đặc trưng" data-noi18n></select>
     <label id="lbCurveZ" title="chuẩn hoá từng đường về điểm z qua các năm để so hình dạng"><input type="checkbox" id="cbCurveZ"> z</label>
     <label id="lbCurveS1" title="thêm đường Sentinel-1 VV, VH (dB, trục phải) cùng lúc với đường Sentinel-2; đọc trực tuyến từ Planetary Computer, mỗi cảnh một giá trị tại điểm"><input type="checkbox" id="cbCurveS1"> + S1</label>
+    <label id="lbCurveLST" title="thêm đường nhiệt độ bề mặt Landsat 8/9 (°C, trục phải): mỗi cảnh quang đãng một giá trị tại điểm, trung vị theo tháng hoặc kỳ; đọc trực tuyến từ Planetary Computer"><input type="checkbox" id="cbCurveLST"> + nhiệt</label>
     <button id="bCurveBig" type="button" title="xem lớn">⤢ Phóng to</button>
     <button id="bCurveCS" type="button" title="thêm, bớt chỉ số (248 chỉ số Sentinel-2 hoặc công thức tự nhập)">∑ Chỉ số…</button>
   </div>
@@ -712,6 +719,15 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
       <button id="osmMo" type="button" title="lọc, xem thẻ, sửa, lấy mẫu từ OSM">Bảng OSM…</button></div>
     <div id="osmDS" data-noi18n></div>
     <div class="mu sm" id="osmTT"></div>
+    <div class="osm-h"><b>Overture Maps</b> <span class="mu sm" id="ovBan" data-noi18n></span></div>
+    <div class="row"><label title="nhà (Google Open Buildings, Microsoft, OpenStreetMap gộp trong Overture), tô màu theo diện tích nền; từ mức phóng 14"><input type="checkbox" id="cOvNha"> 🏠 nhà</label>
+      <label title="điểm dịch vụ, cửa hàng, cơ quan… (Overture Places), tô màu theo nhóm chức năng; từ mức phóng 14"><input type="checkbox" id="cOvPoi"> 📍 điểm dịch vụ (POI)</label>
+      <label title="ở khung điểm: số POI theo nhóm chức năng, số nhà, tỉ lệ phủ xây dựng quanh điểm; ghi vào điểm để xuất CSV"><input type="checkbox" id="cOvTK"> 📊 thống kê quanh điểm</label></div>
+    <div class="row sm">bán kính <select id="ovR"><option value="100">100 m</option><option value="250">250 m</option><option value="500">500 m</option></select>
+      <span title="Overture ghi độ tin cậy (0–1) cho mỗi POI; POI dưới ngưỡng không vẽ, không đếm">POI tin cậy ≥ <select id="ovTc"><option value="0">0</option><option value="0.3">0.3</option><option value="0.5">0.5</option><option value="0.7">0.7</option></select></span>
+      <button id="ovTatCa" type="button" title="tính thống kê Overture quanh mọi điểm của bộ điểm đang mở, để xuất CSV">Tính cho mọi điểm</button></div>
+    <div id="ovCG" data-noi18n></div>
+    <div class="mu sm" id="ovTT" data-noi18n></div>
     <div class="ol"><label><input type="checkbox" id="cVung" checked> ▦ Vùng mẫu đã lưu</label>
       <label><input type="checkbox" id="cTra"> 🔍 Nhấp bản đồ: xem dải ảnh và đường mùa vụ tại chỗ nhấp</label>
       <label><input type="checkbox" id="cInfo"> 🖱 Thông tin điểm khi bấm lên bản đồ</label>
@@ -1047,6 +1063,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Lấy điểm từ Google Earth (3.7)</b>: nút <b>📌 GE</b>. Kéo nút “📌 Lấy điểm GE” lên thanh dấu trang một lần; trong tab Google Earth bấm dấu trang đó thì giữa khung ảnh có dấu tâm đỏ cùng toạ độ của tâm, khoảng cách tới máy ảnh, sai số, ngày ảnh. Căn tâm vào giữa vùng cần lấy mẫu, bấm “Chép điểm”, sang geoportal bấm <kbd>Ctrl</kbd>+<kbd>V</kbd>: điểm được tạo đúng toạ độ, chuyển sang năm của ngày ảnh, trên bản đồ có vị trí máy ảnh, tia nhìn và vòng sai số; bấm phím lớp để gán. Street View: toạ độ tâm tính từ góc cúi và chiều cao máy ảnh (mặc định 2.5 m, chỉnh được), nên chọn chỗ gần dưới 40 m. Nhìn từ trên: tâm chính là toạ độ trong đường dẫn. CSV dạng dài có thêm cột nguon_mau, ngay_anh_mau, kc_may_anh_m, sai_so_m.</li>
     <li><b>Giao nhiều tia nhìn (3.8)</b>: trong Google Earth Street View, nhắm cùng một chỗ từ hai hay nhiều ảnh ở chỗ đứng khác nhau, mỗi lần bấm “➕ Góc nhìn”; toạ độ là giao các tia nhìn (bình phương tối thiểu có trọng số), không phụ thuộc chiều cao máy ảnh; có góc giao, elip sai số, cảnh báo khi các tia không gặp nhau hay góc giao nhỏ. Nút <b>📥 Dán điểm</b> thay cho Ctrl+V (trình duyệt không cho đọc bộ nhớ tạm thì mở ô để dán tay, mỗi dòng một góc nhìn). Điểm đã tạo có nút “➕ thêm góc nhìn” để giao lại. CSV có thêm so_goc_nhin, goc_giao_do.</li>
     <li><b>Mùa vụ 12 tháng (3.9)</b>: ô <b>6 kỳ / 12 tháng</b> ở đường mùa vụ. 12 tháng: mỗi tháng một giá trị, là trung vị các cảnh Sentinel-2 L2A quang đãng tại điểm trong tháng (lớp SCL), đọc trực tuyến tại đúng điểm ảnh qua API điểm của Microsoft Planetary Computer (10 băng, NDVI, MNDWI và các chỉ số đang dùng); tháng không có cảnh quang đãng thì để trống. Năm đang gán đọc trước, các năm khác đọc dần, kết quả giữ trong trình duyệt; dùng được ở mọi nơi, không cần ảnh có sẵn. Chế độ một năm: chấm nhỏ là từng cảnh quang đãng, vạch xám dưới trục là cảnh bị mây tại điểm. Bật + S1 thì đường Sentinel-1 cũng theo tháng. 6 kỳ vẫn là đường tái dựng từ PCA chuỗi năm như trước.</li>
+    <li><b>Overture, nhiệt độ bề mặt (3.10)</b>: mục <b>Overture Maps</b> ở bảng ảnh nền: lớp 🏠 nhà (tô màu theo diện tích nền) và 📍 điểm dịch vụ (tô màu theo nhóm chức năng: thương mại, ăn uống, dịch vụ, công nghiệp – kho vận, giáo dục, y tế, hành chính, văn hoá – thể thao, lưu trú, giao thông), đọc thẳng từ tệp PMTiles của Overture, bản mới nhất; 📊 thống kê quanh điểm (bán kính 100/250/500 m) ở khung điểm: số POI, mật độ, các nhóm, độ đa dạng chức năng, số nhà, tỉ lệ phủ xây dựng, diện tích nhà, tỉ lệ nhà lớn; ghi vào điểm, xuất CSV (cột ov_…); nút “Tính cho mọi điểm”. Ô <b>+ nhiệt</b> ở đường mùa vụ: nhiệt độ bề mặt Landsat 8/9 (°C, trục phải), trung vị theo tháng hoặc kỳ các cảnh quang đãng tại điểm, loại thêm cảnh mây QA bỏ sót (xanh lam sáng, lạnh bất thường); trung vị từng năm xuất CSV (cột lst_tv_c).</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2366,7 +2383,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.9";
+const VERSION = "3.10";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2991,7 +3008,7 @@ function curveSVG(cv, p, mode, feat, W, H) {
   const rong = lo < -1.05 || hi > 1.05;          // bản 2.4: chỉ số ngoài khoảng -1..1 (tỉ số, EVI...) không bị cắt
   if (rong) { const d = (hi - lo) * 0.06 || 0.5; lo -= d; hi += d; }
   else { lo = Math.max(-1, Math.floor((lo - 0.05) * 10) / 10); hi = Math.min(1, Math.ceil((hi + 0.05) * 10) / 10); if (hi - lo < 0.4) hi = Math.min(1, lo + 0.4); }
-  const L0 = 30, R0 = cv.s1 ? 34 : 8, T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;   // bản 3.6: lề phải cho trục dB của S1
+  const L0 = 30, R0 = 8 + (cv.s1 ? 26 : 0) + (cv.lst ? 28 : 0), T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;   // bản 3.6: lề phải cho trục dB của S1
   const X = i => L0 + (n > 1 ? i * (W - L0 - R0) / (n - 1) : 0);
   const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
   const pl = (pts, c, w, op, dash) => {
@@ -3040,6 +3057,7 @@ function curveSVG(cv, p, mode, feat, W, H) {
   }
   if (cv.s1 && typeof s1SVG === "function") s += s1SVG(cv, {mode, yrs, X, W, H, L0, R0, T0, B0, nky});      // bản 3.6: đường Sentinel-1
   if (cv.s2m && typeof s2mSVG === "function") s += s2mSVG(cv, {mode, feats, X, Y, H, B0});                      // bản 3.9: từng cảnh S2
+  if (cv.lst && typeof lstSVG === "function") s += lstSVG(cv, {mode, yrs, X, W, H, R0, T0, B0, nky});           // bản 3.10: nhiệt độ bề mặt
   return s + "</svg>";
 }
 function curveLegend(cv, p, mode, feat) {
@@ -3066,10 +3084,11 @@ function curveLegend(cv, p, mode, feat) {
   const d = cv.ys[ST.nam], src = cv.src || {};
   const sanF = src.kieu === "san" && (f === "NDVI" || f === "MNDWI");
   if (cv.s2m && typeof s2mChuGiai === "function") h += s2mChuGiai(cv);                                      // bản 3.9: 12 tháng
-  if (src.kieu !== "s1" && src.kieu !== "s2m") h += `<div class="cvnote">${sanF ? T("tính sẵn, k = {k} PC", {k: src.k}) : T("đọc từ ảnh PC, k = {k}", {k: (MAN && MAN.pc && MAN.pc.k) || src.k})} · ${T("{n} năm", {n: yrs.length})}` +
+  if (src.kieu !== "s1" && src.kieu !== "s2m" && src.kieu !== "lst") h += `<div class="cvnote">${sanF ? T("tính sẵn, k = {k} PC", {k: src.k}) : T("đọc từ ảnh PC, k = {k}", {k: (MAN && MAN.pc && MAN.pc.k) || src.k})} · ${T("{n} năm", {n: yrs.length})}` +
     (d ? (d.NFILL ? ` · <b style="color:#b54708">${T("năm {y} có {n} kỳ phải nội suy", {y: ST.nam, n: d.NFILL})}</b>` : "") : ` · <b>${T("không có năm {y}", {y: ST.nam})}</b>`) +
     (yrs.some(y => y <= 2018) ? ` · <b style="color:#b54708">${T("2017-2018 ảnh S2 thưa, đường kém tin cậy")}</b>` : "") + `</div>`;
   if (cv.s1 && typeof s1ChuGiai === "function") h += s1ChuGiai(cv, mode);                                       // bản 3.6
+  if (cv.lst && typeof lstChuGiai === "function") h += lstChuGiai(cv, mode);                                     // bản 3.10
   if (mode !== "mot") h += `<div class="cvnote">${T("Đọc hình: nét đứt xám là trung vị các năm, tức quy luật mùa vụ của điểm; năm lệch xa là năm đổi lớp, năm ảnh xấu hoặc năm bất thường.")}</div>`;
   return h;
 }
@@ -3084,11 +3103,12 @@ async function renderCurve() {
   let cv = KY === KY12 ? s2mGop(p) : await curvesFor(p);
   if (tok !== curveTok) return;
   if (CVS.s1 && typeof s1Gop === "function") cv = s1Gop(cv, p);           // bản 3.6: thêm đường S1 (đọc dần, vẽ lại khi có thêm năm)
+  if (CVS.lst && typeof lstGop === "function") cv = lstGop(cv, p);        // bản 3.10: nhiệt độ bề mặt Landsat
   lastCV = cv;
   if (!cv || !Object.keys(cv.ys).length) {
     box.innerHTML = `<div class="mu sm">${T('không có đường mùa vụ cho điểm này (chỉ có sẵn cho hai bộ điểm, hoặc khi bộ dữ liệu có lớp "pc").')}</div>`; return;
   }
-  if (!cv.s1 && !cv.s2m && !Object.values(cv.ys).some(d => d[CVS.feat])) {
+  if (!cv.s1 && !cv.s2m && !cv.lst && !Object.values(cv.ys).some(d => d[CVS.feat])) {
     box.innerHTML = `<div class="mu sm">${T("không có {f} cho điểm này: băng ngoài NDVI, MNDWI cần ảnh PC (lớp pc) của bộ dữ liệu.", {f: CVS.feat})}</div>`; return;
   }
   const Wc = cvW(box);
@@ -3487,6 +3507,7 @@ function setLang(l) {
 /*__V36__*/
 /*__V37__*/
 /*__V39__*/
+/*__V310__*/
 /*__PWA__*/
 </script>
 </body>

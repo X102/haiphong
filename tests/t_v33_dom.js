@@ -4,7 +4,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest");
-  ok(E("VERSION") >= "3.3", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.3", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   await until(() => !$("vnW").hidden && E("V27.tinh === '31' && VG.xa && VG.xa.length === 2"), 6000, "hành chính");
   // vùng thử: hộp 0.2° × 0.1°, hai đơn vị con bên trong và một đơn vị láng giềng bên ngoài
   E(`window.HOP = (w, s, e, n) => [[w, s], [e, s], [e, n], [w, n], [w, s]];

@@ -5,7 +5,7 @@ const RV = require("/tmp/fx/ref_vung.json");
 (async () => {
   const {w, $, E, sleep, key, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.3", "bản 2.3");
+  ok(E("VERSION").localeCompare("2.3", undefined, {numeric: true}) >= 0, "bản 2.3");
   const click = (lon, lat, oe) => E(`map.fire("click", {latlng: L.latLng(${lat}, ${lon}), originalEvent: ${JSON.stringify(oe || {})}})`);
 
   // ---------- hàm thuần

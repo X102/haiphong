@@ -7,7 +7,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.6", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.6", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
 
   // ---------- 1. nạp trước 5, 10, 20 điểm; nhường bản đồ
   ok(["5", "10", "20"].every(v => [...$("ntSo").options].some(o => o.value === v)), "ô nạp trước có 5, 10, 20 điểm");

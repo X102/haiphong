@@ -14,7 +14,7 @@ const kc = (a, b) => Math.hypot((a.lat - b.lat) * ky, (a.lon - b.lon) * kx);
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.8", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.8", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   const dan = s => { const ev = new w.Event("paste", {bubbles: true, cancelable: true}); Object.defineProperty(ev, "clipboardData", {value: {getData: () => s}}); w.document.body.dispatchEvent(ev); return ev.defaultPrevented; };
   const U1 = goc(-12, -30), U2 = goc(14, -28), U3 = goc(30, -5);          // ba chỗ đứng trên đường phía nam, đông nam
 

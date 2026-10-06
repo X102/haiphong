@@ -6,7 +6,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, key, until, errs, puts} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.1", "bản 2.1");
+  ok(E("VERSION").localeCompare("2.1", undefined, {numeric: true}) >= 0, "bản 2.1");
 
   // ---------- hàm thuần
   const lk = E("CORE.links(20.71285, 106.506712, {year: 2023, wayback: 123, lang: 'ru', ten: 'E0001'})"), by = k => lk.find(x => x.k === k);

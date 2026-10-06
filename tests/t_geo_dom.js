@@ -5,7 +5,7 @@ const VI = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềế
 (async () => {
   const {w, $, E, sleep, key, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.1" && $("selLang").options.length === 3 && E("LANG") === "vi", "bản 2.1, ba ngôn ngữ, mặc định tiếng Việt");
+  ok(E("VERSION").localeCompare("2.1", undefined, {numeric: true}) >= 0 && $("selLang").options.length === 3 && E("LANG") === "vi", "bản 2.1, ba ngôn ngữ, mặc định tiếng Việt");
   // ---------- hàm thuần
   ok(E(`CORE.tr({ru: {"năm {y}": "{y} г."}}, "ru", "năm {y}", {y: 2025})`) === "2025 г." &&
      E(`CORE.tr({ru: {__re: [["^lưới (\\\\d+)×(\\\\d+)$", "сетка $1×$2"]]}}, "ru", "lưới 12×34")`) === "сетка 12×34" &&

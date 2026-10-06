@@ -9,7 +9,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.1", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.1", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   ok(E("typeof polygonClipping") === "object" && E("typeof S2OC") === "object", "thư viện polygon-clipping và lõi S2OC đã nạp");
   await until(() => !$("vnW").hidden && E("V27.tinh === '31' && VG.xa && VG.xa.length === 2"), 6000, "hành chính tỉnh 31");
 

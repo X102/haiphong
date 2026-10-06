@@ -6,7 +6,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.6", "bản 2.6");
+  ok(E("VERSION").localeCompare("2.6", undefined, {numeric: true}) >= 0, "bản 2.6");
 
   // ---------- hàm lõi
   const C = E(`(() => {

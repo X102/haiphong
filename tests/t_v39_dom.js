@@ -10,7 +10,7 @@ const THAT = require("fs").readFileSync(__dirname + "/s2m_that_20.89696_106.5822
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.9", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.9", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   ok([...$("selCurveKy").options].map(o => o.value).join() === "6,12", "đường mùa vụ có ô chọn 6 kỳ / 12 tháng");
 
   w.THAT = THAT;
@@ -132,7 +132,7 @@ const THAT = require("fs").readFileSync(__dirname + "/s2m_that_20.89696_106.5822
   // ---------- 5. nạp trước
   E(`delete ST.diem.XA; NT.so = 2; select("E0002", false); NT.xong.clear(); ntBatDau(0)`);
   await until(() => E(`!!(S2M.m.get(s1Khoa(ST.diem.E0003)) || {}).xong`), 25000, "nạp trước 12 tháng cho điểm kế tiếp");
-  ok(E(`!!(S2M.m.get(s1Khoa(ST.diem.E0003)) || {}).xong`) && /\|12$/.test(E(`ntKhoa(ST.diem.E0003)`)), "nạp trước đường 12 tháng của điểm kế tiếp; khoá nạp trước tách 6 / 12");
+  ok(E(`!!(S2M.m.get(s1Khoa(ST.diem.E0003)) || {}).xong`) && /\|12(\||$)/.test(E(`ntKhoa(ST.diem.E0003)`)), "nạp trước đường 12 tháng của điểm kế tiếp; khoá nạp trước tách 6 / 12");
 
   // ---------- 6. về 6 kỳ
   $("selCurveKy").value = "6"; $("selCurveKy").onchange(); await sleep(250);

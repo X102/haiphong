@@ -5,7 +5,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   const phim = (k, them) => w.document.body.dispatchEvent(new w.KeyboardEvent("keydown", Object.assign({key: k, bubbles: true}, them || {})));
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.5", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.5", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   ok(!!$("ntSo") && !!$("bLuoi") && !!$("gyBox") && !!$("luoiP") && $("luoiP").hidden, "có ô nạp trước, nút lưới, dòng gợi ý; lưới đang đóng");
 
   // ---------- 1. bộ nhớ ảnh dải: vẽ lại dải không đọc lại ảnh

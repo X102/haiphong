@@ -8,7 +8,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.4", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.4", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   // lõi: mặt nạ theo nguồn
   ok(E(`[S2OC.quang("ls", 21824), S2OC.quang("ls", 22280), S2OC.quang("ls", 21826), S2OC.quang("ls", 1), S2OC.quang("s1", 0.05), S2OC.quang("s1", -32768), S2OC.quang("s2", 4), S2OC.quang("s2", 9)].join()`)
      === "true,false,false,false,true,false,true,false", "mặt nạ: QA_PIXEL Landsat (mây, mây giãn, không dữ liệu), S1 có dữ liệu, SCL S2");

@@ -9,7 +9,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs, blobs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.9", "bản 2.9: " + E("VERSION"));
+  ok(E("VERSION").localeCompare("2.9", undefined, {numeric: true}) >= 0, "bản 2.9: " + E("VERSION"));
 
   // ---------- A1. lát cắt kết thúc đúng ranh giới khối: có vá thì đúng từng byte, không vá thì lỗi 'offset'
   const URL_ = "http://127.0.0.1:8765/s2d/s2d_2025.tif";

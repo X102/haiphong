@@ -7,7 +7,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs, blobs, docBlob} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.7", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.7", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   const dan = s => { const ev = new w.Event("paste", {bubbles: true, cancelable: true}); Object.defineProperty(ev, "clipboardData", {value: {getData: () => s}}); w.document.body.dispatchEvent(ev); return ev.defaultPrevented; };
 
   // ---------- 1. tính toạ độ tâm

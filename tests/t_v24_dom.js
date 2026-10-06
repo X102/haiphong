@@ -6,7 +6,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, key, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "2.4", "bản 2.4");
+  ok(E("VERSION").localeCompare("2.4", undefined, {numeric: true}) >= 0, "bản 2.4");
 
   // ---------- biên dịch công thức
   const BT = (bt, v) => E(`(() => { try { return CORE.bieuThuc(${JSON.stringify(bt)}, CORE.S2_BANDS, CHISO_IDB.hang)(${JSON.stringify(v || [0.03, 0.06, 0.03, 0.10, 0.30, 0.38, 0.40, 0.42, 0.20, 0.10])}); } catch (e) { return "LỖI " + e.message; } })()`);

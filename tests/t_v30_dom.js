@@ -6,7 +6,7 @@ const REF = JSON.parse(fs.readFileSync("/tmp/fx/ref_ls.json", "utf8"));
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") >= "3.0", "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.0", undefined, {numeric: true}) >= 0, "bản " + E("VERSION"));
   ok(E("coLS()") === false && !$("ols").textContent.includes("Landsat"), "bộ dữ liệu chưa có Landsat: không hiện gì thêm");
   // gộp mục Landsat vào manifest (như ô cuối của notebook ls_HF_LANDSAT)
   await E(`fetch("http://127.0.0.1:8765/manifest_ls.json").then(r => r.json()).then(X => { MAN.ls = X.ls; MAN.lspc = X.lspc; MAN.layers = MAN.layers.concat(X.layers); buildOverlays(); buildStripSelect(); })`);
