@@ -416,6 +416,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <span id="ntTT" class="mu sm" data-noi18n></span>
     <button id="bLuoi" type="button" title="Chế độ lưới: nhiều điểm cùng năm trên một màn, gán bằng phím cho các ô đã chọn, Enter nhận gợi ý (phím l)">▦ Lưới <kbd>l</kbd></button>
     <select id="tmMo" title="Mỗi khi sang điểm mới (phím n, p, nhấp), tự mở trang này ở tab mới đúng toạ độ điểm. Phím t: mở cho điểm đang xem. Xem xong bấm Ctrl+W để đóng tab và quay lại."><option value="">tự mở khi sang điểm: tắt</option><option value="gearth">tự mở: 🌍 Google Earth</option><option value="gsat">tự mở: 🛰 Google Maps vệ tinh</option><option value="copernicus">tự mở: 🛰 Copernicus Browser</option><option value="wayback">tự mở: 🕰 Esri Wayback</option><option value="bing">tự mở: 🅱 Bing Maps</option><option value="yandex">tự mở: 🟡 Yandex Maps</option></select>
+    <button id="bGE" type="button" title="Lấy điểm mẫu từ Google Earth / Street View: dấu tâm giữa màn hình, toạ độ, ngày ảnh; dán vào đây bằng Ctrl+V">📌 GE</button>
   </div>
   <div class="prog"><div id="progbar" style="width:0"></div></div>
   <div class="mu sm" id="progtxt"></div>
@@ -963,6 +964,21 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div class="row"><button id="eClose">Đóng</button></div>
 </dialog>
 
+<dialog id="dlgGE" style="max-width:640px">
+  <h3 style="margin-top:0">📌 Lấy điểm mẫu từ Google Earth</h3>
+  <ol class="sm" style="padding-left:18px">
+    <li>Kéo nút <a id="geBM" href="#" style="display:inline-block;padding:3px 10px;border:1px solid #0b63ce;border-radius:6px;background:#eef4ff;font-weight:700;text-decoration:none">📌 Lấy điểm GE</a> lên thanh dấu trang của trình duyệt (Ctrl+Shift+B nếu thanh đang ẩn). Chỉ làm một lần.</li>
+    <li>Trong tab Google Earth (Street View hoặc nhìn từ trên), bấm dấu trang đó: giữa khung ảnh hiện dấu tâm đỏ, góc trên có toạ độ của tâm, khoảng cách tới máy ảnh, sai số và ngày ảnh. Bấm lần nữa để tắt.</li>
+    <li>Xoay, cúi góc nhìn cho dấu tâm nằm giữa vùng cần lấy mẫu (ruộng, ao, vườn...). Chọn chỗ gần (dưới 40 m) và ở giữa vùng đồng nhất, để vòng sai số nằm gọn trong vùng đó.</li>
+    <li>Bấm “📋 Chép điểm”, sang geoportal bấm Ctrl+V trên bản đồ: điểm được tạo đúng toạ độ, chuyển sang năm của ngày ảnh; bấm phím lớp để gán.</li>
+  </ol>
+  <div class="row sm">Chiều cao máy ảnh so với mặt đất ở chỗ nhìn <input id="geH" type="number" step="0.1" min="0.5" max="10" style="width:64px"> m
+    <span class="mu">(xe Street View khoảng 2.5 m; ruộng thấp hơn mặt đường 1 m thì đặt 3.5)</span></div>
+  <div class="row sm">Báo “xa quá” khi tâm cách máy ảnh hơn <input id="geXa" type="number" min="10" max="200" style="width:64px"> m</div>
+  <div class="mu sm">Sai số ước tính ở Street View: khoảng ±3 m khi tâm cách máy ảnh 15 m, ±4 m ở 25 m, ±6 m ở 40 m, lớn nhanh khi xa hơn. Nhìn từ trên (không phải Street View) thì tâm màn hình chính là toạ độ trong đường dẫn. Cũng dán được đường dẫn Google Earth (trong tab đó bấm Ctrl+L rồi Ctrl+C) hoặc toạ độ “vĩ độ, kinh độ”.</div>
+  <div class="mu sm" style="margin-top:4px">Nếu bấm dấu trang trong Google Earth mà không thấy dấu tâm (trình duyệt chặn dấu trang trên trang đó): cài tiện ích Tampermonkey rồi mở tệp <button id="geUS" type="button">tải userscript</button>: Google Earth sẽ có nút 📌 nổi ở góc dưới, bấm để bật dấu tâm.</div>
+  <div class="row" style="margin-top:8px"><button id="geDan" type="button">Dán từ bộ nhớ tạm</button><button id="geDong" type="button">Đóng</button></div>
+</dialog>
 <dialog id="dlgHelp">
   <h3>Cách dùng</h3>
   <div data-i18n-html="helpBody">
@@ -1019,6 +1035,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Lấy mẫu nhanh (3.5)</b>: <b>nạp trước</b> (ô cạnh nút ‹ ›): trong lúc anh gán điểm đang xem, trang đọc sẵn dải ảnh mọi năm, đồ thị theo năm, đặc trưng gợi ý và ô ảnh nền của 1-3 điểm kế tiếp (⚡ cho biết đã xong bao nhiêu); ảnh dải đã vẽ được giữ lại nên gán nhãn, đổi năm không phải đọc lại. <b>Gợi ý lớp</b>: dưới các nút lớp, lớp của các láng giềng gần nhất trong số các điểm đã gán (trên embedding, PC, S2 10 băng, Landsat có sẵn; ngoài vùng có dữ liệu thì băng và chỉ số đọc trực tuyến theo kế hoạch cảnh), kèm độ tin; <kbd>Enter</kbd> nhận gợi ý. Không dùng chính điểm đang xem; lớp U, M không tính. Một phần điểm (mặc định 10 %, cố định theo mã) là điểm gán mù, không hiện gợi ý: độ đúng của gợi ý trên các điểm này là ước lượng không bị gợi ý dẫn dắt. Mỗi nhãn ghi gợi ý lúc gán: cột goi_y_knn, tin_goi_y, gan_mu, nhan_tu_goi_y trong CSV dạng dài. <b>Chế độ lưới</b> (nút ▦ Lưới, phím <kbd>l</kbd>): nhiều điểm cùng năm trên một màn, xếp theo lớp gợi ý; nhấp để chọn ô (Shift: chọn dải, Ctrl+A: cả trang), bấm phím lớp để gán cho các ô đã chọn, Enter nhận gợi ý (ô đã chọn, hoặc mọi ô chưa gán đủ ngưỡng tin cậy), nhấp đúp mở điểm; <kbd>n</kbd> <kbd>p</kbd> sang trang, <kbd>←</kbd> <kbd>→</kbd> đổi năm; tuỳ chọn điền nhãn cho các năm sau.</li>
     <li><b>3.6</b>: nạp trước tới 5, 10 hoặc 20 điểm kế tiếp; nạp trước nhường bản đồ khi bản đồ đang tải ô. Ở <b>đường mùa vụ 6 kỳ</b>, ô <b>+ S1</b> thêm đường Sentinel-1 VV, VH (dB, trục phải) cùng lúc với các đường Sentinel-2: giá trị tại điểm của từng cảnh một quỹ đạo (sentinel-1-rtc, Planetary Computer), trung vị theo kỳ 2 tháng; năm đang gán đọc trước, các năm khác đọc dần, kết quả giữ trong trình duyệt. S2 trực tuyến có che mây nay chỉ đọc băng của các cảnh có góp điểm ảnh quang đãng cho ô đang vẽ (bỏ cảnh mây kín ở ô đó).</li>
     <li><b>3.6.1</b>: ô <b>tự mở khi sang điểm</b> (cạnh nút ▦ Lưới): chọn Google Earth (hoặc Google Maps vệ tinh, Copernicus, Wayback, Bing, Yandex) thì mỗi lần sang điểm mới bằng <kbd>n</kbd>, <kbd>p</kbd> hay nhấp, trang đó mở ở tab mới đúng toạ độ điểm; phím <kbd>t</kbd> mở cho điểm đang xem. Google Earth không cho trang khác điều khiển tab của nó, nên mỗi điểm là một tab mới: xem xong bấm <kbd>Ctrl</kbd>+<kbd>W</kbd> để đóng tab, trình duyệt quay về geoportal.</li>
+    <li><b>Lấy điểm từ Google Earth (3.7)</b>: nút <b>📌 GE</b>. Kéo nút “📌 Lấy điểm GE” lên thanh dấu trang một lần; trong tab Google Earth bấm dấu trang đó thì giữa khung ảnh có dấu tâm đỏ cùng toạ độ của tâm, khoảng cách tới máy ảnh, sai số, ngày ảnh. Căn tâm vào giữa vùng cần lấy mẫu, bấm “Chép điểm”, sang geoportal bấm <kbd>Ctrl</kbd>+<kbd>V</kbd>: điểm được tạo đúng toạ độ, chuyển sang năm của ngày ảnh, trên bản đồ có vị trí máy ảnh, tia nhìn và vòng sai số; bấm phím lớp để gán. Street View: toạ độ tâm tính từ góc cúi và chiều cao máy ảnh (mặc định 2.5 m, chỉnh được), nên chọn chỗ gần dưới 40 m. Nhìn từ trên: tâm chính là toạ độ trong đường dẫn. CSV dạng dài có thêm cột nguon_mau, ngay_anh_mau, kc_may_anh_m, sai_so_m.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -1248,6 +1265,7 @@ var CORE = (function () {
           if (q.tin && q.tin[y] != null) p.tin[y] = q.tin[y];
           if (p.anh) delete p.anh[y];                                         // bản 3.2: ảnh đã xem khi gán đi cùng nhãn
           if (q.anh && q.anh[y]) { p.anh = p.anh || {}; p.anh[y] = q.anh[y]; }
+          if (q.sv && !p.sv) p.sv = q.sv;                                     // bản 3.7: điểm lấy từ Google Earth
           if (p.gy) delete p.gy[y];                                           // bản 3.5: gợi ý lúc gán đi cùng nhãn
           if (q.gy && q.gy[y]) { p.gy = p.gy || {}; p.gy[y] = q.gy[y]; }
         }
@@ -1267,7 +1285,9 @@ var CORE = (function () {
                    ma_lop: ma, id_lop: c.id, nhom: c.nhom || "", lop3: idx.lop3(ma), tin_cay: p.tin[y] || "",
                    goi_y_3lop: p.goi_y[y] == null ? "" : p.goi_y[y], xem_lai: p.xem_lai ? 1 : 0,
                    ghi_chu: p.ghi_chu, cap_nhat: p.tg[y] ? new Date(p.tg[y]).toISOString() : "", anh: p.anh && p.anh[y] ? p.anh[y].s || "" : "",
-                   goi_y_knn: gy && gy.g ? gy.g : "", tin_goi_y: gy && gy.t != null ? gy.t : "", gan_mu: gy ? gy.mu || 0 : "", nhan_tu_goi_y: gy ? gy.n || 0 : ""});
+                   goi_y_knn: gy && gy.g ? gy.g : "", tin_goi_y: gy && gy.t != null ? gy.t : "", gan_mu: gy ? gy.mu || 0 : "", nhan_tu_goi_y: gy ? gy.n || 0 : "",
+                   nguon_mau: p.sv ? p.sv.nguon + (p.sv.kieu ? ":" + p.sv.kieu : "") : "", ngay_anh_mau: p.sv && p.sv.ngay ? p.sv.ngay : "",
+                   kc_may_anh_m: p.sv && p.sv.kc != null ? p.sv.kc : "", sai_so_m: p.sv && p.sv.ss != null ? p.sv.ss : ""});
       });
     });
     return rows;
@@ -2334,7 +2354,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.6.1";
+const VERSION = "3.7";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3448,6 +3468,7 @@ function setLang(l) {
 /*__V34__*/
 /*__V35__*/
 /*__V36__*/
+/*__V37__*/
 /*__PWA__*/
 </script>
 </body>

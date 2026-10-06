@@ -578,6 +578,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R36 if r[0] not in _co]              # bản 3.6: nạp trước nhiều điểm, đường S1
 for L_, (moc, them) in HELP36.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v37 import R37, HELP37
+_co = {r[0] for r in R}
+R = R + [r for r in R37 if r[0] not in _co]              # bản 3.7: lấy điểm từ Google Earth
+for L_, (moc, them) in HELP37.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en
