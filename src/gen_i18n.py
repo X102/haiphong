@@ -588,6 +588,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R38 if r[0] not in _co]              # bản 3.8: giao nhiều tia nhìn
 for L_, (moc, them) in HELP38.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v39 import R39, HELP39
+_co = {r[0] for r in R}
+R = R + [r for r in R39 if r[0] not in _co]              # bản 3.9: mùa vụ 12 tháng
+for L_, (moc, them) in HELP39.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

@@ -99,6 +99,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.6: đường mùa vụ có thêm Sentinel-1 RTC (ESA, CC BY 4.0) đọc tại điểm qua API của Microsoft Planetary Computer; nạp trước tới 20 điểm (xem docs/BAN_3_6.md).
 - Bản 3.7: lấy điểm mẫu từ Google Earth / Street View (dấu tâm, toạ độ, ngày ảnh, dán vào geoportal; xem docs/BAN_3_7.md). Ảnh Google Earth thuộc Google; điểm mẫu là kết quả giải đoán của người lấy mẫu.
 - Bản 3.8: toạ độ giao nhiều tia nhìn Street View, nút Dán điểm (xem docs/BAN_3_8.md).
+- Bản 3.9: đường mùa vụ 12 tháng, Sentinel-2 đọc trực tuyến tại điểm, trung vị các cảnh quang đãng mỗi tháng (xem docs/BAN_3_9.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

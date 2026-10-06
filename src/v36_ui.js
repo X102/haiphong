@@ -38,17 +38,19 @@ function s1Nam() {                                    // các năm cần: năm c
   const ys = new Set(years()); if (MAN && MAN.pc) MAN.pc.nam.forEach(y => ys.add(y));
   return [...ys].filter(y => y >= 2015 && y <= new Date().getFullYear()).sort((a, b) => a - b);
 }
-function s1Ky(ngay) { return Math.min(5, Math.floor((+ngay.slice(5, 7) - 1) / 2)); }
-function s1Tong(e) {                                  // trung vị dB theo kỳ 2 tháng, mỗi năm
-  const nam = {};
-  e.canh.forEach(c => {
-    if (c.vv == null) return;
-    const y = +c.d.slice(0, 4), k = s1Ky(c.d), N = nam[y] = nam[y] || {VV: [[], [], [], [], [], []], VH: [[], [], [], [], [], []]};
-    N.VV[k].push(c.vv); if (c.vh != null) N.VH[k].push(c.vh);
-  });
+function s1Ky(ngay, nky) { const m = +ngay.slice(5, 7) - 1; return nky === 12 ? m : Math.min(5, Math.floor(m / 2)); }
+function s1Tong(e) {                                  // trung vị dB theo kỳ 2 tháng (e.nam) và theo tháng (e.nam12), mỗi năm
   const tv = a => { if (!a.length) return null; const b = a.slice().sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
-  Object.values(nam).forEach(N => { N.n = N.VV.map(a => a.length); N.VV = N.VV.map(tv); N.VH = N.VH.map(tv); });
-  e.nam = nam;
+  [6, 12].forEach(nky => {
+    const nam = {}, rong = () => Array.from({length: nky}, () => []);
+    e.canh.forEach(c => {
+      if (c.vv == null) return;
+      const y = +c.d.slice(0, 4), k = s1Ky(c.d, nky), N = nam[y] = nam[y] || {VV: rong(), VH: rong()};
+      N.VV[k].push(c.vv); if (c.vh != null) N.VH[k].push(c.vh);
+    });
+    Object.values(nam).forEach(N => { N.n = N.VV.map(a => a.length); N.VV = N.VV.map(tv); N.VH = N.VH.map(tv); });
+    if (nky === 12) e.nam12 = nam; else e.nam = nam;
+  });
 }
 function s1VeLai(k) {                                // điểm đang xem là điểm vừa có thêm dữ liệu S1: vẽ lại đồ thị (gộp các lần gọi)
   const q = vizPt(); if (!q || s1Khoa(q) !== k || CVS.kind === "nam" || !CVS.s1) return;
@@ -116,7 +118,7 @@ function s1Gop(cv, p) {                               // gắn dữ liệu S1 (c
   return out;
 }
 function s1SVG(cv, g) {                               // lớp S1 trong đồ thị mùa vụ: trục dB bên phải, VV, VH nét đứt
-  const e = cv.s1, nam = e.nam || {}, {mode, yrs, X, W, H, R0, T0, B0, nky} = g;
+  const {mode, yrs, X, W, H, R0, T0, B0, nky} = g, e = cv.s1, nam = (nky === 12 ? e.nam12 : e.nam) || {};
   const vals = [];
   Object.values(nam).forEach(N => ["VV", "VH"].forEach(b => N[b].forEach(v => { if (v != null) vals.push(v); })));
   if (mode === "mot") e.canh.forEach(c => { if (+c.d.slice(0, 4) === ST.nam) [c.vv, c.vh].forEach(v => { if (v != null) vals.push(v); }); });
@@ -131,11 +133,11 @@ function s1SVG(cv, g) {                               // lớp S1 trong đồ th
   const duong = (pts, mau, w, op, dash) => { const q = pts.filter(t => t[1] != null && isFinite(t[1])); if (q.length < 2) return "";
     return `<polyline points="${q.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${mau}" stroke-width="${w}" opacity="${op}" stroke-dasharray="${dash || "6 3"}" stroke-linejoin="round"/>`; };
   const tv = (b, i) => { const a = Object.values(nam).map(N => N[b][i]).filter(v => v != null).sort((x, y) => x - y); if (!a.length) return null; const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
-  const viTri = d => { const m = +d.slice(5, 7) - 1, dd = +d.slice(8, 10) - 1; return Math.max(0, Math.min(nky - 1, (m + dd / 31) / 2 - 0.5)); };
+  const viTri = d => { const m = +d.slice(5, 7) - 1, dd = +d.slice(8, 10) - 1; return Math.max(0, Math.min(nky - 1, nky === 12 ? m + dd / 31 - 0.5 : (m + dd / 31) / 2 - 0.5)); };
   if (mode === "chuoi") {
     ["VV", "VH"].forEach(b => { s += duong(yrs.flatMap((y, k) => nam[y] ? nam[y][b].map((v, i) => [k * nky + i, v]) : []), S1MAU[b], 1.5, 0.95); });
     yrs.forEach((y, k) => { if (!nam[y]) return; ["VV", "VH"].forEach(b => nam[y][b].forEach((v, i) => { if (v == null) return;
-      s += `<circle cx="${X(k * nky + i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="1.6" fill="${S1MAU[b]}"><title>${b} ${y}, ${T("kỳ")} ${KY[i]}: ${v.toFixed(1)} dB (${nam[y].n[i]} ${T("cảnh")})</title></circle>`; })); });
+      s += `<circle cx="${X(k * nky + i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="1.6" fill="${S1MAU[b]}"><title>${b} ${y}, ${kyTen(i)}: ${v.toFixed(1)} dB (${nam[y].n[i]} ${T("cảnh")})</title></circle>`; })); });
     return s;
   }
   ["VV", "VH"].forEach(b => {
@@ -143,7 +145,7 @@ function s1SVG(cv, g) {                               // lớp S1 trong đồ th
     else s += duong(KY.map((t, i) => [i, tv(b, i)]), S1MAU[b], 1.2, 0.7, "2 2");
     const N = nam[ST.nam];
     if (N) { s += duong(N[b].map((v, i) => [i, v]), S1MAU[b], 2.4, 1);
-      N[b].forEach((v, i) => { if (v != null) s += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="#fff" stroke="${S1MAU[b]}" stroke-width="1.6"><title>${b} ${ST.nam}, ${T("kỳ")} ${KY[i]}: ${v.toFixed(1)} dB (${T("trung vị")} ${N.n[i]} ${T("cảnh")})</title></circle>`; }); }
+      N[b].forEach((v, i) => { if (v != null) s += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="#fff" stroke="${S1MAU[b]}" stroke-width="1.6"><title>${b} ${ST.nam}, ${kyTen(i)}: ${v.toFixed(1)} dB (${T("trung vị")} ${N.n[i]} ${T("cảnh")})</title></circle>`; }); }
   });
   if (mode === "mot") e.canh.forEach(c => { if (+c.d.slice(0, 4) !== ST.nam) return; const x = X(viTri(c.d)).toFixed(1);
     [["VV", c.vv], ["VH", c.vh]].forEach(([b, v]) => { if (v != null) s += `<circle cx="${x}" cy="${Y(v).toFixed(1)}" r="1.4" fill="${S1MAU[b]}" opacity=".55"><title>${b} ${c.d}: ${v.toFixed(1)} dB</title></circle>`; }); });
@@ -154,7 +156,7 @@ function s1ChuGiai(cv, mode) {
   let h = `<div class="cvleg"><span><i style="background:${S1MAU.VV}"></i>S1 VV (dB, ${T("trục phải")})</span><span><i style="background:${S1MAU.VH}"></i>S1 VH (dB)</span>` +
     `<span>${mode === "mot" ? T("nét đứt đậm: năm {y}; chấm nhỏ: từng cảnh", {y: ST.nam}) : mode === "chong" ? T("nét đứt đậm: năm {y}; nét chấm: trung vị các năm", {y: ST.nam}) : T("nét đứt: S1 theo kỳ")}</span></div>`;
   const quy = e.quy ? e.quy.replace("descending", T("quỹ đạo giảm")).replace("ascending", T("quỹ đạo tăng")) : "";
-  h += `<div class="cvnote">${T("Sentinel-1 RTC (Planetary Computer), trung vị dB theo kỳ 2 tháng, đúng điểm ảnh 10 m")}` + (quy ? ` · ${quy}` : "") +
+  h += `<div class="cvnote">${KY.length === 12 ? T("Sentinel-1 RTC (Planetary Computer), trung vị dB theo tháng, đúng điểm ảnh 10 m") : T("Sentinel-1 RTC (Planetary Computer), trung vị dB theo kỳ 2 tháng, đúng điểm ảnh 10 m")}` + (quy ? ` · ${quy}` : "") +
     (e.xong ? (e.loi ? ` · <b style="color:#b42318">${e.loi === "khong_canh" ? T("không có cảnh S1 tại điểm") : T("lỗi đọc S1: ") + esc(e.loi)}</b>` : ` · ${T("{n} cảnh", {n: e.canh.filter(c => c.vv != null).length})}`)
       : ` · <b>${T("đang đọc S1 {a}/{b} cảnh…", {a: e.doc || 0, b: e.tong || "?"})}</b>`) + `</div>`;
   h += `<div class="cvnote">${T("Đọc nhanh: nước VV thấp (dưới −18 dB); lúa ngập đầu vụ VV thấp rồi tăng dần khi lúa lớn; đô thị VV cao, ít đổi theo mùa; rừng VH cao, ổn định.")}</div>`;
