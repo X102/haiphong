@@ -101,6 +101,8 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.8: toạ độ giao nhiều tia nhìn Street View, nút Dán điểm (xem docs/BAN_3_8.md).
 - Bản 3.9: đường mùa vụ 12 tháng, Sentinel-2 đọc trực tuyến tại điểm, trung vị các cảnh quang đãng mỗi tháng (xem docs/BAN_3_9.md).
 - Bản 3.10: Overture Maps (nhà, điểm dịch vụ, thống kê chức năng quanh điểm) và nhiệt độ bề mặt Landsat ở đường mùa vụ (xem docs/BAN_3_10.md).
+- Bản 3.10.1: ô đến mã đi theo điểm, thang màu cho mọi lớp vẽ bằng bảng màu, POI Overture ẩn / hiện theo nhóm và bấm xem thông tin POI, nhà, bấm vào đồ thị mùa vụ xem giá trị, chọn đường S1 (VV, VH, VH−VV) (xem docs/BAN_3_10_1.md).
+- Bản 3.11: nguồn mới chuẩn bị trên Colab rồi đẩy lên Hugging Face (colab/HF_311_NGUON_MOI_cell.py): AlphaEarth 64 chiều (độ giống giữa các năm, gợi ý lớp), OPERA DIST, DSWx, ánh sáng đêm VIIRS, GlobalBuildingAtlas; giá trị thật kèm đơn vị (xem docs/BAN_3_11.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

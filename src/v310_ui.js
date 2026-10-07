@@ -492,7 +492,7 @@ function lstSVG(cv, g) {                             // trục °C bên phải (
   const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
   let s = "";
   for (let v = lo; v <= hi + 1e-9; v += 5) s += `<text x="${xL}" y="${(Y(v) + 3).toFixed(1)}" font-size="8.5" fill="#c46a6a">${v}</text>`;
-  s += `<text x="${W - 2}" y="${T0 + 2}" font-size="8" fill="#c46a6a" text-anchor="end">°C</text>`;
+  s += `<text x="${xL}" y="${Math.max(8, T0 - 7)}" font-size="8" fill="#c46a6a">°C</text>`;
   const duong = (pts, w, op, dash) => { const q = pts.filter(t => t[1] != null && isFinite(t[1])); if (q.length < 2) return "";
     return `<polyline points="${q.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${LST.MAU}" stroke-width="${w}" opacity="${op}"${dash ? ` stroke-dasharray="${dash}"` : ""} stroke-linejoin="round"/>`; };
   const tv = i => { const a = Object.values(nam).map(N => N.T[i]).filter(v => v != null).sort((x, y) => x - y); if (!a.length) return null; const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };

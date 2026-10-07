@@ -11,7 +11,7 @@ const gan = (a, b, t) => a != null && Math.abs(a - b) <= t;
 (async () => {
   const {w, $, E, sleep, until, errs} = moTrang({geoman: true});
   await until(() => E("MAN") && Object.keys(E("ST.diem")).length === 4, 8000, "manifest + E0");
-  ok(E("VERSION") === "3.10" && E("VERSION").localeCompare("3.9", undefined, {numeric: true}) > 0, "bản " + E("VERSION"));
+  ok(E("VERSION").localeCompare("3.10", undefined, {numeric: true}) >= 0 && E("VERSION").localeCompare("3.9", undefined, {numeric: true}) > 0, "bản " + E("VERSION"));
   w.DecompressionStream = DecompressionStream;           // trình duyệt thật có sẵn; jsdom thì lấy của node
 
   // ---------- 1. Overture: tìm bản, thống kê quanh điểm

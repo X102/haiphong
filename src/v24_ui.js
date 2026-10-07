@@ -272,6 +272,7 @@ async function giaTriTai(ll) {               // [[nhãn, giá trị HTML]] của
         const c = (L0.bang_mau || {})[v[0]];
         rows.push([ten, `${c ? `<span class="sw" style="background:${c}"></span> ` : ""}${esc(T((L0.ten_lop || TEN3)[v[0]] || String(v[0])))}`]);
       } else if (L0.kieu === "xam") {
+        if (typeof xamGT === "function") { rows.push([ten, xamGT(L0, v[0])]); continue; }                   // bản 3.11: đơn vị, thang log
         const kg = L0.keo_gian, pc_ = /^(ls)?pc\d+$/.test(L0.id); rows.push([ten, kg ? gtSo((kg[0] + (v[0] - 1) / 254 * (kg[1] - kg[0])) / (pc_ ? 100 : 1)) + (pc_ ? "" : ` <span class="mu">(${v[0]})</span>`) : String(v[0])]);
       } else {
         const pj = await embPJ(L0), m = /thành phần ([\d-]+)/.exec(L0.ten || ""), tp = m ? m[1].split("-").map(Number) : null;

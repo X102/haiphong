@@ -204,6 +204,25 @@ body.dk-duoi #viz h2{margin-top:4px}
 .ov-cg{display:flex;flex-wrap:wrap;gap:3px 8px;font-size:11px;margin:2px 0}
 .ov-cg span{display:inline-flex;align-items:center;gap:3px}
 .ov-cg i{display:inline-block;width:10px;height:10px}
+.ov-cg span[data-ovg]{cursor:pointer;user-select:none}
+.ov-cg span.tat{opacity:.35;text-decoration:line-through}
+.tmau{background:rgba(255,255,255,.94);border:1px solid var(--ln);border-radius:6px;padding:3px 7px 5px;font-size:11px;max-width:240px;box-shadow:0 1px 5px rgba(0,0,0,.15)}
+.tmau .tm-dau{display:flex;align-items:center;gap:6px}.tmau .tm-dau button{margin-left:auto;padding:0 4px;font-size:11px}
+.tmau .tm-dong{margin-top:4px}.tmau .tm-dong b{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmau .tm-thanh{height:10px;border-radius:2px;border:1px solid rgba(0,0,0,.15);margin-top:2px}
+.tmau .tm-so{display:flex;justify-content:space-between;color:#475467;font-size:10px}
+.tmau .tm-lop{display:flex;flex-wrap:wrap;gap:1px 7px}.tmau .tm-lop span{display:inline-flex;align-items:center;gap:3px}
+.tmau .tm-lop i{display:inline-block;width:10px;height:10px;border:1px solid rgba(0,0,0,.2)}
+.ov-pop table{border-collapse:collapse;margin-top:3px}.ov-pop td{padding:1px 4px;border-bottom:1px solid #f2f4f7;font-size:11.5px;vertical-align:top}
+.ov-pop td.k{color:var(--mu);white-space:nowrap}.ov-ch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+details.dd{display:inline-block;position:relative;font-size:12px}details.dd summary{cursor:pointer;list-style:none;border:1px solid var(--ln);border-radius:5px;padding:1px 6px;background:#fff}
+details.dd summary::-webkit-details-marker{display:none}
+details.dd .dd-ds{position:absolute;z-index:30;background:#fff;border:1px solid var(--ln);border-radius:6px;padding:5px 8px;box-shadow:0 2px 8px rgba(0,0,0,.15);min-width:170px}
+details.dd .dd-ds label{display:flex;align-items:center;gap:5px;white-space:nowrap}details.dd .dd-ds i{display:inline-block;width:10px;height:3px}
+.cvtip{position:absolute;z-index:20;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:6px;padding:4px 7px;font-size:11.5px;min-width:180px;max-width:260px;box-shadow:0 2px 8px rgba(0,0,0,.18);pointer-events:auto}
+.cvtip .cvtip-dau{display:flex;align-items:center;gap:6px;margin-bottom:2px}.cvtip .cvtip-dau button{margin-left:auto;padding:0 5px}
+.cvtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}.cvtip div.dam{font-weight:500}
+#curve svg[data-cv],#curveBig svg[data-cv]{cursor:crosshair}
 #osmDS label{display:flex;gap:5px;align-items:center;font-size:12px}
 #osmDS .sw{width:11px;height:11px}
 #xgP,#s2oP{position:absolute;top:10px;left:520px;z-index:1002;background:rgba(255,255,255,.97);border:1px solid var(--ln);border-radius:8px;padding:8px;width:420px;max-height:calc(100% - 40px);overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.15);font-size:12px}
@@ -468,7 +487,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <h2 id="curveH" data-noi18n>Đường mùa vụ 6 kỳ (tái dựng từ PCA chuỗi năm)</h2>
   <div class="row" id="curveCtl">
     <select id="selCurveKind" title="loại đồ thị">
-      <option value="ky">mùa vụ 6 kỳ</option>
+      <option value="ky">mùa vụ theo kỳ</option>
       <option value="nam">giá trị điểm ảnh theo năm</option>
     </select>
     <select id="selCurveMode" title="cách xem các năm">
@@ -1064,6 +1083,8 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Giao nhiều tia nhìn (3.8)</b>: trong Google Earth Street View, nhắm cùng một chỗ từ hai hay nhiều ảnh ở chỗ đứng khác nhau, mỗi lần bấm “➕ Góc nhìn”; toạ độ là giao các tia nhìn (bình phương tối thiểu có trọng số), không phụ thuộc chiều cao máy ảnh; có góc giao, elip sai số, cảnh báo khi các tia không gặp nhau hay góc giao nhỏ. Nút <b>📥 Dán điểm</b> thay cho Ctrl+V (trình duyệt không cho đọc bộ nhớ tạm thì mở ô để dán tay, mỗi dòng một góc nhìn). Điểm đã tạo có nút “➕ thêm góc nhìn” để giao lại. CSV có thêm so_goc_nhin, goc_giao_do.</li>
     <li><b>Mùa vụ 12 tháng (3.9)</b>: ô <b>6 kỳ / 12 tháng</b> ở đường mùa vụ. 12 tháng: mỗi tháng một giá trị, là trung vị các cảnh Sentinel-2 L2A quang đãng tại điểm trong tháng (lớp SCL), đọc trực tuyến tại đúng điểm ảnh qua API điểm của Microsoft Planetary Computer (10 băng, NDVI, MNDWI và các chỉ số đang dùng); tháng không có cảnh quang đãng thì để trống. Năm đang gán đọc trước, các năm khác đọc dần, kết quả giữ trong trình duyệt; dùng được ở mọi nơi, không cần ảnh có sẵn. Chế độ một năm: chấm nhỏ là từng cảnh quang đãng, vạch xám dưới trục là cảnh bị mây tại điểm. Bật + S1 thì đường Sentinel-1 cũng theo tháng. 6 kỳ vẫn là đường tái dựng từ PCA chuỗi năm như trước.</li>
     <li><b>Overture, nhiệt độ bề mặt (3.10)</b>: mục <b>Overture Maps</b> ở bảng ảnh nền: lớp 🏠 nhà (tô màu theo diện tích nền) và 📍 điểm dịch vụ (tô màu theo nhóm chức năng: thương mại, ăn uống, dịch vụ, công nghiệp – kho vận, giáo dục, y tế, hành chính, văn hoá – thể thao, lưu trú, giao thông), đọc thẳng từ tệp PMTiles của Overture, bản mới nhất; 📊 thống kê quanh điểm (bán kính 100/250/500 m) ở khung điểm: số POI, mật độ, các nhóm, độ đa dạng chức năng, số nhà, tỉ lệ phủ xây dựng, diện tích nhà, tỉ lệ nhà lớn; ghi vào điểm, xuất CSV (cột ov_…); nút “Tính cho mọi điểm”. Ô <b>+ nhiệt</b> ở đường mùa vụ: nhiệt độ bề mặt Landsat 8/9 (°C, trục phải), trung vị theo tháng hoặc kỳ các cảnh quang đãng tại điểm, loại thêm cảnh mây QA bỏ sót (xanh lam sáng, lạnh bất thường); trung vị từng năm xuất CSV (cột lst_tv_c).</li>
+    <li><b>Thang màu, POI, đồ thị (3.10.1)</b>: ô “đến mã” luôn ghi mã điểm đang xem, gõ một phần mã cũng tìm được. Góc trái dưới bản đồ có <b>thang màu</b> của mọi lớp đang hiện bằng bảng màu (chỉ số, nhiệt độ, DEM, lớp một băng) và chú giải lớp phân loại. POI Overture: bấm vào nhóm ở chú giải để ẩn, hiện; từ mức phóng 17 có tên; bấm vào POI hoặc nhà để xem thông tin (loại, địa chỉ, điện thoại, web, độ tin cậy, nguồn; diện tích, số tầng). Đường mùa vụ: bấm vào đồ thị để xem mọi giá trị tại kỳ đó; ô cạnh + S1 chọn đường VV, VH, VH−VV.</li>
+    <li><b>Nguồn mới từ Hugging Face (3.11)</b>: khi bộ dữ liệu đã chạy ô Colab HF_311_NGUON_MOI, bảng lớp đối chiếu có thêm: ảnh màu <b>AlphaEarth</b> (3 thành phần chính của 64 chiều, mỗi năm 2017-2025), <b>OPERA DIST-ANN</b> (xáo trộn thực vật trong năm, mức suy giảm lớn nhất), <b>OPERA DSWx-HLS</b> (tần suất có nước mặt trong năm), <b>ánh sáng đêm VIIRS</b> (thang log), <b>GlobalBuildingAtlas</b> (chiều cao nhà, tỉ lệ phủ nhà). Bảng giá trị tại điểm và thang màu hiện đúng giá trị thật và đơn vị. Đồ thị “giá trị điểm ảnh theo năm” có nhóm <b>AlphaEarth: độ giống năm trước, năm đầu</b> (cos của 64 chiều; tụt xuống là điểm có thay đổi). Gợi ý lớp dùng 64 chiều AlphaEarth (ô “dùng AlphaEarth” cạnh ô gợi ý lớp).</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2383,7 +2404,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.10";
+const VERSION = "3.11";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3008,14 +3029,14 @@ function curveSVG(cv, p, mode, feat, W, H) {
   const rong = lo < -1.05 || hi > 1.05;          // bản 2.4: chỉ số ngoài khoảng -1..1 (tỉ số, EVI...) không bị cắt
   if (rong) { const d = (hi - lo) * 0.06 || 0.5; lo -= d; hi += d; }
   else { lo = Math.max(-1, Math.floor((lo - 0.05) * 10) / 10); hi = Math.min(1, Math.ceil((hi + 0.05) * 10) / 10); if (hi - lo < 0.4) hi = Math.min(1, lo + 0.4); }
-  const L0 = 30, R0 = 8 + (cv.s1 ? 26 : 0) + (cv.lst ? 28 : 0), T0 = 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;   // bản 3.6: lề phải cho trục dB của S1
+  const L0 = 30, R0 = 8 + (cv.s1 ? 26 : 0) + (cv.lst ? 28 : 0), T0 = cv.s1 || cv.lst ? 18 : 8, B0 = mode === "chuoi" ? 34 : 18, n = mode === "chuoi" ? Math.max(1, yrs.length) * nky : nky;   // bản 3.6: lề phải cho trục dB của S1
   const X = i => L0 + (n > 1 ? i * (W - L0 - R0) / (n - 1) : 0);
   const Y = v => T0 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T0 - B0);
   const pl = (pts, c, w, op, dash) => {
     const q = pts.filter(t => t && t[1] != null && isFinite(t[1])); if (q.length < 2) return "";
     return `<polyline points="${q.map(t => X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1)).join(" ")}" fill="none" stroke="${c}" stroke-width="${w}" opacity="${op}"${dash ? ` stroke-dasharray="${dash}"` : ""} stroke-linejoin="round"/>`;
   };
-  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" data-cv="${mode}|${W}|${L0}|${R0}|${n}|${nky}|${T0}|${H - B0}">`;     // bản 3.10.1: để bấm xem giá trị
   const vach = rong && typeof niceTicks === "function" ? niceTicks(lo, hi, 5) : Array.from({length: Math.max(0, Math.floor(hi * 5 + 1e-9) - Math.ceil(lo * 5 - 1e-9) + 1)}, (_, i) => (Math.ceil(lo * 5 - 1e-9) + i) / 5);
   vach.forEach(v => { s += `<line x1="${L0}" x2="${W - R0}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${v === 0 ? "#c9ced6" : "#e9ecf0"}"/><text x="3" y="${(Y(v) + 3.5).toFixed(1)}" font-size="9" fill="#98a2b3">${rong && typeof fmtV === "function" ? fmtV(v) : v.toFixed(1)}</text>`; });
   if (mode === "chuoi") {
@@ -3508,6 +3529,8 @@ function setLang(l) {
 /*__V37__*/
 /*__V39__*/
 /*__V310__*/
+/*__V3101__*/
+/*__V311__*/
 /*__PWA__*/
 </script>
 </body>
