@@ -361,7 +361,7 @@ function vgLoiDoc(e) {                       // câu lỗi đọc dữ liệu d�
   const m = String((e && (e.message || e)) || "");
   return /Request failed|fetch|network|Load failed|429|50[234]/i.test(m) ? T("không tải được dữ liệu (mạng hoặc máy chủ bận)") + ` (${m})` : m;
 }
-async function vgDoc(g, y, ids, sc) {
+async function vgDoc(g, y, ids, sc, o) {            // o.khongLop: không đọc các lớp phân loại kèm theo (bản 3.12: đọc đặc trưng tại mẫu ngoài phạm vi)
   const lst = [], N = g.w * g.h; sc = sc || {};
   const u8 = (v, lo, hi) => { const o = new Uint8Array(N), d = hi - lo || 1;
     for (let i = 0; i < N; i++) { const x = v[i]; o[i] = x == null || !isFinite(x) ? 0 : 1 + Math.round(254 * Math.max(0, Math.min(1, (x - lo) / d))); }
@@ -418,7 +418,7 @@ async function vgDoc(g, y, ids, sc) {
     lst.push(r || {data: new Uint8Array(g.w * g.h * (L0.kieu === "xam" ? 1 : 3)), n: L0.kieu === "xam" ? 1 : 3});
   }
   const lop = [];
-  for (const L0 of MAN.layers.filter(l => l.kieu === "lop" && l.nam.includes(y))) {
+  for (const L0 of (o && o.khongLop ? [] : MAN.layers.filter(l => l.kieu === "lop" && l.nam.includes(y)))) {
     const url = CORE.dataUrl(CFG, L0.duong_dan.replace("{y}", y)), r = await vgThuLai(() => readBox(url, g.bb, g.w, g.h, true), url);
     if (r) lop.push(Object.assign({}, L0, {ten_lop: L0.ten_lop || TEN3, data: r.data}));   // giữ ten_en, ten_ru để lname() dịch được
   }

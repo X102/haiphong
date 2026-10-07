@@ -91,7 +91,8 @@ async function bcThongKe() {
 async function bcPhanLoai() {
   const K = PL.kq; if (!K) { msg(T("tạo bản đồ trước"), "wa", 3000); return; }
   const ts = [[T("Năm"), K.y], [T("Phạm vi"), esc(v27TenPV(K.PV))], [T("Bộ mẫu"), esc(K.bo === "*" ? T("mọi bộ điểm (gộp)") : (typeof boTen === "function" ? boTen(K.bo) : K.bo))],
-    [T("Phương pháp"), esc(pl$("plPP").selectedOptions[0].textContent) + (/_mau$/.test(K.pp) ? `, k = ${K.kv}` : "")], [T("Đặc trưng"), esc(K.ids.join(", "))], [T("Lưới"), `${K.g.w} × ${K.g.h}`]];
+    [T("Phương pháp"), esc(pl$("plPP").selectedOptions[0].textContent) + (/_mau$/.test(K.pp) ? `, k = ${K.kv}` : "")], [T("Đặc trưng"), esc(K.ids.join(", "))], [T("Lưới"), `${K.g.w} × ${K.g.h}`],
+    [T("Mẫu huấn luyện"), esc(typeof plNguonTen === "function" ? plNguonTen(K) : "") + (K.nNgoai ? ` (${K.nMau - K.nNgoai} + ${K.nNgoai})` : "")]];
   bcTai("phan_loai_" + K.y, T("Phân loại từ điểm mẫu, năm {y}", {y: K.y}), ts, [
     {h: T("Tóm tắt"), html: bcSach(pl$("plTom"))}, {h: T("Bản đồ"), html: await bcBanDo("pl", PL.canvas, pl$("plLeg"), K.g)},
     {h: T("Cảnh báo, gợi ý"), html: bcSach(pl$("plCB"))}, {h: T("Diện tích"), html: bcSach(pl$("plDTBang"))}, {h: T("Kiểm định"), html: bcSach(pl$("plKDBang"))}]);

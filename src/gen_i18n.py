@@ -603,6 +603,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R311 if r[0] not in _co]             # bản 3.10.1, 3.11: thang màu, POI, đồ thị; lớp mới, AlphaEarth
 for L_, (moc, them) in HELP311.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v312 import R312, HELP312
+_co = {r[0] for r in R}
+R = R + [r for r in R312 if r[0] not in _co]             # bản 3.12: mẫu huấn luyện ngoài phạm vi
+for L_, (moc, them) in HELP312.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

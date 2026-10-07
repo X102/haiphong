@@ -37,8 +37,17 @@ function s2Msg(t) { const e = document.querySelector("[data-s2v] [data-msg]"); i
    toạ độ UTM của từng điểm đích nội suy song tuyến từ 4 góc (sai số dưới 1 m trên một ô bản đồ) */
 async function readUTM(url, bb, w, h, pad, samples, tong, rieng) {   // tong: vẫn chọn ảnh overview khi có đệm; rieng: bản COG riêng cho phân tích
   const t = await tiffOf(url, rieng), ox = t._bb[0], oy = t._bb[3];
-  const cor = [[bb[0], bb[3]], [bb[2], bb[3]], [bb[0], bb[1]], [bb[2], bb[1]]].map(m => { const ll = CORE.m2ll(m[0], m[1]); return CORE.toUTM(ll[0], ll[1]); });
-  const xs = cor.map(c => c[0]), ys = cor.map(c => c[1]), ub = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  /* bản 3.12: toạ độ UTM của từng điểm ảnh nội suy từ lưới điểm điều khiển mỗi 32 điểm ảnh (trước đây chỉ từ 4 góc: lệch ~1 m
+     ở cỡ xã, ~5 m cỡ 25 km, ~200 m cỡ cả tỉnh). Nhờ vậy đặc trưng đọc trên lưới lớn hay lưới nhỏ quanh một điểm đều trùng nhau. */
+  const SB = 32, PX = [], PY = [];
+  for (let a = 0; a * SB < w; a++) PX.push(a * SB); PX.push(w);
+  for (let b = 0; b * SB < h; b++) PY.push(b * SB); PY.push(h);
+  const nx = PX.length, ny = PY.length, CX = new Float64Array(nx * ny), CY = new Float64Array(nx * ny);
+  for (let b = 0; b < ny; b++) for (let a = 0; a < nx; a++) {
+    const ll = CORE.m2ll(bb[0] + PX[a] / w * (bb[2] - bb[0]), bb[3] - PY[b] / h * (bb[3] - bb[1])), u = CORE.toUTM(ll[0], ll[1]);
+    CX[b * nx + a] = u[0]; CY[b * nx + a] = u[1];
+  }
+  const ub = [Math.min(...CX), Math.min(...CY), Math.max(...CX), Math.max(...CY)];
   if (!CORE.inter(ub, t._bb)) return null;
   const I = pad && !tong ? t._imgs[0] : CORE.pickImage(t._imgs, (ub[2] - ub[0]) / w);
   const c0 = Math.max(0, Math.floor((ub[0] - ox) / I.rx) - pad - 1), c1 = Math.min(I.w, Math.ceil((ub[2] - ox) / I.rx) + pad + 1);
@@ -47,10 +56,11 @@ async function readUTM(url, bb, w, h, pad, samples, tong, rieng) {   // tong: v�
   const src = await docCua(I.im, [c0, r0, c1, r1], samples);
   const sw = c1 - c0, sh = r1 - r0, idx = new Int32Array(w * h).fill(-1);
   for (let j = 0; j < h; j++) {
-    const v = (j + 0.5) / h;
+    const cb = Math.min(ny - 2, Math.floor((j + 0.5) / SB)), v = (j + 0.5 - PY[cb]) / (PY[cb + 1] - PY[cb]);
     for (let i = 0; i < w; i++) {
-      const u = (i + 0.5) / w, a = (1 - u) * (1 - v), b = u * (1 - v), c = (1 - u) * v, d = u * v;
-      const X = a * cor[0][0] + b * cor[1][0] + c * cor[2][0] + d * cor[3][0], Y = a * cor[0][1] + b * cor[1][1] + c * cor[2][1] + d * cor[3][1];
+      const ca = Math.min(nx - 2, Math.floor((i + 0.5) / SB)), u = (i + 0.5 - PX[ca]) / (PX[ca + 1] - PX[ca]);
+      const a = (1 - u) * (1 - v), b = u * (1 - v), c = (1 - u) * v, d = u * v, k0 = cb * nx + ca, k1 = k0 + 1, k2 = k0 + nx, k3 = k2 + 1;
+      const X = a * CX[k0] + b * CX[k1] + c * CX[k2] + d * CX[k3], Y = a * CY[k0] + b * CY[k1] + c * CY[k2] + d * CY[k3];
       const col = Math.floor((X - ox) / I.rx) - c0, row = Math.floor((oy - Y) / I.ry) - r0;
       if (col >= 0 && row >= 0 && col < sw && row < sh) idx[j * w + i] = row * sw + col;
     }

@@ -101,6 +101,49 @@ function plTach(V, lab, K) {                      // lớp có hai nhóm mẫu k
   return out;
 }
 
+/* ---------- bản 3.12: mẫu huấn luyện ngoài phạm vi (vùng xung quanh, mọi điểm đã gán) ---------- */
+/* Đặc trưng tại mẫu ngoài phạm vi đọc trên các lưới nhỏ CÙNG bước, CÙNG gốc với lưới phân tích, và cùng thang đổi byte của lưới đó
+   (PC, độ cao DEM lấy phân vị trên phạm vi): giá trị đúng như khi lưới phân tích phủ tới chỗ mẫu. Chuẩn hoá (trừ trung bình, chia
+   độ lệch chuẩn) vẫn tính trên phạm vi cần phân loại. */
+const PL_MAX_NGOAI = 1500;                      // số mẫu ngoài phạm vi tối đa (gần phạm vi nhất trước)
+function plKhoangCach(PV) {                     // (lon, lat) -> khoảng cách mặt đất (m) tới ranh giới phạm vi
+  let rings;
+  if (PV.mp) rings = [].concat(...PV.mp);
+  else { const a = CORE.m2ll(PV.bb[0], PV.bb[1]), b = CORE.m2ll(PV.bb[2], PV.bb[3]); rings = [[[a[0], a[1]], [b[0], a[1]], [b[0], b[1]], [a[0], b[1]], [a[0], a[1]]]]; }
+  return (lon, lat) => {
+    const kx = 111320 * Math.cos(lat * Math.PI / 180), ky = 110574; let best = Infinity;
+    for (const rg of rings) for (let i = 1; i < rg.length; i++) {
+      const ax = (rg[i - 1][0] - lon) * kx, ay = (rg[i - 1][1] - lat) * ky, bx = (rg[i][0] - lon) * kx, by = (rg[i][1] - lat) * ky;
+      const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, t = L2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L2)) : 0;
+      const d = Math.hypot(ax + t * dx, ay + t * dy); if (d < best) best = d;
+    }
+    return best;
+  };
+}
+async function plDocNgoai(g, y, ids, sc, ds, tien) {   // ds: [{p}] -> gán o.raw (Uint8Array nf) cho mẫu đọc được
+  const res = g.res, B = 256 * res, m = 10, nhom = new Map();
+  ds.forEach(o => { const q = CORE.to3857(o.p.lon, o.p.lat); o.mx = q[0]; o.my = q[1];
+    const k = Math.floor(q[0] / B) + "," + Math.floor(q[1] / B); if (!nhom.has(k)) nhom.set(k, []); nhom.get(k).push(o); });
+  let i = 0;
+  for (const nh of nhom.values()) {
+    const xs = nh.map(o => o.mx), ys = nh.map(o => o.my);
+    const i0 = Math.floor((Math.min(...xs) - g.x0) / res) - m, i1 = Math.ceil((Math.max(...xs) - g.x0) / res) + m;
+    const j0 = Math.floor((g.y1 - Math.max(...ys)) / res) - m, j1 = Math.ceil((g.y1 - Math.min(...ys)) / res) + m;
+    const gc = {x0: g.x0 + i0 * res, y1: g.y1 - j0 * res, res, w: i1 - i0, h: j1 - j0}; gc.bb = [gc.x0, gc.y1 - gc.h * res, gc.x0 + gc.w * res, gc.y1];
+    if (tien && (await tien(++i, nhom.size)) === false) return false;
+    let S = null;
+    try { const D = await vgDoc(gc, y, ids, sc, {khongLop: true}); S = CORE.stackFeat(D.lst, gc.w * gc.h); } catch (e) { S = null; }   // khối ngoài vùng dữ liệu: bỏ
+    if (!S) continue;
+    nh.forEach(o => { const px = Math.floor((o.mx - gc.x0) / res), py = Math.floor((gc.y1 - o.my) / res), k = py * gc.w + px;
+      if (px >= 0 && py >= 0 && px < gc.w && py < gc.h && S.valid[k]) o.raw = S.F.slice(k * S.nf, k * S.nf + S.nf); });
+  }
+  return true;
+}
+function plNguonTen(K) {                        // mô tả nguồn mẫu huấn luyện
+  const n = K.nguon || "trong";
+  return n === "trong" ? T("trong phạm vi") : n === "all" ? T("mọi điểm đã gán (gần phạm vi nhất trước)") : T("phạm vi và vùng xung quanh {d} km", {d: n.slice(1)});
+}
+
 /* ---------- chạy ---------- */
 async function plChay() {
   const tok = ++PL.tok, tt = pl$("plTT"), y = +pl$("plNam").value, he = pl$("plHe").value, pp = pl$("plPP").value, kv = /_mau$/.test(pp) ? Math.max(1, +pl$("plK").value || 1) : 1;
@@ -111,16 +154,30 @@ async function plChay() {
     const PV = v27PhamVi(pl$("plPV").value, [...pl$("plXa").selectedOptions].map(o => +o.value), pl$("plVung").value);
     const g = CORE.gridFor(PV.bb, +pl$("plLuoi").value || 900, {x0: 0, y1: 0, res0: 10}), N = g.w * g.h;
     tt.textContent = T("đang đọc đặc trưng năm {y}…", {y});
-    const D = await vgDoc(g, y, ids, {}); if (tok !== PL.tok) return;
+    const sc = {}, D = await vgDoc(g, y, ids, sc); if (tok !== PL.tok) return;
     const S = CORE.stackFeat(D.lst, N), nf = S.nf, F = S.F;
     const vung = PV.mp ? CORE.rasterizeRings(CORE.polysToPixRings(g, PV.mp), g.w, g.h) : null;
     const bo = pl$("plBo").value || plBoTot(y, he), dac = new Set((SCHEME.dac_biet || []).map(c => c.ma));
+    const nguon = (pl$("plNguon") && pl$("plNguon").value) || "trong", ngoai = [];
     const mau = Object.values(ST.diem).filter(p => (bo === "*" || p.bo === bo) && p.nhan[y] && !dac.has(p.nhan[y])).map(p => {
       const k = plKhoa(p.nhan[y], he); if (!k) return null;
       const q = CORE.llToPix(g, p.lon, p.lat), x = Math.floor(q[0]), yy = Math.floor(q[1]);
-      if (x < 0 || yy < 0 || x >= g.w || yy >= g.h) return null; const i = yy * g.w + x; return S.valid[i] ? {p, i, key: k} : null; }).filter(Boolean);
+      if (x < 0 || yy < 0 || x >= g.w || yy >= g.h) { if (nguon !== "trong") ngoai.push({p, key: k, ngoai: true}); return null; }
+      const i = yy * g.w + x; return S.valid[i] ? {p, i, key: k} : null; }).filter(Boolean);
+    let dNgoai = 0, catBot = 0;
+    if (ngoai.length) {                           // bản 3.12: mẫu ngoài phạm vi trong vùng xung quanh (hoặc mọi điểm), gần trước
+      const dMax = nguon === "all" ? Infinity : +nguon.slice(1) * 1000, dk = plKhoangCach(PV);
+      ngoai.forEach(o => { o.d = dk(o.p.lon, o.p.lat); });
+      let chon = ngoai.filter(o => o.d <= dMax).sort((p, q) => p.d - q.d);
+      if (chon.length > PL_MAX_NGOAI) { catBot = chon.length - PL_MAX_NGOAI; chon = chon.slice(0, PL_MAX_NGOAI); }
+      if (chon.length) {
+        const ok = await plDocNgoai(g, y, ids, sc, chon, async (i, n) => { tt.textContent = T("đang đọc đặc trưng tại {m} mẫu ngoài phạm vi ({i}/{n} khối)…", {m: chon.length, i, n}); await plTre(); return tok === PL.tok; });
+        if (!ok || tok !== PL.tok) return;
+        chon.filter(o => o.raw).forEach(o => { mau.push(o); dNgoai = Math.max(dNgoai, o.d); });
+      }
+    }
     const keys = [...new Set(mau.map(m => m.key))].sort((a, b) => he === "3" ? a - b : SCHEME.lop.findIndex(c => c.ma === a) - SCHEME.lop.findIndex(c => c.ma === b));
-    if (keys.length < 2) throw new Error(T("cần điểm mẫu có nhãn năm {y} của ít nhất hai lớp nằm trong phạm vi", {y}));
+    if (keys.length < 2) throw new Error(T("cần điểm mẫu có nhãn năm {y} của ít nhất hai lớp nằm trong phạm vi", {y}) + (nguon === "trong" ? "; " + T("hoặc chọn Mẫu huấn luyện: thêm vùng xung quanh, mọi điểm đã gán") : ""));
     const K = keys.length, lab = mau.map(m => keys.indexOf(m.key)), lop = keys.map(k => plMoTaLop(k, he));
     // thống kê chuẩn hoá trên phạm vi
     const buoc = Math.max(1, Math.floor(N / 150000)), mu = new Float64Array(nf), sq = new Float64Array(nf); let n0 = 0;
@@ -129,7 +186,7 @@ async function plChay() {
     const a = new Float64Array(nf); for (let c = 0; c < nf; c++) { mu[c] /= n0; a[c] = 1 / Math.max(Math.sqrt(Math.max(sq[c] / n0 - mu[c] * mu[c], 0)), 1); }
     const s = 1 / (255 * Math.sqrt(nf)), raw = i => F.subarray(i * nf, i * nf + nf);
     const vec = i => cos ? plChuan(raw(i), mu, a, new Float32Array(nf)) : Float32Array.from(raw(i));
-    const V = mau.map(m => vec(m.i));
+    const V = mau.map(m => m.ngoai ? (cos ? plChuan(m.raw, mu, a, new Float32Array(nf)) : Float32Array.from(m.raw)) : vec(m.i));
     const refs = plThamChieu(V, lab, K, pp, PL_MAX_REF);
     // phân loại từng điểm ảnh
     const cls = new Uint8Array(N), s1 = new Float32Array(N).fill(NaN), mg = new Float32Array(N), k2 = new Int8Array(N).fill(-1), x = new Float32Array(nf);
@@ -158,12 +215,14 @@ async function plChay() {
     const tach = plTach(V, lab, K), sai = [];
     mau.forEach((m, i) => { if (KD.du[i] >= 0 && KD.du[i] !== lab[i]) sai.push({id: m.p.id, that: lab[i], du: KD.du[i], mg: KD.mg[i]}); });
     sai.sort((p, q) => q.mg - p.mg);
-    const soMau = new Int32Array(K); lab.forEach(k => soMau[k]++);
+    const soMau = new Int32Array(K), soNgoai = new Int32Array(K); lab.forEach((k, i) => { soMau[k]++; if (mau[i].ngoai) soNgoai[k]++; });
+    const Mt = Array.from({length: K}, () => new Float64Array(K)); mau.forEach((m, i) => { if (!m.ngoai && KD.du[i] >= 0) Mt[lab[i]][KD.du[i]]++; });
     let xaTrong = []; if (VG.xa) { const XI = vgXaIdx(g), haX = {}, coMau = new Set(); for (const i of chay) if (XI[i]) haX[XI[i]] = (haX[XI[i]] || 0) + ra[Math.floor(i / g.w)] / 1e4;
-      mau.forEach(m => { if (XI[m.i]) coMau.add(XI[m.i]); });
+      mau.forEach(m => { if (!m.ngoai && XI[m.i]) coMau.add(XI[m.i]); });
       xaTrong = Object.entries(haX).filter(([x0, h]) => !coMau.has(+x0) && h >= 0.01 * tong).map(([x0, h]) => ({ten: (VG.xa.find(q => q.i === +x0) || {}).ten || x0, ha: h, x: +x0})).sort((p, q) => q.ha - p.ha); }
     if (tok !== PL.tok) return;
-    PL.kq = {g, PV, y, he, pp, kv, bo, K, keys, lop, cls, s1, mg, xa, lan, tau, m0, dt, tong, haXa, haLan, cap, manh, tach, sai, soMau, xaTrong, KD, mau, lab, nMau: mau.length, nRef: refs.length, ids, chay: chay.length};
+    PL.kq = {g, PV, y, he, pp, kv, bo, K, keys, lop, cls, s1, mg, xa, lan, tau, m0, dt, tong, haXa, haLan, cap, manh, tach, sai, soMau, xaTrong, KD, mau, lab, nMau: mau.length, nRef: refs.length, ids, chay: chay.length,
+      nguon, soNgoai, nNgoai: mau.filter(m => m.ngoai).length, dNgoai, catBot, Mt};
     plVeKQ(); pl$("plKQ").hidden = false;
     tt.textContent = T("xong: {n} điểm mẫu, {k} lớp, {h} ha", {n: mau.length, k: K, h: tong.toFixed(0)});
   } catch (e) { if (tok === PL.tok) tt.textContent = T("lỗi: ") + (typeof vgLoiDoc === "function" ? vgLoiDoc(e) : (e.message || e)); }
@@ -181,6 +240,7 @@ function plCanhBao(K_) {                          // danh sách cảnh báo, nh�
     ds: o.nhom.map((g, j) => ({t: T("nhóm {j}: {ids}", {j: j + 1, ids: g.slice(0, 12).map(i => K.mau[i].p.id).join(", ") + (g.length > 12 ? "…" : "")}), diem: g.map(i => K.mau[i].p.id)}))}));
   if (K.sai.length) L.push({muc: "sai", t: T("{n} điểm mẫu bị kiểm định chéo xếp vào lớp khác: xem lại nhãn (đầu danh sách là chỗ chắc chắn nhất)", {n: K.sai.length}),
     ds: K.sai.slice(0, 15).map(o => ({t: `${esc(o.id)}: ${ten(o.that)} → ${ten(o.du)}`, diem: [o.id]}))});
+  if (K.nNgoai) Array.from(K.soMau).forEach((n, k) => { if (n && K.soNgoai[k] === n) L.push({muc: "ngoai", t: T("{l} chỉ có mẫu ngoài phạm vi ({n} điểm): bản đồ dựa vào mẫu nơi khác; nên lấy vài mẫu của lớp này ngay trong phạm vi để kiểm tra", {l: ten(k), n})}); });
   Array.from(K.soMau).forEach((n, k) => { if (n < 5) L.push({muc: "it", t: T("{l} chỉ có {n} điểm mẫu: nên có ít nhất 5 đến 10 mẫu rải khắp phạm vi", {l: ten(k), n})}); });
   Array.from(K.dt).forEach((h, k) => { if (h > 0.2 * K.tong && K.soMau[k] < 0.05 * K.nMau) L.push({muc: "lech", t: T("{l} chiếm {p} % diện tích nhưng chỉ {n} % số mẫu: nên thêm mẫu cho lớp này", {l: ten(k), p: pct(h), n: (100 * K.soMau[k] / K.nMau).toFixed(0)})}); });
   if (K.xaTrong.length) L.push({muc: "xa", t: T("{n} xã chưa có điểm mẫu nào (mỗi xã từ 1 % diện tích phạm vi)", {n: K.xaTrong.length}),
@@ -197,11 +257,16 @@ function plVeKQ() {
   const ppT = {cos_mau: T("cosine, k mẫu gần nhất bỏ phiếu"), cos_nm: T("cosine, nguyên mẫu từng lớp (k-means)"), ecl_mau: T("khoảng cách chuẩn hoá, mẫu gần nhất (như chọn vùng)"), ecl_tam: T("khoảng cách chuẩn hoá, tâm lớp")}[K.pp];
   pl$("plTom").innerHTML = `<p>${T("Năm {y}, {v}: {k} lớp từ {n} điểm mẫu ({bo}); {pp}{kv}; {f} đặc trưng.", {y: K.y, v: esc(v27TenPV(K.PV)), k: K.K, n: K.nMau,
       bo: esc(K.bo === "*" ? T("mọi bộ điểm") : (typeof boTen === "function" ? boTen(K.bo) : K.bo)), pp: ppT, kv: /_mau$/.test(K.pp) && K.kv > 1 ? ` (k = ${K.kv})` : "", f: K.ids.length})}</p>` +
-    `<p>${T("Kiểm định chéo trên các điểm mẫu: đúng {oa} %, kappa {kp} (lạc quan hơn độ chính xác thật vì mẫu thường lấy ở chỗ dễ nhận).", {oa: (100 * kk.oa).toFixed(1), kp: kk.kappa.toFixed(2)})}</p>` +
+    (K.nNgoai ? `<p>${T("Mẫu huấn luyện: {a} trong phạm vi, {b} ngoài phạm vi (xa nhất {d} km; nguồn: {s}).", {a: K.nMau - K.nNgoai, b: K.nNgoai, d: (K.dNgoai / 1000).toFixed(1), s: plNguonTen(K)})}` +
+      (K.catBot ? " " + T("Bỏ {n} mẫu xa hơn (tối đa {m} mẫu ngoài phạm vi).", {n: K.catBot, m: PL_MAX_NGOAI}) : "") + `</p>` : "") +
+    `<p>${T("Kiểm định chéo trên các điểm mẫu: đúng {oa} %, kappa {kp} (lạc quan hơn độ chính xác thật vì mẫu thường lấy ở chỗ dễ nhận).", {oa: (100 * kk.oa).toFixed(1), kp: kk.kappa.toFixed(2)})}` +
+      (K.nNgoai ? (() => { const nt = K.Mt.reduce((s, r) => s + r.reduce((a, b) => a + b, 0), 0), dt = K.Mt.reduce((s, r, i) => s + r[i], 0);
+        return " " + (nt ? T("Riêng {n} mẫu trong phạm vi: đúng {oa} %.", {n: nt, oa: (100 * dt / nt).toFixed(1)}) : T("Không có mẫu nào trong phạm vi để kiểm tra riêng.")); })() : "") + `</p>` +
     `<p>${T("Xa mọi mẫu: {a} ha; khó phân biệt giữa hai lớp: {b} ha.", {a: K.haXa.toFixed(1), b: K.haLan.toFixed(1)})}${K.nRef < K.nMau ? " " + T("(so với {r} đại diện rút gọn từ {n} mẫu)", {r: K.nRef, n: K.nMau}) : ""}</p>` +
-    `<p class="mu sm">${T("Phân loại không học máy: mỗi điểm ảnh về lớp của mẫu giống nó nhất. Kết quả phụ thuộc trực tiếp vào độ phủ và độ sạch của bộ mẫu; xem các cảnh báo.")}</p>`;
+    `<p class="mu sm">${T("Phân loại không học máy: mỗi điểm ảnh về lớp của mẫu giống nó nhất. Kết quả phụ thuộc trực tiếp vào độ phủ và độ sạch của bộ mẫu; xem các cảnh báo.")}` +
+      (K.nNgoai ? " " + T("Mẫu ngoài phạm vi giúp đủ lớp, nhưng nơi khác có thể khác điều kiện (đất, mùa vụ, ảnh): so độ đúng riêng của mẫu trong phạm vi, thấp thì lấy thêm mẫu tại chỗ.") : "") + `</p>`;
   pl$("plDTBang").innerHTML = `<table><tr><th>${T("lớp")}</th><th>${T("mẫu")}</th><th>${T("ha")}</th><th>%</th></tr>` + K.lop.map((l, k) =>
-    `<tr><td><i class="sw" style="background:${l.mau}"></i> ${esc(l.ten)}</td><td>${K.soMau[k]}</td><td>${K.dt[k].toFixed(1)}</td><td>${(100 * K.dt[k] / Math.max(K.tong, 1e-9)).toFixed(1)}</td></tr>`).join("") + `</table>`;
+    `<tr><td><i class="sw" style="background:${l.mau}"></i> ${esc(l.ten)}</td><td>${K.soMau[k]}${K.nNgoai && K.soNgoai[k] ? ` <span class="mu">(${K.soNgoai[k]} ${T("ngoài")})</span>` : ""}</td><td>${K.dt[k].toFixed(1)}</td><td>${(100 * K.dt[k] / Math.max(K.tong, 1e-9)).toFixed(1)}</td></tr>`).join("") + `</table>`;
   pl$("plKDBang").innerHTML = `<p class="mu sm">${T("Hàng: nhãn; cột: lớp dự đoán khi bỏ mẫu đó ra (hoặc chia 5 phần). Số điểm mẫu.")}</p><table><tr><th></th>` + K.lop.map(l => `<th>${esc(l.ten.split(" ")[0])}</th>`).join("") + `<th>${T("độ phủ")}</th></tr>` +
     M.map((r, i) => `<tr><th>${esc(K.lop[i].ten)}</th>` + Array.from(r).map((v, j) => `<td class="${i === j ? "dg" : ""}">${v || ""}</td>`).join("") + `<td>${(100 * f1[i].r).toFixed(0)} %</td></tr>`).join("") +
     `<tr><th>${T("độ chính xác")}</th>` + f1.map(q => `<td>${(100 * q.p).toFixed(0)} %</td>`).join("") + `<td></td></tr></table>`;
@@ -248,7 +313,7 @@ function plLuu() {
   K.lop.forEach((l, k) => { const key = K.keys[k]; lop[l.v] = {ten: l.ten, mau: l.mau, chung: K.he === "3" ? ({1: 0, 2: 1, 3: 6, 4: 7})[key] : (CHUNG_HE[key] || 0), n3: K.he === "3" ? (key <= 3 ? key : 0) : paHe3(key)}; });
   paThem({id: "tao_" + Date.now().toString(36), ten: pl$("plTen").value || T("Phân loại"), nguon: "tao", nam: [K.y], lop,
     du: {[K.y]: {g0: {x0: K.g.x0, y1: K.g.y1, res: K.g.res, w: K.g.w, h: K.g.h}, data: plGiaTri(K)}},
-    tham_so: {pp: K.pp, k: K.kv, he: K.he, bo: K.bo, dac_trung: K.ids, pham_vi: v27TenPV(K.PV), so_mau: K.nMau}, tao_luc: new Date().toISOString()});
+    tham_so: {pp: K.pp, k: K.kv, he: K.he, bo: K.bo, dac_trung: K.ids, pham_vi: v27TenPV(K.PV), so_mau: K.nMau, nguon_mau: K.nguon || "trong", so_mau_ngoai: K.nNgoai || 0}, tao_luc: new Date().toISOString()});
   msg(T("đã lưu thành phương án: dùng được ở Thống kê lớp phủ và Phát hiện thay đổi"), "ok", 5000);
 }
 function plGeo() {
@@ -269,6 +334,8 @@ $("bPL").onclick = () => plMo();
 pl$("plDong").onclick = () => { plMo(false); if (PL.hien) { map.removeLayer(PL.hien); PL.hien = null; } };
 pl$("plThu").onclick = () => { const b = pl$("plBody"); b.hidden = !b.hidden; pl$("plThu").textContent = b.hidden ? "+" : "–"; };
 pl$("plPV").onchange = plHien; pl$("plPP").onchange = plHien;
+if (pl$("plNguon")) { const cu = ls("laymau_hp_pl_nguon_v1"); if (cu && [...pl$("plNguon").options].some(o => o.value === cu)) pl$("plNguon").value = cu;
+  pl$("plNguon").onchange = () => ls("laymau_hp_pl_nguon_v1", pl$("plNguon").value); }
 ["plNam", "plHe"].forEach(id => { pl$(id).onchange = plVeBo; });
 pl$("plChay").onclick = plChay; pl$("plXem").onchange = plVe; pl$("plLuu").onclick = plLuu; pl$("plGeo").onclick = plGeo; pl$("plCSV").onclick = plCSV;
 pl$("plTif").onclick = () => { const K = PL.kq; if (!K) return;
