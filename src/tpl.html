@@ -440,7 +440,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <select id="ntSo" title="Nạp trước dải ảnh, đồ thị, gợi ý của các điểm kế tiếp trong lúc gán điểm đang xem"><option value="0">nạp trước: tắt</option><option value="1">nạp trước 1 điểm</option><option value="2">nạp trước 2 điểm</option><option value="3">nạp trước 3 điểm</option><option value="5">nạp trước 5 điểm</option><option value="10">nạp trước 10 điểm</option><option value="20">nạp trước 20 điểm</option></select>
     <span id="ntTT" class="mu sm" data-noi18n></span>
     <button id="bLuoi" type="button" title="Chế độ lưới: nhiều điểm cùng năm trên một màn, gán bằng phím cho các ô đã chọn, Enter nhận gợi ý (phím l)">▦ Lưới <kbd>l</kbd></button>
-    <select id="tmMo" title="Mỗi khi sang điểm mới (phím n, p, nhấp), tự mở trang này ở tab mới đúng toạ độ điểm. Phím t: mở cho điểm đang xem. Xem xong bấm Ctrl+W để đóng tab và quay lại."><option value="">tự mở khi sang điểm: tắt</option><option value="gearth">tự mở: 🌍 Google Earth</option><option value="gsat">tự mở: 🛰 Google Maps vệ tinh</option><option value="copernicus">tự mở: 🛰 Copernicus Browser</option><option value="wayback">tự mở: 🕰 Esri Wayback</option><option value="bing">tự mở: 🅱 Bing Maps</option><option value="yandex">tự mở: 🟡 Yandex Maps</option></select>
+    <select id="tmMo" title="Mỗi khi sang điểm mới (phím n, p, nhấp), tự mở trang này ở tab mới đúng toạ độ điểm. Phím t: mở cho điểm đang xem. Xem xong bấm Ctrl+W để đóng tab và quay lại."><option value="">tự mở khi sang điểm: tắt</option><option value="gearth">tự mở: 🌍 Google Earth</option><option value="ge1">tự mở: 🌍 Google Earth một tab (chép toạ độ)</option><option value="gsat">tự mở: 🛰 Google Maps vệ tinh</option><option value="copernicus">tự mở: 🛰 Copernicus Browser</option><option value="wayback">tự mở: 🕰 Esri Wayback</option><option value="bing">tự mở: 🅱 Bing Maps</option><option value="yandex">tự mở: 🟡 Yandex Maps</option></select>
     <button id="bGE" type="button" title="Lấy điểm mẫu từ Google Earth / Street View: dấu tâm giữa màn hình, toạ độ, ngày ảnh; dán vào đây bằng Ctrl+V">📌 GE</button>
     <button id="bGEdan" type="button" title="Dán điểm đã chép từ Google Earth (thay cho Ctrl+V): tạo điểm mẫu">📥 Dán điểm</button>
   </div>
@@ -2404,7 +2404,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.11";
+const VERSION = "3.11.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }

@@ -42,6 +42,18 @@ const gan = (a, b, t) => a != null && Math.abs(a - b) <= t;
   $("tmau").querySelector("[data-tm]").click(); await sleep(30);
   ok(!$("tmau").querySelector(".tm-than") && E(`localStorage.getItem("laymau_hp_tmau_v1")`) === '"an"', "thu gọn thang màu, nhớ trong trình duyệt");
   $("tmau").querySelector("[data-tm]").click(); await sleep(30);
+  // bản 3.11.1: bấm vào thang màu không được thành nhấp bản đồ (trước đây nút thu gọn vẽ lại khung, Leaflet tạo điểm tra cứu mới)
+  E(`window.SO_BAM = 0; map.on("click", () => SO_BAM++)`);
+  const bam = el => ["mousedown", "mouseup", "click"].forEach(t => el.dispatchEvent(new w.MouseEvent(t, {bubbles: true, cancelable: true, clientX: 40, clientY: 500})));
+  bam($("tmau").querySelector("[data-tm]")); await sleep(20); bam($("tmau").querySelector("[data-tm]")); await sleep(20); bam($("tmau").querySelector(".tm-thanh")); await sleep(20);
+  ok(E("SO_BAM") === 0 && !!$("tmau").querySelector(".tm-than"), "bấm nút thu gọn, mở lại, bấm dải màu của thang màu: không thành nhấp bản đồ");
+  E(`window.CTL_THU = L.control({position: "topright"}); CTL_THU.onAdd = () => { const d = L.DomUtil.create("div"); d.id = "ctlThu"; L.DomEvent.disableClickPropagation(d);
+     const ve = () => { d.innerHTML = '<button type="button">x</button>'; d.querySelector("button").onclick = ve; }; ve(); return d; }; CTL_THU.addTo(map)`);
+  bam($("ctlThu").querySelector("button")); await sleep(20);
+  ok(E("SO_BAM") === 0, "khung điều khiển bất kỳ tự vẽ lại khi bấm (chỉ có chặn nhấp của Leaflet): không thành nhấp bản đồ");
+  E(`CTL_THU.remove()`);
+  bam(E("map.getContainer()")); await sleep(20);
+  ok(E("SO_BAM") === 1, "đối chứng: nhấp thẳng lên bản đồ vẫn là nhấp bản đồ");
 
   // ---------- 3. 3.11: lớp mới, giá trị tại điểm
   ok(["aef_rgb", "dist_tt", "dist_max", "den_dem", "nha_cao", "nha_phu"].every(id => E(`!!OVL["${id}"]`)) && /GlobalBuildingAtlas/.test($("ols").textContent), "bảng lớp đối chiếu có các lớp mới (AlphaEarth, DIST, ánh sáng đêm, nhà)");
@@ -145,12 +157,33 @@ const gan = (a, b, t) => a != null && Math.abs(a - b) <= t;
   ok(new RegExp("kỳ 3-4 · " + yC).test(($("curve").querySelector(".cvtip") || {}).textContent || "") && +c2[4] === ys.length * 6, "chuỗi liên tục (" + ys.join(", ") + "): bấm đúng kỳ 3-4 năm " + yC);
   E(`CVS.mode = "mot"; CVS.s1 = false; $("cbCurveS1").checked = false; renderCurve()`);
 
+  // ---------- 6b. bản 3.11.1: Google Earth một tab (chép toạ độ), nhắc khi mở nhiều tab
+  E(`window.MO = []; window.open = (u, n, f) => { MO.push(u); return null; }; window.CHEP = [];
+     Object.defineProperty(navigator, "clipboard", {configurable: true, value: {writeText: t => { CHEP.push(t); return Promise.resolve(); }}});
+     $("tmMo").value = ""; $("tmMo").onchange(); ST.filter = "all"; select("E0000", false); TM.moi = []; TM.lan = 0; TM.canhLuc = 0;
+     $("tmMo").value = "ge1"; $("tmMo").onchange()`);
+  ok([...$("tmMo").options].some(o => o.value === "ge1"), "ô tự mở có “Google Earth một tab (chép toạ độ)”");
+  E(`step(1)`); await sleep(20);
+  ok(E("MO.length") === 1 && /earth\.google\.com\/web\/search\//.test(E("MO[0]")) && E("CHEP.length") === 0, "một tab: điểm đầu mở Google Earth một lần");
+  E(`step(1)`); await sleep(20);
+  const p2 = E(`ST.diem[ST.cur].lat.toFixed(6) + ", " + ST.diem[ST.cur].lon.toFixed(6)`);
+  ok(E("MO.length") === 1 && E("CHEP[0]") === p2 && /đã chép toạ độ E\d+: sang tab Google Earth/.test($("msgs").textContent), "điểm sau: không mở tab mới, chép toạ độ “vĩ độ, kinh độ” để dán vào ô tìm kiếm: " + E("CHEP[0]"));
+  w.document.body.dispatchEvent(new w.KeyboardEvent("keydown", {key: "t", bubbles: true}));
+  ok(E("MO.length") === 2, "phím t: mở lại Google Earth cho điểm đang xem (khi đã lỡ đóng tab)");
+  E(`$("tmMo").value = "gearth"; $("tmMo").onchange(); TM.moi = Array(18).fill(Date.now() - 60000); $("msgs").innerHTML = ""`);
+  E(`step(1)`); ok(E("MO.length") === 3 && !/Đã mở Google Earth \d+ lần/.test($("msgs").textContent), "nhiều tab: mở lần thứ 19 trong 30 phút, chưa nhắc");
+  E(`step(1)`); ok(/Đã mở Google Earth 20 lần trong 30 phút/.test($("msgs").textContent) && /một tab/.test($("msgs").textContent), "lần thứ 20 trong 30 phút: nhắc Google có thể tạm ngừng trả ảnh, gợi ý chế độ một tab");
+  E(`step(-1)`); ok(($("msgs").textContent.match(/Đã mở Google Earth \d+ lần/g) || []).length === 1 && E(`JSON.parse(localStorage.getItem("laymau_hp_tumo_v1")).moi.length`) === 21, "nhắc tối đa một lần mỗi 30 phút; số lần mở nhớ trong trình duyệt");
+  E(`TM.moi = [Date.now() - 31 * 60000]; TM.canhLuc = 0; $("tmMo").value = ""; $("tmMo").onchange()`);
+  ok(E("TM.moi.length") === 1, "lần mở cũ hơn 30 phút không tính (lọc khi mở lần sau)");
+
   // ---------- 7. dịch
   E("setLang('ru')"); await sleep(80);
   E(`OVL.den_dem.on = true; refreshOverlays()`); await sleep(250);
+  ok(/Google Earth в одной вкладке/.test([...$("tmMo").options].map(o => o.textContent).join()), "tiếng Nga: chế độ Google Earth một tab");
   ok(/Цветовая шкала/.test($("tmau").textContent) && /логарифмическая/.test($("tmau").textContent) && /использовать AlphaEarth/.test($("lbGyAef").textContent) && /по периодам/.test([...$("selCurveKind").options].map(o => o.textContent).join()),
      "tiếng Nga: thang màu, ô AlphaEarth, tên đường mùa vụ");
-  const miss = E("[...T_MISS]").filter(x => /AlphaEarth|thang|giống|nhà|POI|S1|mã|loại|nguồn/i.test(x));
+  const miss = E("[...T_MISS]").filter(x => /AlphaEarth|thang|giống|nhà|POI|S1|mã|loại|nguồn|Google Earth|chép/i.test(x));
   ok(miss.length === 0, "không sót khoá dịch mới" + (miss.length ? ": " + miss.slice(0, 5).join(" | ") : ""));
   E("setLang('vi')");
   ok(errs.length === 0, loiJS(errs));

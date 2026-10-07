@@ -82,9 +82,23 @@ var TMAU_CTL = L.control({position: "bottomleft"});
 TMAU_CTL.onAdd = function () {
   const d = L.DomUtil.create("div", "tmau"); d.id = "tmau"; d.setAttribute("data-noi18n", "");
   L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+  L.DomEvent.on(d, "click dblclick contextmenu", L.DomEvent.stopPropagation);   // bản 3.11.1: bấm vào thang màu không thành nhấp bản đồ
   return d;
 };
 TMAU_CTL.addTo(map);
+/* bản 3.11.1: nút trong một khung điều khiển hay khung thông tin trên bản đồ vẽ lại chính khung đó khi bấm (thu gọn thang màu…):
+   phần tử vừa bấm bị gỡ khỏi trang trước khi sự kiện tới bản đồ, Leaflet không lần ngược lên được tới khung chặn nhấp nên coi đó là
+   nhấp bản đồ (tạo điểm tra cứu mới). Ghi đường đi của mỗi lần bấm từ đầu (pha bắt ở document) để vẫn nhận ra. */
+var BAM_DUONG = [];
+document.addEventListener("click", e => { BAM_DUONG = e.composedPath ? e.composedPath() : []; }, true);
+(function () {
+  const g = map._isClickDisabled;
+  if (typeof g !== "function") return;
+  map._isClickDisabled = function (el) {
+    if (g.call(this, el)) return true;
+    return !!(el && el.isConnected === false && BAM_DUONG.some(n => n && n._leaflet_disable_click));
+  };
+})();
 function tmauVe() {
   const d = $("tmau"); if (!d) return;
   const ds = tmauDS();

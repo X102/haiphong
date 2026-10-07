@@ -34,6 +34,15 @@ R311 = [
 ("AlphaEarth: độ giống năm trước, năm đầu (cos)", "AlphaEarth: сходство с предыдущим и первым годом (cos)", "AlphaEarth: similarity to previous and first year (cos)"),
 ("dùng AlphaEarth", "использовать AlphaEarth", "use AlphaEarth"),
 ("gợi ý lớp bằng 64 chiều AlphaEarth tại điểm (thay cho đặc trưng có sẵn)", "подсказка класса по 64 измерениям AlphaEarth в точке (вместо имеющихся признаков)", "class suggestion from the 64 AlphaEarth dimensions at the point (instead of the existing features)"),
+("tự mở: 🌍 Google Earth một tab (chép toạ độ)", "автооткрытие: 🌍 Google Earth в одной вкладке (копировать координаты)", "auto-open: 🌍 Google Earth in one tab (copy coordinates)"),
+("Đã mở Google Earth {n} lần trong {p} phút. Mỗi lần mở là một Google Earth mới tải lại từ đầu; mở dồn dập, Google có thể tạm ngừng trả ảnh vệ tinh cho mạng đang dùng (phải chờ hoặc đổi mạng). Nên chọn “tự mở: Google Earth một tab (chép toạ độ)” và đóng bớt các tab Google Earth cũ (Ctrl+W).",
+ "Google Earth открыт {n} раз за {p} мин. Каждое открытие заново загружает Google Earth целиком; при частых открытиях Google может временно перестать отдавать космические снимки для этой сети (придётся подождать или сменить сеть). Выберите «автооткрытие: Google Earth в одной вкладке (копировать координаты)» и закройте старые вкладки Google Earth (Ctrl+W).",
+ "Google Earth has been opened {n} times in {p} minutes. Each opening reloads Google Earth from scratch; when it is opened this often, Google may temporarily stop serving satellite imagery to this network (you would have to wait or change network). Choose “auto-open: Google Earth in one tab (copy coordinates)” and close old Google Earth tabs (Ctrl+W)."),
+("đã chép toạ độ {id}: sang tab Google Earth, bấm vào ô tìm kiếm, Ctrl+V, Enter", "координаты {id} скопированы: перейдите во вкладку Google Earth, щёлкните поле поиска, Ctrl+V, Enter", "coordinates of {id} copied: switch to the Google Earth tab, click the search box, Ctrl+V, Enter"),
+("không chép tự động được; toạ độ để dán vào Google Earth: {t}", "не удалось скопировать автоматически; координаты для Google Earth: {t}", "could not copy automatically; coordinates for Google Earth: {t}"),
+("Đã mở Google Earth ở tab mới. Các điểm sau không mở thêm tab: geoportal chép toạ độ, sang tab Google Earth bấm vào ô tìm kiếm, Ctrl+V, Enter. Phím t: mở lại Google Earth cho điểm đang xem.",
+ "Google Earth открыт в новой вкладке. Для следующих точек новые вкладки не открываются: геопортал копирует координаты, во вкладке Google Earth щёлкните поле поиска, Ctrl+V, Enter. Клавиша t: снова открыть Google Earth для текущей точки.",
+ "Google Earth opened in a new tab. Later points do not open more tabs: the geoportal copies the coordinates; in the Google Earth tab click the search box, Ctrl+V, Enter. Key t: open Google Earth again for the current point."),
 ]
 HELP311 = {
   "ru": ("<li><b>Overture, температура поверхности (3.10)</b>", """

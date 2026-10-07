@@ -194,24 +194,52 @@ s2ovUI = function (div) {
    và tab Google Earth ngay khi trang đó tải: geoportal không thể chuyển tab cũ sang điểm mới, cũng không đóng được nó. Vì vậy mỗi
    điểm mở một tab mới; Ctrl+W đóng tab đó và trình duyệt quay về geoportal. Chỉ mở khi đổi điểm do thao tác của người dùng (phím,
    nhấp), để trình duyệt không chặn và không tự mở khi trang tải lại. */
-var TM = Object.assign({k: ""}, ls("laymau_hp_tumo_v1") || {});
+var TM = Object.assign({k: "", moi: []}, ls("laymau_hp_tumo_v1") || {});
+/* bản 3.11.1: mỗi lần mở là một Google Earth mới tải lại toàn bộ (ứng dụng + ảnh): mở dồn dập, Google có thể tạm ngừng trả ảnh vệ
+   tinh cho địa chỉ mạng đó. Chế độ "một tab" (ge1): chỉ mở Google Earth MỘT lần, các điểm sau chép toạ độ để dán vào ô tìm kiếm
+   của tab đang mở (Google Earth bay tới, không tải lại). Chế độ nhiều tab: đếm số lần mở trong 30 phút, quá ngưỡng thì nhắc. */
+var TM_CANH = {so: 20, phut: 30};
+function tmLuu() { ls("laymau_hp_tumo_v1", {k: TM.k, moi: TM.moi}); }
 function tmUrl(p, k) {
   const L_ = CORE.links(p.lat, p.lon, {year: ST.nam, wayback: REL[relIdx] ? REL[relIdx][1] : null, lang: LANG, ten: p.id});
-  const x = L_.find(l => l.k === (k || TM.k || "gearth")); return x ? x.url : null;
+  k = k || TM.k || "gearth"; if (k === "ge1") k = "gearth";
+  const x = L_.find(l => l.k === k); return x ? x.url : null;
+}
+function tmDem() {                                    // ghi một lần mở Google Earth; quá ngưỡng thì nhắc (tối đa một lần mỗi 30 phút)
+  const now = Date.now(), cs = TM_CANH.phut * 60000;
+  TM.moi = (TM.moi || []).filter(t => now - t < cs); TM.moi.push(now); tmLuu();
+  if (TM.k !== "ge1" && TM.moi.length >= TM_CANH.so && !(TM.canhLuc && now - TM.canhLuc < cs)) {
+    TM.canhLuc = now;
+    msg(T("Đã mở Google Earth {n} lần trong {p} phút. Mỗi lần mở là một Google Earth mới tải lại từ đầu; mở dồn dập, Google có thể tạm ngừng trả ảnh vệ tinh cho mạng đang dùng (phải chờ hoặc đổi mạng). Nên chọn “tự mở: Google Earth một tab (chép toạ độ)” và đóng bớt các tab Google Earth cũ (Ctrl+W).",
+      {n: TM.moi.length, p: TM_CANH.phut}), "wa", 15000);
+  }
+}
+function tmChep(p) {                                  // chế độ một tab: chép "vĩ độ, kinh độ" để dán vào ô tìm kiếm của Google Earth
+  const t = p.lat.toFixed(6) + ", " + p.lon.toFixed(6);
+  const pr = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject(new Error("x"));
+  TM.chep = t;
+  return pr.then(() => { msg(T("đã chép toạ độ {id}: sang tab Google Earth, bấm vào ô tìm kiếm, Ctrl+V, Enter", {id: p.id || t}), "ok", 3000); return true; })
+    .catch(() => { msg(T("không chép tự động được; toạ độ để dán vào Google Earth: {t}", {t}), "wa", 9000); return false; });
 }
 function tmMoDiem(p, k) {
   if (!p) return false;
-  const u = tmUrl(p, k); if (!u) return false;
+  const kk = k || TM.k || "gearth", u = tmUrl(p, kk); if (!u) return false;
   window.open(u, "_blank", "noopener");                 // noopener: trang ngoài không điều khiển được tab geoportal
+  if (kk === "gearth" || kk === "ge1") { tmDem(); if (kk === "ge1") TM.ge1Mo = true; }
   TM.lan = (TM.lan || 0) + 1;
-  if (TM.lan === 1) msg(T("Đã mở {s} ở tab mới. Xem xong bấm Ctrl+W để đóng tab và quay lại geoportal.", {s: T(LINK_LBL[k || TM.k || "gearth"], {y: ST.nam})}), "ok", 6000);
+  if (TM.lan === 1) msg(kk === "ge1" ? T("Đã mở Google Earth ở tab mới. Các điểm sau không mở thêm tab: geoportal chép toạ độ, sang tab Google Earth bấm vào ô tìm kiếm, Ctrl+V, Enter. Phím t: mở lại Google Earth cho điểm đang xem.")
+    : T("Đã mở {s} ở tab mới. Xem xong bấm Ctrl+W để đóng tab và quay lại geoportal.", {s: T(LINK_LBL[kk], {y: ST.nam})}), "ok", kk === "ge1" ? 9000 : 6000);
   return true;
+}
+function tmSangDiem(p) {                              // sang điểm mới do người dùng: mở trang đã chọn, hoặc (một tab) chép toạ độ
+  if (TM.k === "ge1" && TM.ge1Mo) return tmChep(p);
+  return tmMoDiem(p);
 }
 function tmCoThaoTac() { const a = navigator.userActivation; return !a || a.isActive; }   // trình duyệt không có userActivation: coi như có
 var _select361 = select;
 select = function () {
   const truoc = ST.cur, r = _select361.apply(this, arguments);
-  if (TM.k && ST.cur && ST.cur !== truoc && tmCoThaoTac()) tmMoDiem(cur());
+  if (TM.k && ST.cur && ST.cur !== truoc && tmCoThaoTac()) tmSangDiem(cur());
   return r;
 };
 document.addEventListener("keydown", e => {         // phím t: mở trang đã chọn (hoặc Google Earth) cho điểm đang xem
@@ -223,5 +251,5 @@ document.addEventListener("keydown", e => {         // phím t: mở trang đã 
 }, true);
 (function () {
   const s = $("tmMo"); if (!s) return;
-  s.value = TM.k; s.onchange = () => { TM.k = s.value; ls("laymau_hp_tumo_v1", {k: TM.k}); };
+  s.value = TM.k; s.onchange = () => { TM.k = s.value; TM.ge1Mo = false; tmLuu(); };
 })();
