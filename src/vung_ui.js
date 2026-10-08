@@ -379,7 +379,8 @@ async function vgDoc(g, y, ids, sc, o) {            // o.khongLop: không đọc
   };
   const pv = (v, key, q) => { let r = sc[key]; if (!r) {              // phân vị (lấy mẫu thưa) cho nguồn không có khoảng cố định
     q = q || 0.02; const st = Math.max(1, Math.floor(N / 200000)), a = []; for (let i = 0; i < N; i += st) if (isFinite(v[i])) a.push(v[i]);
-    r = [CORE.phanVi(a, q), CORE.phanVi(a, 1 - q)]; if (r[0] == null || !(r[1] > r[0])) r = [r[0] || 0, (r[0] || 0) + 1]; sc[key] = r; } return r; };
+    if (sc.__thu) { const t = sc.__thu[key] || (sc.__thu[key] = {q, a: []}); for (let i = 0; i < a.length && t.a.length < 400000; i++) t.a.push(a[i]); }   // bản 3.15: gom mẫu cho thang chung
+    r = [CORE.phanVi(a, q), CORE.phanVi(a, 1 - q)]; if (r[0] == null || !(r[1] > r[0])) r = [r[0] || 0, (r[0] || 0) + 1]; if (!sc.__thu) sc[key] = r; } return r; };
   for (const id of ids) {
     if (id.includes(":")) {
       const [nh, k] = id.split(":"), K = s2Keo(), bs = s2Bang();

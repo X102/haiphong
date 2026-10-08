@@ -107,6 +107,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.12: phân loại từ điểm mẫu lấy thêm mẫu ở vùng xung quanh (2, 5, 10 km) hoặc mọi điểm đã gán, phân loại riêng phạm vi đã chọn; đọc ảnh UTM chính xác hơn ở phạm vi rộng (xem docs/BAN_3_12.md).
 - Bản 3.13: bản đồ xuất ghi tên lớp theo ngôn ngữ, tên tệp đủ thông tin, nhãn địa danh dự phòng (Google, CARTO); chọn xã bằng ô tích và lưu thành vùng gộp, xuất bản đồ theo các xã chọn; xuất điểm mẫu Shapefile; quản lý phương án (xem, đến, đổi tên, xuất bản đồ, GeoTIFF) (xem docs/BAN_3_13.md).
 - Bản 3.14: phân loại nhiều năm một lần (một phương án nhiều năm); hậu xử lý (đồng nhất trong đối tượng, lọc đa số, bỏ mảnh nhỏ, làm mịn theo năm); tên phương án, tiêu đề, phụ đề bản đồ theo ngôn ngữ đang chọn (xem docs/BAN_3_14.md).
+- Bản 3.15: phân loại theo khối cho phạm vi lớn (huấn luyện một lần, phân loại từng khối 512 × 512 điểm ảnh rồi ghép; lưới đơn quá lớn thì tự chuyển), chạy được cả tỉnh, nhiều năm; gộp nhiều phương án (ví dụ từng xã) thành một bản đồ (xem docs/BAN_3_15.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

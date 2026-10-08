@@ -618,6 +618,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R314 if r[0] not in _co]             # bản 3.14: nhiều năm, hậu xử lý, tên theo ngôn ngữ
 for L_, (moc, them) in HELP314.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v315 import R315, HELP315
+_co = {r[0] for r in R}
+R = R + [r for r in R315 if r[0] not in _co]             # bản 3.15: phân loại theo khối, gộp phương án
+for L_, (moc, them) in HELP315.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en
