@@ -310,7 +310,7 @@ function plVe() {
 function plGiaTri(K) { const v = new Uint8Array(K.cls.length); const m = K.lop.map(l => l.v); for (let i = 0; i < v.length; i++) if (K.cls[i]) v[i] = m[K.cls[i] - 1]; return v; }
 function plLuu() {
   const K = PL.kq; if (!K) return; const lop = {};
-  K.lop.forEach((l, k) => { const key = K.keys[k]; lop[l.v] = {ten: l.ten, mau: l.mau, chung: K.he === "3" ? ({1: 0, 2: 1, 3: 6, 4: 7})[key] : (CHUNG_HE[key] || 0), n3: K.he === "3" ? (key <= 3 ? key : 0) : paHe3(key)}; });
+  K.lop.forEach((l, k) => { const key = K.keys[k]; lop[l.v] = {ten: l.ten, ma: K.he === "3" ? undefined : key, mau: l.mau, chung: K.he === "3" ? ({1: 0, 2: 1, 3: 6, 4: 7})[key] : (CHUNG_HE[key] || 0), n3: K.he === "3" ? (key <= 3 ? key : 0) : paHe3(key)}; });
   paThem({id: "tao_" + Date.now().toString(36), ten: pl$("plTen").value || T("Phân loại"), nguon: "tao", nam: [K.y], lop,
     du: {[K.y]: {g0: {x0: K.g.x0, y1: K.g.y1, res: K.g.res, w: K.g.w, h: K.g.h}, data: plGiaTri(K)}},
     tham_so: {pp: K.pp, k: K.kv, he: K.he, bo: K.bo, dac_trung: K.ids, pham_vi: v27TenPV(K.PV), so_mau: K.nMau, nguon_mau: K.nguon || "trong", so_mau_ngoai: K.nNgoai || 0}, tao_luc: new Date().toISOString()});

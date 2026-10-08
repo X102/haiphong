@@ -372,6 +372,13 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 #dlgXB textarea{width:100%;min-height:38px;font-size:12px}
 #xbXem{max-width:100%;border:1px solid var(--ln);background:#fff;display:block;margin:6px auto}
 #xbCG label{display:block;font-size:12px}
+.xahop{border:1px solid #eaecf0;border-radius:6px;padding:4px 6px;margin:3px 0;background:#fcfcfd}
+.xahop-dau,.xahop-cuoi{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.xahop-dau input[type=search]{flex:1;min-width:90px}.xahop-cuoi input[type=text]{flex:1;min-width:80px}
+.xahop-ds{max-height:150px;overflow:auto;margin:3px 0;columns:2 150px;column-gap:10px}
+.xahop-ds label{display:block;font-size:12px;break-inside:avoid;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa-hang{padding:3px 0;border-bottom:1px solid #f2f4f7}.pa-hang .pa-nut{white-space:nowrap}.pa-hang .pa-nut button{padding:0 5px;margin-left:2px}
+.pa-hang .pa-nut button.on{background:#dbeafe;border-color:#3b82f6}
 #xbLop .xbR{display:flex;align-items:center;gap:6px;font-size:12px;padding:2px 0;border-bottom:1px solid #eaecf0}
 #xbLop .xbR label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #xbLop .xbR input[type=range]{width:90px}
@@ -702,7 +709,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
         <option value="none">không ảnh nền</option>
       </select>
       <label title="tên địa danh, đường trên mọi ảnh nền và lớp đối chiếu"><input type="checkbox" id="cNhan"> nhãn</label>
-      <select id="selNhan" title="nguồn nhãn"><option value="gg">Google</option><option value="esri">Esri</option></select>
+      <select id="selNhan" title="nguồn nhãn"><option value="gg">Google</option><option value="esri">Esri</option><option value="carto">CARTO (OSM)</option></select>
     </div>
     <div class="row"><select id="selRel" style="width:100%"></select></div>
     <div class="mu sm" id="relnote"></div>
@@ -1087,6 +1094,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Thang màu, POI, đồ thị (3.10.1)</b>: ô “đến mã” luôn ghi mã điểm đang xem, gõ một phần mã cũng tìm được. Góc trái dưới bản đồ có <b>thang màu</b> của mọi lớp đang hiện bằng bảng màu (chỉ số, nhiệt độ, DEM, lớp một băng) và chú giải lớp phân loại. POI Overture: bấm vào nhóm ở chú giải để ẩn, hiện; từ mức phóng 17 có tên; bấm vào POI hoặc nhà để xem thông tin (loại, địa chỉ, điện thoại, web, độ tin cậy, nguồn; diện tích, số tầng). Đường mùa vụ: bấm vào đồ thị để xem mọi giá trị tại kỳ đó; ô cạnh + S1 chọn đường VV, VH, VH−VV.</li>
     <li><b>Nguồn mới từ Hugging Face (3.11)</b>: khi bộ dữ liệu đã chạy ô Colab HF_311_NGUON_MOI, bảng lớp đối chiếu có thêm: ảnh màu <b>AlphaEarth</b> (3 thành phần chính của 64 chiều, mỗi năm 2017-2025), <b>OPERA DIST-ANN</b> (xáo trộn thực vật trong năm, mức suy giảm lớn nhất), <b>OPERA DSWx-HLS</b> (tần suất có nước mặt trong năm), <b>ánh sáng đêm VIIRS</b> (thang log), <b>GlobalBuildingAtlas</b> (chiều cao nhà, tỉ lệ phủ nhà). Bảng giá trị tại điểm và thang màu hiện đúng giá trị thật và đơn vị. Đồ thị “giá trị điểm ảnh theo năm” có nhóm <b>AlphaEarth: độ giống năm trước, năm đầu</b> (cos của 64 chiều; tụt xuống là điểm có thay đổi). Gợi ý lớp dùng 64 chiều AlphaEarth (ô “dùng AlphaEarth” cạnh ô gợi ý lớp).</li>
     <li><b>Mẫu từ nơi khác (3.12)</b>: ở bảng <b>Phân loại từ điểm mẫu</b>, ô <b>Mẫu huấn luyện</b> cho lấy thêm mẫu ở vùng xung quanh (2, 5, 10 km) hoặc ở mọi điểm đã gán (gần trước, tối đa 1500), rồi phân loại riêng phạm vi đã chọn. Đặc trưng tại các điểm đó đọc trên cùng lưới, cùng thang như phạm vi. Tóm tắt ghi số mẫu trong và ngoài phạm vi, và độ đúng riêng của mẫu trong phạm vi.</li>
+    <li><b>Xuất bản đồ, chọn xã, phương án (3.13)</b>: bản đồ xuất ghi tên lớp theo ngôn ngữ đang chọn; tên tệp có nội dung, năm, phạm vi, khổ, dpi, giờ; nhãn Esri không tải về để xuất được thì lấy nhãn Google hoặc CARTO. Danh sách xã ở các bảng là ô tích có tìm kiếm và nút "lưu thành vùng gộp"; hộp xuất bản đồ có khung "các xã chọn dưới đây". Xuất điểm mẫu Shapefile (ZIP), chọn các bộ điểm để gộp. Ở bảng Thống kê, mỗi phương án tạo ra ghi phạm vi, thời gian tạo, số mẫu, có nút xem trên bản đồ, đến, đổi tên, xuất bản đồ, GeoTIFF; tên trùng tự đánh số.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2406,7 +2414,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.12";
+const VERSION = "3.13";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3533,6 +3541,7 @@ function setLang(l) {
 /*__V310__*/
 /*__V3101__*/
 /*__V311__*/
+/*__V313__*/
 /*__PWA__*/
 </script>
 </body>

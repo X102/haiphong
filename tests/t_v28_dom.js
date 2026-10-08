@@ -110,7 +110,7 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   $("xbTieuDe").value = "Thử xuất"; doi("xbKho", "c2"); ok($("xbW").value === "17.5" && /2067 × 1417/.test($("xbTT").textContent), "khổ hai cột 17.5 × 12 cm ở 300 dpi = 2067 × 1417 điểm ảnh");
   nb = blobs.length; $("xbXuatBtn").click(); await until(() => /đã xuất/.test($("xbTT").textContent) || /lỗi/.test($("xbTT").textContent), 20000, "xuất");
   const b = blobs[nb], u = b ? new Uint8Array(await new Promise(r => { const f = new w.FileReader(); f.onload = () => r(f.result); f.readAsArrayBuffer(b); })) : [];
-  ok(b && b.type === "image/jpeg" && u[13] === 1 && u[14] * 256 + u[15] === 300 && /đã xuất ban_do_thu_xuat_300dpi_/i.test($("xbTT").textContent), `JPEG ghi 300 dpi, tên tệp theo tiêu đề (${$("xbTT").textContent.slice(0, 80)})`);
+  ok(b && b.type === "image/jpeg" && u[13] === 1 && u[14] * 256 + u[15] === 300 && /đã xuất ban_do_Thu_xuat_17\.5x12cm_300dpi_\d{4}-\d{2}-\d{2}_\d{4}\.jpg/.test($("xbTT").textContent), `JPEG ghi 300 dpi, tên tệp theo tiêu đề (${$("xbTT").textContent.slice(0, 80)})`);
   doi("xbDD", "png"); $("xbXemBtn").click(); await until(() => /xem trước/.test($("xbTT").textContent) || /lỗi/.test($("xbTT").textContent), 20000, "xem trước");
   ok(/xem trước/.test($("xbTT").textContent), "xem trước dựng ở độ phân giải màn hình");
   $("xbDong").click(); doi("xbDD", "jpg");

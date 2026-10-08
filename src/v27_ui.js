@@ -30,6 +30,8 @@ function v27Nhan() {                          // lớp nhãn (địa danh, đư�
   if (!map.getPane("nhan27")) { const p = map.createPane("nhan27"); p.style.zIndex = 390; p.style.pointerEvents = "none"; }
   V27.nhan = ng === "esri"
     ? L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {pane: "nhan27", maxZoom: 21, maxNativeZoom: 19, attribution: "Esri"})
+    : ng === "carto"                            // bản 3.13: CARTO (OSM), cho tải chéo nên xuất bản đồ được
+    ? L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png", {pane: "nhan27", subdomains: "abcd", maxZoom: 21, maxNativeZoom: 20, attribution: "© CARTO, © OpenStreetMap contributors"})
     : L.tileLayer(ggUrl("h"), {pane: "nhan27", subdomains: "0123", maxZoom: 21, maxNativeZoom: 20, attribution: "© Google"});
   V27.nhan.addTo(map);
 }

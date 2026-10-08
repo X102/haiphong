@@ -559,7 +559,7 @@ async function xbChay(xem) {
     const R = await xbVe(geoTif ? Object.assign({}, o, {chiKhung: true}) : o, tt); if (tok !== XB.tok) return;
     const ghi = R.thieu.length ? " " + T("Không lấy được: {l} (máy chủ không cho tải chéo hoặc không có ô ảnh).", {l: R.thieu.join(", ")}) : "";
     if (xem) { const cv = xb$("xbXem"); cv.width = R.W; cv.height = R.H; cv.getContext("2d").drawImage(R.c, 0, 0); tt(T("xem trước ({t})", {t: R.tl || "-"}) + ghi); return; }
-    const goc = (o.tieuDe ? `ban_do_${v28TenTep(o.tieuDe)}` : "ban_do") + `_${o.dpi}dpi_${stamp()}`, E = R.E;
+    const goc = typeof xbTenTep === "function" ? xbTenTep(o) : (o.tieuDe ? `ban_do_${v28TenTep(o.tieuDe)}` : "ban_do") + `_${o.dpi}dpi_${stamp()}`, E = R.E;   // bản 3.13: tên có nội dung, phạm vi, khổ
     let ten, du, kieu;
     if (geoTif) {                                // GeoTIFF khung bản đồ: RGBA 8 bit, EPSG:3857, điểm ảnh = r mét Web Mercator
       const id = R.c.getContext("2d").getImageData(0, 0, R.W, R.H).data, N = R.W * R.H, B = [0, 1, 2, 3].map(() => new Uint8Array(N));
