@@ -311,7 +311,7 @@ var XH = (function () {
     obj[1] = "<< /Type /Catalog /Pages 2 0 R /Extensions << /ADBE << /BaseVersion /1.7 /ExtensionLevel 3 >> >> >>";   // mở rộng địa lý của Adobe cho PDF 1.7
     obj[2] = "<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
     obj[3] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pdfSo(o.wPt) + " " + pdfSo(o.hPt) + "] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R" +
-      " /VP [<< /Type /Viewport /BBox [" + vp.map(pdfSo).join(" ") + "] /Name " + pdfChuoi(o.ten || "map") + " /Measure 6 0 R >>] >>";
+      " /VP [" + (o.vpDs && o.vpDs.length ? o.vpDs : [vp]).map(function (v, i) { return "<< /Type /Viewport /BBox [" + v.map(pdfSo).join(" ") + "] /Name " + pdfChuoi((o.ten || "map") + (o.vpDs && o.vpDs.length > 1 ? " " + (i + 1) : "")) + " /Measure 6 0 R >>"; }).join(" ") + "] >>";   // bản 3.16: nhiều khung cùng phạm vi (bản đồ ghép)
     obj[4] = null;                                        // ảnh: ghi riêng (nhị phân)
     obj[5] = "<< /Length " + nd.length + " >>\nstream\n" + nd + "\nendstream";
     obj[6] = "<< /Type /Measure /Subtype /GEO /Bounds [0 0 0 1 1 1 1 0] /GPTS [" +

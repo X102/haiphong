@@ -170,8 +170,8 @@ function xbLuoi(g, E, o, fs, k) {               // lưới toạ độ: đườn
   const tk = fs * 0.45; g.strokeStyle = "#111"; g.lineWidth = Math.max(1, 0.9 * k); g.setLineDash([]);
   nhan.forEach(([t, v, s]) => {
     g.beginPath();
-    if (t === "x") { g.moveTo(v, E.fy + E.fh); g.lineTo(v, E.fy + E.fh + tk); g.moveTo(v, E.fy); g.lineTo(v, E.fy - tk); g.stroke(); if (o.nhanLuoi !== false) xbChu(g, s, v, E.fy + E.fh + tk + fs * 0.62, fs * 0.82, "center"); }
-    else { g.moveTo(E.fx, v); g.lineTo(E.fx - tk, v); g.moveTo(E.fx + E.fw, v); g.lineTo(E.fx + E.fw + tk, v); g.stroke(); if (o.nhanLuoi !== false) xbChu(g, s, E.fx - tk - fs * 0.2, v, fs * 0.82, "right"); }
+    if (t === "x") { g.moveTo(v, E.fy + E.fh); g.lineTo(v, E.fy + E.fh + tk); g.moveTo(v, E.fy); g.lineTo(v, E.fy - tk); g.stroke(); if (o.nhanLuoi !== false && o.nhanX !== false) xbChu(g, s, v, E.fy + E.fh + tk + fs * 0.62, fs * 0.82, "center"); }
+    else { g.moveTo(E.fx, v); g.lineTo(E.fx - tk, v); g.moveTo(E.fx + E.fw, v); g.lineTo(E.fx + E.fw + tk, v); g.stroke(); if (o.nhanLuoi !== false && o.nhanY !== false) xbChu(g, s, E.fx - tk - fs * 0.2, v, fs * 0.82, "right"); }
   });
 }
 function xbBac(g, E, fs, chu) {                 // mũi tên bắc ở góc trên phải trong khung
@@ -411,6 +411,36 @@ function xbCatPath(g, E, mp) {                   // đường cắt theo đa gi�
   g.beginPath(); mp.forEach(pg => pg.forEach(r => r.forEach((q, i) => { const p = xbP(E, {lat: q[1], lng: q[0]}); if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }))); g.closePath();
 }
 
+/* bản 3.16: vẽ các lớp vào một khung bản đồ (dùng chung cho bản đồ đơn, xuất hàng loạt, bản đồ ghép nhiều năm);
+   cache: Map lớp ô -> ảnh khung đã dựng (các ô của bản đồ ghép cùng phạm vi, cùng cỡ: ảnh nền chỉ tải một lần) */
+async function xbVeCacLop(g, E, F, ds, mp, k, fs, tt, cache) {
+  const thieu = [], nhan = []; let tong = 0, xong = 0;
+  g.save(); g.beginPath(); g.rect(F.x, F.y, F.w, F.h); g.clip();
+  const E0 = Object.assign({}, E, {fx: 0, fy: 0});
+  for (const {s, d} of ds) {
+    const v = d.ve(s); if (!v) continue;
+    const cat = mp && (d.nhom === "du_lieu" || d.nhom === "ket_qua");
+    if (cat) { g.save(); xbCatPath(g, E, mp); g.clip("evenodd"); }
+    if (v.o) {
+      let cv = cache ? cache.get(v.o) : null;
+      if (!cv) {
+        cv = document.createElement("canvas"); cv.width = Math.ceil(F.w); cv.height = Math.ceil(F.h); const g2 = cv.getContext("2d");
+        const dd = {co: 0, thieu: 0}, viec = xbVeO(g2, E0, v.o, dd, 1); tong += viec.length; cv._dd = dd;
+        await xbHang(viec, 6, () => { xong++; if (tt) tt(T("đang dựng bản đồ: {a}/{b} ô ảnh", {a: xong, b: tong})); });
+        if (cache) cache.set(v.o, cv);
+      }
+      if (cv._dd.co) { g.save(); g.globalAlpha = s.op; g.drawImage(cv, F.x, F.y); g.restore(); }
+      if (cv._dd.thieu && !cv._dd.co) thieu.push(d.ten);
+    } else if (v.anh) xbVeCanvas(g, E, v.anh, v.bb, s.op);
+    else if (v.paths) v.paths.forEach(p => xbVeVecto(g, E, p, k, nhan, s.op));
+    if (cat) g.restore();
+  }
+  if (mp) { g.save(); xbCatPath(g, E, mp); g.strokeStyle = "#111"; g.lineWidth = Math.max(1, 1.3 * k); g.setLineDash([]); g.stroke(); g.restore(); }
+  nhan.forEach(n => xbChu(g, n.t, n.p[0], n.p[1], fs * 0.72, "center", false, "#111", "rgba(255,255,255,.9)"));
+  g.restore();
+  return {thieu, nhan};
+}
+
 /* ---------- dựng bản đồ ---------- */
 async function xbVe(o, tt) {                     // -> {c: canvas, thieu: [tên lớp thiếu ô], tl, W, H, E, F}
   const dpi = o.dpi, cm = v => v / 2.54 * dpi, fs = o.chu * dpi / 72, k = dpi / 96 * (o.net || 1);
@@ -440,26 +470,7 @@ async function xbVe(o, tt) {                     // -> {c: canvas, thieu: [tên 
   // các lớp theo thứ tự trong hộp thoại (dưới trước, trên sau)
   const by = {}; xbDS().forEach(d => { by[d.k] = d; });
   const ds = XB.lop.filter(s => s.on && s.op > 0 && by[s.k]).map(s => ({s, d: by[s.k]}));
-  const thieu = [], nhan = []; let tong = 0, xong = 0;
-  g.save(); g.beginPath(); g.rect(F.x, F.y, F.w, F.h); g.clip();
-  const E0 = Object.assign({}, E, {fx: 0, fy: 0});
-  for (const {s, d} of ds) {
-    const v = d.ve(s); if (!v) continue;
-    const cat = mp && (d.nhom === "du_lieu" || d.nhom === "ket_qua");
-    if (cat) { g.save(); xbCatPath(g, E, mp); g.clip("evenodd"); }
-    if (v.o) {
-      const cv = document.createElement("canvas"); cv.width = Math.ceil(F.w); cv.height = Math.ceil(F.h); const g2 = cv.getContext("2d");
-      const dd = {co: 0, thieu: 0}, viec = xbVeO(g2, E0, v.o, dd, 1); tong += viec.length;
-      await xbHang(viec, 6, () => { xong++; if (tt) tt(T("đang dựng bản đồ: {a}/{b} ô ảnh", {a: xong, b: tong})); });
-      if (dd.co) { g.save(); g.globalAlpha = s.op; g.drawImage(cv, F.x, F.y); g.restore(); }
-      if (dd.thieu && !dd.co) thieu.push(d.ten);
-    } else if (v.anh) xbVeCanvas(g, E, v.anh, v.bb, s.op);
-    else if (v.paths) v.paths.forEach(p => xbVeVecto(g, E, p, k, nhan, s.op));
-    if (cat) g.restore();
-  }
-  if (mp) { g.save(); xbCatPath(g, E, mp); g.strokeStyle = "#111"; g.lineWidth = Math.max(1, 1.3 * k); g.setLineDash([]); g.stroke(); g.restore(); }
-  nhan.forEach(n => xbChu(g, n.t, n.p[0], n.p[1], fs * 0.72, "center", false, "#111", "rgba(255,255,255,.9)"));
-  g.restore();
+  const {thieu} = await xbVeCacLop(g, E, F, ds, mp, k, fs, tt);
   let tl = "";
   if (!chi) {
     xbLuoi(g, E, o, fs, k);
@@ -550,6 +561,28 @@ async function xbBlob(c, kieu, q) {
   const ab = blob.arrayBuffer ? await blob.arrayBuffer() : await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = () => no(fr.error); fr.readAsArrayBuffer(blob); });
   return new Uint8Array(ab);
 }
+async function xbTep(R, o, goc, geoTif) {        // bản 3.16: ảnh đã dựng -> các tệp [{ten, du, kieu}] theo định dạng (ảnh, kèm tệp toạ độ nếu chọn)
+  const E = R.E;
+  if (geoTif) {                                  // GeoTIFF khung bản đồ: RGBA 8 bit, EPSG:3857, điểm ảnh = r mét Web Mercator
+    const id = R.c.getContext("2d").getImageData(0, 0, R.W, R.H).data, N = R.W * R.H, B = [0, 1, 2, 3].map(() => new Uint8Array(N));
+    for (let i = 0; i < N; i++) { B[0][i] = id[i * 4]; B[1][i] = id[i * 4 + 1]; B[2][i] = id[i * 4 + 2]; B[3][i] = id[i * 4 + 3]; }
+    return [{ten: goc + ".tif", du: new Uint8Array(XH.tifGhi({bands: B, w: R.W, h: R.H, x0: E.x0 - E.fx * E.r, y1: E.y1 + E.fy * E.r, res: E.r, epsg: 3857, rgb: true})), kieu: "image/tiff"}];
+  }
+  if (o.dd === "pdf") {                          // PDF có toạ độ: cả trang là một ảnh JPEG, khung bản đồ (mọi khung, nếu là bản đồ ghép) khai báo bằng Viewport + Measure GEO
+    const jpg = await xbBlob(R.c, "image/jpeg", 0.92), kp = 72 / o.dpi, a = CORE.m2ll(E.x0, E.y0), b = CORE.m2ll(E.x1, E.y1);
+    const vpF = F => [F.x * kp, (R.H - F.y - F.h) * kp, (F.x + F.w) * kp, (R.H - F.y) * kp];
+    return [{ten: goc + ".pdf", kieu: "application/pdf", du: XH.pdfGeo({jpeg: jpg, wPx: R.W, hPx: R.H, wPt: R.W * kp, hPt: R.H * kp, vp: vpF(R.F), vpDs: R.Fds ? R.Fds.map(vpF) : null,
+      ll: {w: a[0], s: a[1], e: b[0], n: b[1]}, ten: o.tieuDe || "map"})}];
+  }
+  const kieu = o.dd === "png" ? "image/png" : "image/jpeg";
+  const u8 = await xbBlob(R.c, kieu, 0.93), anh = o.dd === "png" ? XH.pngDpi(u8, o.dpi) : XH.jpegDpi(u8, o.dpi), duoi = o.dd === "png" ? "png" : "jpg";
+  const out = [{ten: goc + "." + duoi, du: anh, kieu}];
+  if (o.wf && !R.Fds) {                          // world file: tâm điểm ảnh góc trên trái của cả ảnh (lề, chú giải nằm ngoài khung nhưng cùng phép affine)
+    out.push({ten: goc + (duoi === "png" ? ".pgw" : ".jgw"), du: XH.worldFile(E.r, E.x0 + (0.5 - E.fx) * E.r, E.y1 - (0.5 - E.fy) * E.r)},
+      {ten: goc + ".prj", du: XH.WKT_3857}, {ten: goc + "." + duoi + ".aux.xml", du: XH.auxXml()});
+  }
+  return out;
+}
 async function xbChay(xem) {
   const tok = ++XB.tok, o = Object.assign({}, xbDoc()), tt = s => { if (tok === XB.tok) xb$("xbTT").textContent = s; };
   try {
@@ -559,28 +592,11 @@ async function xbChay(xem) {
     const R = await xbVe(geoTif ? Object.assign({}, o, {chiKhung: true}) : o, tt); if (tok !== XB.tok) return;
     const ghi = R.thieu.length ? " " + T("Không lấy được: {l} (máy chủ không cho tải chéo hoặc không có ô ảnh).", {l: R.thieu.join(", ")}) : "";
     if (xem) { const cv = xb$("xbXem"); cv.width = R.W; cv.height = R.H; cv.getContext("2d").drawImage(R.c, 0, 0); tt(T("xem trước ({t})", {t: R.tl || "-"}) + ghi); return; }
-    const goc = typeof xbTenTep === "function" ? xbTenTep(o) : (o.tieuDe ? `ban_do_${v28TenTep(o.tieuDe)}` : "ban_do") + `_${o.dpi}dpi_${stamp()}`, E = R.E;   // bản 3.13: tên có nội dung, phạm vi, khổ
+    const goc = typeof xbTenTep === "function" ? xbTenTep(o) : (o.tieuDe ? `ban_do_${v28TenTep(o.tieuDe)}` : "ban_do") + `_${o.dpi}dpi_${stamp()}`;   // bản 3.13: tên có nội dung, phạm vi, khổ
+    const tep = await xbTep(R, o, goc, geoTif);
     let ten, du, kieu;
-    if (geoTif) {                                // GeoTIFF khung bản đồ: RGBA 8 bit, EPSG:3857, điểm ảnh = r mét Web Mercator
-      const id = R.c.getContext("2d").getImageData(0, 0, R.W, R.H).data, N = R.W * R.H, B = [0, 1, 2, 3].map(() => new Uint8Array(N));
-      for (let i = 0; i < N; i++) { B[0][i] = id[i * 4]; B[1][i] = id[i * 4 + 1]; B[2][i] = id[i * 4 + 2]; B[3][i] = id[i * 4 + 3]; }
-      du = new Uint8Array(XH.tifGhi({bands: B, w: R.W, h: R.H, x0: E.x0 - E.fx * E.r, y1: E.y1 + E.fy * E.r, res: E.r, epsg: 3857, rgb: true}));
-      ten = goc + ".tif"; kieu = "image/tiff";
-    } else if (o.dd === "pdf") {                // PDF có toạ độ: cả trang là một ảnh JPEG, khung bản đồ khai báo bằng Viewport + Measure GEO
-      const jpg = await xbBlob(R.c, "image/jpeg", 0.92), kp = 72 / o.dpi, a = CORE.m2ll(E.x0, E.y0), b = CORE.m2ll(E.x1, E.y1);
-      du = XH.pdfGeo({jpeg: jpg, wPx: R.W, hPx: R.H, wPt: R.W * kp, hPt: R.H * kp, vp: [R.F.x * kp, (R.H - R.F.y - R.F.h) * kp, (R.F.x + R.F.w) * kp, (R.H - R.F.y) * kp],
-        ll: {w: a[0], s: a[1], e: b[0], n: b[1]}, ten: o.tieuDe || "map"});
-      ten = goc + ".pdf"; kieu = "application/pdf";
-    } else {
-      kieu = o.dd === "png" ? "image/png" : "image/jpeg";
-      const u8 = await xbBlob(R.c, kieu, 0.93), anh = o.dd === "png" ? XH.pngDpi(u8, o.dpi) : XH.jpegDpi(u8, o.dpi), duoi = o.dd === "png" ? "png" : "jpg";
-      if (o.wf) {                                // world file: tâm điểm ảnh góc trên trái của cả ảnh (lề, chú giải nằm ngoài khung nhưng cùng phép affine)
-        const wf = XH.worldFile(E.r, E.x0 + (0.5 - E.fx) * E.r, E.y1 - (0.5 - E.fy) * E.r);
-        du = XH.zip([{ten: goc + "." + duoi, du: anh}, {ten: goc + (duoi === "png" ? ".pgw" : ".jgw"), du: wf}, {ten: goc + ".prj", du: XH.WKT_3857},
-          {ten: goc + "." + duoi + ".aux.xml", du: XH.auxXml()}]);
-        ten = goc + ".zip"; kieu = "application/zip";
-      } else { du = anh; ten = goc + "." + duoi; }
-    }
+    if (tep.length === 1) ({ten, du, kieu} = tep[0]);
+    else { du = XH.zip(tep.map(f => ({ten: f.ten, du: f.du}))); ten = goc + ".zip"; kieu = "application/zip"; }
     v28Tai(ten, du, kieu);
     tt(T("đã xuất {f}: {w} × {h} điểm ảnh, {d} dpi, {cw} × {ch} cm", {f: ten, w: R.W, h: R.H, d: o.dpi, cw: o.w, ch: o.h}) + ghi);
     return {ten, du, R};

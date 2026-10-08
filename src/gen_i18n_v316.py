@@ -1,0 +1,43 @@
+# Bản 3.16: xuất bản đồ nhiều năm (từng năm một tệp, ghép các năm trong một ảnh, bảng diện tích theo năm)
+R316 = [
+("Nhiều năm", "Несколько лет", "Several years"),
+("Số cột", "Столбцов", "Columns"),
+("Bảng số liệu", "Таблица", "Table"),
+("các lớp dữ liệu khác có năm đó cũng đổi theo năm của từng ô", "другие слои данных за этот год тоже показываются по году каждой ячейки", "other data layers that have that year also follow the year of each panel"),
+("một năm (chọn ở danh sách lớp)", "один год (выбирается в списке слоёв)", "one year (chosen in the layer list)"),
+("từng năm một tệp (gói ZIP kèm bảng diện tích)", "каждый год отдельным файлом (ZIP с таблицей площадей)", "one file per year (ZIP with an area table)"),
+("ghép các năm trong một ảnh (chung chú giải)", "все годы на одном изображении (общая легенда)", "all years in one image (shared legend)"),
+("tự chọn", "автоматически", "automatic"),
+("bản đồ có nhiều năm: xuất từng năm thành tệp riêng, hoặc ghép các năm thành một ảnh có chung chú giải và bảng số liệu",
+ "карта за несколько лет: экспорт каждого года отдельным файлом или компоновка всех лет на одном изображении с общей легендой и таблицей",
+ "multi-year map: export each year as a separate file, or lay out all years in one image with a shared legend and a table"),
+("bảng diện tích từng lớp theo năm dưới các ô bản đồ, đếm trong khung (hoặc trong ranh giới cắt)",
+ "таблица площадей классов по годам под картами; подсчёт в рамке карты (или в границе обрезки)",
+ "table of class areas by year below the maps, counted within the map frame (or within the clipping boundary)"),
+("{n} năm: {n} tệp", "лет: {n}; файлов: {n}", "{n} years: {n} files"),
+("{n} năm: {n} ô bản đồ", "лет: {n}; карт: {n}", "{n} years: {n} map panels"),
+("% diện tích có dữ liệu", "% площади с данными", "% of the area with data"),
+("ha (% diện tích có dữ liệu)", "га (% площади с данными)", "ha (% of the area with data)"),
+("Diện tích các lớp theo năm, {d}", "Площади классов по годам, {d}", "Class areas by year, {d}"),
+("đếm trong ranh giới {v}", "подсчёт в границе: {v}", "counted within the boundary of {v}"),
+("đếm trong khung bản đồ", "подсчёт в рамке карты", "counted within the map frame"),
+("Lớp", "Класс", "Class"),
+("tổng có dữ liệu", "всего с данными", "total with data"),
+("khổ ảnh không đủ chỗ cho {n} ô bản đồ: tăng khổ, giảm số năm, cỡ chữ hoặc bỏ bảng", "формат мал для {n} карт: увеличьте формат, уменьшите число лет, размер шрифта или отключите таблицу",
+ "the page is too small for {n} map panels: enlarge the page, choose fewer years, a smaller font or no table"),
+("ô {i}/{n}: năm {y}…", "карта {i}/{n}: {y} г.…", "panel {i}/{n}: {y}…"),
+("đang tính diện tích các năm…", "расчёт площадей по годам…", "computing areas by year…"),
+("chọn ít nhất một năm", "выберите хотя бы один год", "choose at least one year"),
+("xem trước: {n} năm, {c} cột × {h} hàng ({t})", "предпросмотр: лет {n}, {c} столбц. × {h} строк ({t})", "preview: {n} years, {c} columns × {h} rows ({t})"),
+("đã xuất {f}: {n} năm trong một ảnh, {w} × {h} điểm ảnh, {d} dpi", "экспортировано {f}: {n} лет на одном изображении, {w} × {h} пикселей, {d} dpi", "exported {f}: {n} years in one image, {w} × {h} pixels, {d} dpi"),
+("Bản đồ ghép không xuất GeoTIFF: đã xuất PNG.", "Компоновка не экспортируется в GeoTIFF: сохранён PNG.", "A multi-panel map cannot be exported as GeoTIFF: PNG was saved."),
+("năm {y} ({i}/{n}): {s}", "{y} г. ({i}/{n}): {s}", "{y} ({i}/{n}): {s}"),
+("xem trước năm {y} (xuất sẽ tạo {n} tệp)", "предпросмотр {y} г. (при экспорте будет файлов: {n})", "preview of {y} (export will create {n} files)"),
+("đã xuất {f}: {n} năm, {k} tệp", "экспортировано {f}: лет {n}, файлов {k}", "exported {f}: {n} years, {k} files"),
+]
+HELP316 = {
+  "ru": ("<li><b>Большой охват, объединение вариантов (3.15)</b>", """
+    <li><b>Экспорт карт за несколько лет (3.16)</b>: если выбранная карта содержит несколько лет (многолетний вариант, классификация за несколько лет, слой данных по годам), в окне экспорта появляется раздел «Несколько лет»: экспорт каждого года отдельным файлом (ZIP с таблицей площадей CSV) или компоновка всех лет на одном изображении: карты одного охвата и масштаба с подписью года, общая легенда, таблица площадей классов по годам со столбцом изменения.</li>"""),
+  "en": ("<li><b>Large extent, merging variants (3.15)</b>", """
+    <li><b>Multi-year map export (3.16)</b>: when the chosen map has several years (a multi-year variant, a multi-year classification, a yearly data layer), the export dialog shows a “Several years” section: export each year as a separate file (ZIP with a CSV area table), or lay out all years in one image: panels with the same extent and scale labelled by year, a shared legend, and a table of class areas by year with a change column.</li>"""),
+}
