@@ -1095,6 +1095,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Nguồn mới từ Hugging Face (3.11)</b>: khi bộ dữ liệu đã chạy ô Colab HF_311_NGUON_MOI, bảng lớp đối chiếu có thêm: ảnh màu <b>AlphaEarth</b> (3 thành phần chính của 64 chiều, mỗi năm 2017-2025), <b>OPERA DIST-ANN</b> (xáo trộn thực vật trong năm, mức suy giảm lớn nhất), <b>OPERA DSWx-HLS</b> (tần suất có nước mặt trong năm), <b>ánh sáng đêm VIIRS</b> (thang log), <b>GlobalBuildingAtlas</b> (chiều cao nhà, tỉ lệ phủ nhà). Bảng giá trị tại điểm và thang màu hiện đúng giá trị thật và đơn vị. Đồ thị “giá trị điểm ảnh theo năm” có nhóm <b>AlphaEarth: độ giống năm trước, năm đầu</b> (cos của 64 chiều; tụt xuống là điểm có thay đổi). Gợi ý lớp dùng 64 chiều AlphaEarth (ô “dùng AlphaEarth” cạnh ô gợi ý lớp).</li>
     <li><b>Mẫu từ nơi khác (3.12)</b>: ở bảng <b>Phân loại từ điểm mẫu</b>, ô <b>Mẫu huấn luyện</b> cho lấy thêm mẫu ở vùng xung quanh (2, 5, 10 km) hoặc ở mọi điểm đã gán (gần trước, tối đa 1500), rồi phân loại riêng phạm vi đã chọn. Đặc trưng tại các điểm đó đọc trên cùng lưới, cùng thang như phạm vi. Tóm tắt ghi số mẫu trong và ngoài phạm vi, và độ đúng riêng của mẫu trong phạm vi.</li>
     <li><b>Xuất bản đồ, chọn xã, phương án (3.13)</b>: bản đồ xuất ghi tên lớp theo ngôn ngữ đang chọn; tên tệp có nội dung, năm, phạm vi, khổ, dpi, giờ; nhãn Esri không tải về để xuất được thì lấy nhãn Google hoặc CARTO. Danh sách xã ở các bảng là ô tích có tìm kiếm và nút "lưu thành vùng gộp"; hộp xuất bản đồ có khung "các xã chọn dưới đây". Xuất điểm mẫu Shapefile (ZIP), chọn các bộ điểm để gộp. Ở bảng Thống kê, mỗi phương án tạo ra ghi phạm vi, thời gian tạo, số mẫu, có nút xem trên bản đồ, đến, đổi tên, xuất bản đồ, GeoTIFF; tên trùng tự đánh số.</li>
+    <li><b>Nhiều năm, hậu xử lý (3.14)</b>: phân loại từ điểm mẫu chạy được nhiều năm một lần (ô "nhiều năm"), có bảng theo năm và lưu một phương án nhiều năm. Hậu xử lý: đồng nhất trong đối tượng (siêu điểm ảnh), lọc đa số 3 × 3 hoặc 5 × 5, bỏ mảnh nhỏ hơn một diện tích, làm mịn theo năm. Tên phương án, tiêu đề, phụ đề bản đồ theo ngôn ngữ đang chọn; địa danh Việt ở giao diện Nga, Anh viết không dấu.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2414,7 +2415,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.13";
+const VERSION = "3.14";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3542,6 +3543,7 @@ function setLang(l) {
 /*__V3101__*/
 /*__V311__*/
 /*__V313__*/
+/*__V314__*/
 /*__PWA__*/
 </script>
 </body>

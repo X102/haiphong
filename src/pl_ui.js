@@ -196,6 +196,8 @@ async function plChay() {
       cls[i] = r.k + 1; s1[i] = r.s1; mg[i] = r.m; k2[i] = r.k2;
       if (q % 40000 === 39999) { tt.textContent = T("đang phân loại {p} %…", {p: Math.round(100 * q / chay.length)}); await plTre(); if (tok !== PL.tok) return; }
     }
+    let hx = null;                               // bản 3.14: hậu xử lý (đối tượng, lọc đa số, bỏ mảnh nhỏ)
+    if (typeof plHauXuLy === "function") { hx = await plHauXuLy({cls, g, K, mg, chay, F, nf, mu, a, tt, tok}); if (tok !== PL.tok) return; }
     tt.textContent = T("đang kiểm định, tìm chỗ cần thêm mẫu…"); await plTre();
     const KD = plKiemDinh(V, lab, K, pp, kv, s);
     // ngưỡng "xa mọi mẫu": phân vị 5 % độ giống của mỗi mẫu với mẫu khác gần nhất (hoặc với đại diện gần nhất)
@@ -222,7 +224,7 @@ async function plChay() {
       xaTrong = Object.entries(haX).filter(([x0, h]) => !coMau.has(+x0) && h >= 0.01 * tong).map(([x0, h]) => ({ten: (VG.xa.find(q => q.i === +x0) || {}).ten || x0, ha: h, x: +x0})).sort((p, q) => q.ha - p.ha); }
     if (tok !== PL.tok) return;
     PL.kq = {g, PV, y, he, pp, kv, bo, K, keys, lop, cls, s1, mg, xa, lan, tau, m0, dt, tong, haXa, haLan, cap, manh, tach, sai, soMau, xaTrong, KD, mau, lab, nMau: mau.length, nRef: refs.length, ids, chay: chay.length,
-      nguon, soNgoai, nNgoai: mau.filter(m => m.ngoai).length, dNgoai, catBot, Mt};
+      nguon, soNgoai, nNgoai: mau.filter(m => m.ngoai).length, dNgoai, catBot, Mt, hx};
     plVeKQ(); pl$("plKQ").hidden = false;
     tt.textContent = T("xong: {n} điểm mẫu, {k} lớp, {h} ha", {n: mau.length, k: K, h: tong.toFixed(0)});
   } catch (e) { if (tok === PL.tok) tt.textContent = T("lỗi: ") + (typeof vgLoiDoc === "function" ? vgLoiDoc(e) : (e.message || e)); }
@@ -279,7 +281,8 @@ function plVeKQ() {
     else if (h === "them") { map.setView([d.bay[1], d.bay[0]], Math.max(map.getZoom(), 16)); const p = themDiemTai(d.bay[0], d.bay[1]); msg(T("đã thêm điểm {id}: gán nhãn năm {y} cho điểm này", {id: p.id, y: PL.kq.y}), "ok", 5000); }
     else if (h === "diem") { if (ST.diem[d.diem[0]]) { ST.bo = ST.diem[d.diem[0]].bo; buildSetSelect(); select(d.diem[0], true); } msg(d.diem.join(", "), "ok", 8000); }
     else if (h === "xa") { const x = VG.xa.find(q => q.i === d.xaI); if (x) map.fitBounds([[x.bl[1], x.bl[0]], [x.bl[3], x.bl[2]]]); } }; });
-  pl$("plTen").value = pl$("plTen").value || `${T("Phân loại")} ${K.y} · ${v27TenPV(K.PV)}`.slice(0, 80);
+  if (typeof plTenMac === "function") { if (pl$("plTen").dataset.tay !== "1") pl$("plTen").value = plTenMac().slice(0, 80); }   // bản 3.14: tên tự động theo kết quả đang xem
+  else pl$("plTen").value = pl$("plTen").value || `${T("Phân loại")} ${K.y} · ${v27TenPV(K.PV)}`.slice(0, 80);
   plVe();
 }
 function plCanvas(K, mode) {                      // bản 2.9: vẽ kết quả phân loại lên canvas (dùng cho bản đồ và cho xuất bản đồ)
