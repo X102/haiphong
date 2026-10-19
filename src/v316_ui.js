@@ -297,3 +297,10 @@ xbChay = async function (xem) {
   } catch (e) { tt(T("lỗi: ") + (/tainted|insecure|SecurityError/i.test(String(e && (e.name + e.message))) ? T("một lớp ảnh không cho tải chéo nên trình duyệt chặn xuất: tắt lớp đó hoặc đổi ảnh nền rồi thử lại") : (e.message || e))); }
   finally { L.s.nam = cu; }
 };
+
+/* =============================== BẢN 3.16.1 =============================== */
+/* Tiến độ nạp lại từ IndexedDB lúc mở trang (xem luuTT, ttNapIDB): vẽ lại các phần đã dựng từ bản lưu cũ trong lúc chờ. */
+document.addEventListener("tt-khoi-phuc", () => {
+  ["vgVeVung", "vgNhomDS", "xgNapPV", "csVe", "s2oDien", "s2oBang"].forEach(f => { try { if (typeof window[f] === "function") window[f](); } catch (e) { /* phần đó chưa mở */ } });
+  msg(T("đã nạp tiến độ lưu trong IndexedDB: {n} điểm", {n: Object.keys(ST.diem).length}), "ok", 5000);
+});

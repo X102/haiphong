@@ -628,6 +628,9 @@ _co = {r[0] for r in R}
 R = R + [r for r in R316 if r[0] not in _co]             # bản 3.16: xuất bản đồ nhiều năm
 for L_, (moc, them) in HELP316.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v3161 import R3161
+_co = {r[0] for r in R}
+R = R + [r for r in R3161 if r[0] not in _co]           # bản 3.16.1: lưu tiến độ lớn (IndexedDB), báo số điểm sau khi gộp
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

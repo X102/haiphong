@@ -949,7 +949,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div id="gtDS" data-noi18n></div>
   <div class="row">Khi các tệp gán nhãn khác nhau cho cùng điểm, cùng năm: <select id="gtKieu"><option value="moi">lấy nhãn gán sau cùng</option><option value="sau">tệp chọn sau thắng</option><option value="giu">giữ nhãn đang có</option></select></div>
   <div class="row"><label><input type="checkbox" id="gtDanh" checked> đánh dấu "xem lại" các điểm có nhãn khác nhau</label></div>
-  <div class="row"><button id="gtOk" type="button" class="on" disabled>Gộp</button><button id="gtCSV" type="button" hidden>Bảng nhãn khác nhau (CSV)</button><button id="gtDong" type="button">Đóng</button></div>
+  <div class="row"><button id="gtOk" type="button" class="on" disabled>Gộp</button><button id="gtCSV" type="button" hidden>Bảng nhãn khác nhau (CSV)</button><button id="gtpDong" type="button">Đóng</button></div>
   <div id="gtKQ" data-noi18n></div>
 </dialog>
 <dialog id="dlgGop">
@@ -2417,7 +2417,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.16";
+const VERSION = "3.16.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -2512,7 +2512,64 @@ let MAN = null, CURVES = {}, addMode = false, blinkOff = false, saveT = null;
 const OVL = {};              // id lớp -> {layer, on, op}
 const olPref = ls("laymau_hp_ol_v1") || {};
 
-function save() { clearTimeout(saveT); saveT = setTimeout(() => { ls(KEY_STATE, ST); }, 300); }
+/* bản 3.16.1: tiến độ lớn (nhiều nghìn điểm, kế hoạch cảnh S2 trực tuyến) vượt bộ nhớ localStorage của trình duyệt (khoảng 5 triệu
+   ký tự): trước đây lỗi "đầy bộ nhớ" bị bỏ qua lặng lẽ, lần mở sau trang hiện bản lưu cũ. Nay mỗi lần lưu ghi cả vào IndexedDB (không
+   giới hạn như vậy); localStorage đầy thì giữ ở đó một bản tóm tắt (không có điểm). Lúc mở trang, bản IndexedDB mới hơn được nạp lại
+   trước khi nạp bộ điểm; trong lúc chờ, việc lưu được hoãn để không ghi đè bản tốt bằng bản cũ. */
+const TT_DB = {db: null, san: false, cho: false, ls: true, bao: false, khoiPhuc: false};
+function ttMoDB() {
+  return new Promise(ok => { try { if (typeof indexedDB === "undefined" || !indexedDB) return ok(null);
+    const r = indexedDB.open("laymau_hp_tien_do", 1); r.onupgradeneeded = () => { try { r.result.createObjectStore("tt"); } catch (e) { /* đã có */ } };
+    r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); r.onblocked = () => ok(null); } catch (e) { ok(null); } });
+}
+async function ttIDB(viec, gt) {                 // viec: "doc" | "ghi"
+  if (!TT_DB.db) TT_DB.db = await ttMoDB(); const db = TT_DB.db; if (!db) return viec === "doc" ? null : false;
+  return new Promise(ok => { try {
+    const tx = db.transaction("tt", viec === "doc" ? "readonly" : "readwrite"), os = tx.objectStore("tt");
+    if (viec === "doc") { const q = os.get("st"); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }
+    else { os.put(gt, "st"); tx.oncomplete = () => ok(true); tx.onerror = tx.onabort = () => ok(false); }
+  } catch (e) { ok(viec === "doc" ? null : false); } });
+}
+function ttGon(st) {                             // bản tóm tắt cho localStorage khi đầy: cài đặt, không có điểm
+  return {chi_tom_tat: true, luu_tg: st.luu_tg, bo: st.bo, cur: st.cur, nam: st.nam, filter: st.filter, scheme: st.scheme, bo_cfg: st.bo_cfg, chiso: st.chiso, diem: {}};
+}
+function luuTT() {
+  saveT = null;
+  if (!TT_DB.san) { TT_DB.cho = true; return; }  // chưa nạp xong bản IndexedDB: lưu sau
+  ST.luu_tg = Date.now(); delete ST.chi_tom_tat;
+  let s; try { s = JSON.stringify(ST); } catch (e) { return; }
+  let okLS = false; try { localStorage.setItem(KEY_STATE, s); okLS = true; } catch (e) { okLS = false; }
+  if (!okLS) { try { localStorage.setItem(KEY_STATE, JSON.stringify(ttGon(ST))); } catch (e) { /* bỏ */ } }
+  const truoc = TT_DB.ls; TT_DB.ls = okLS;
+  ttIDB("ghi", s).then(okDB => {
+    if (!okLS && !okDB) { msg(T("Không lưu được tiến độ vào trình duyệt (bộ nhớ đầy hoặc bị chặn): hãy xuất tệp tiến độ ngay (Xuất… → tệp tiến độ JSON)."), "er", 12000); return; }
+    if (!okLS && (truoc || !TT_DB.bao)) { TT_DB.bao = true; msg(T("Tiến độ đã lớn hơn bộ nhớ thường của trình duyệt ({m} triệu ký tự): từ nay lưu trong IndexedDB. Vẫn nên xuất tệp tiến độ định kỳ.", {m: (s.length / 1e6).toFixed(1)}), "wa", 9000); }
+  });
+}
+function save() { clearTimeout(saveT); saveT = setTimeout(luuTT, 300); }
+window.addEventListener("pagehide", () => { if (saveT) { clearTimeout(saveT); luuTT(); } });
+function ttMacDinh() {                           // khoá mặc định mà các phần của trang cần (như khi khởi tạo)
+  ["vung", "khu", "nhom_xa", "osm_sua", "vgop", "s2oKho", "bo_cfg"].forEach(k => { if (!ST[k] || typeof ST[k] !== "object") ST[k] = {}; });
+  if (typeof CS_GOC !== "undefined") ST.chiso = Object.assign({dung: Object.keys(CS_GOC), tu: [], khoang: {}}, ST.chiso || {});
+}
+async function ttNapIDB() {                      // lúc mở trang: bản IndexedDB mới hơn (hoặc localStorage chỉ có bản tóm tắt) thì nạp
+  let s = null; try { s = await ttIDB("doc"); } catch (e) { s = null; }
+  let j = null; try { j = s ? JSON.parse(s) : null; } catch (e) { j = null; }
+  const tomTat = !!ST.chi_tom_tat;
+  if (j && j.diem && ((j.luu_tg || 0) > (ST.luu_tg || 0) || tomTat)) {
+    Object.keys(ST).forEach(k => { delete ST[k]; });
+    Object.assign(ST, {diem: {}, bo: "", cur: null, nam: 2025, filter: "all"}, j); delete ST.chi_tom_tat;
+    if (ST.scheme && ST.scheme.lop) { SCHEME = ST.scheme; IDX = CORE.schemeIndex(SCHEME); } else ST.scheme = SCHEME;
+    ttMacDinh(); TT_DB.khoiPhuc = true; TT_DB.ls = false;
+  } else if (tomTat) msg(T("Tiến độ được lưu trong IndexedDB nhưng không đọc được: hãy nạp lại tệp tiến độ (Tải tệp…)."), "er", 12000);
+  TT_DB.san = true;
+  if (TT_DB.khoiPhuc) {
+    try { if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1]; buildSetSelect(); render(); } catch (e) { /* trang chưa sẵn */ }
+    document.dispatchEvent(new CustomEvent("tt-khoi-phuc"));
+  }
+  if (TT_DB.cho) { TT_DB.cho = false; save(); }
+}
+const TT_NAP = ttNapIDB();
 function msg(txt, kind, ms) {
   const d = document.createElement("div"); d.className = "msg " + (kind || "wa"); d.textContent = T(txt);
   $("msgs").appendChild(d); if (ms !== 0) setTimeout(() => d.remove(), ms || 6000);
@@ -3404,7 +3461,9 @@ $("fileIn").onchange = async e => {
       if (j.st.chiso && typeof csGop === "function") csGop(j.st.chiso);
       if (typeof phienNhap === "function") phienNhap(j);                 // bản 2.5: khu, nhóm xã, sửa OSM, cả phiên làm việc
       Object.entries(j.st.bo_cfg || {}).forEach(([k, c]) => { if (!ST.bo_cfg[k]) ST.bo_cfg[k] = c; }); if (j.st.scheme) { SCHEME = ST.scheme = j.st.scheme; IDX = CORE.schemeIndex(SCHEME); }
-      save(); buildSetSelect(); render(); msg(T("đã gộp tiến độ: {n} điểm mới, nhãn mới hơn được giữ", {n: Object.keys(ST.diem).length - n0}), "ok");
+      const doi = typeof boSauNap === "function" ? boSauNap() : null;   // bản 3.16.1: bộ đang chọn trống thì chuyển sang bộ có dữ liệu
+      save(); buildSetSelect(); render(); msg(T("đã gộp tiến độ: {n} điểm mới, nhãn mới hơn được giữ", {n: Object.keys(ST.diem).length - n0}) +
+        (typeof boDem === "function" ? "; " + T("trang có {n} điểm", {n: Object.keys(ST.diem).length}) : "") + (doi ? "; " + T("đã chuyển sang bộ {b}", {b: doi.sang}) : ""), "ok", 7000);
     } else if (j.lop && j.nhom) { SCHEME = ST.scheme = j; IDX = CORE.schemeIndex(SCHEME); save(); render(); msg("đã nạp hệ thống lớp", "ok"); }
     else if (j.type === "FeatureCollection" && j.features.some(ft => ft.geometry && /Polygon/.test(ft.geometry.type))
              && typeof vungNhapGeo === "function") { vungNhapGeo(j, f.name); }
@@ -3507,7 +3566,7 @@ function setLang(l) {
   if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1];
   pnThu(!!ls("laymau_hp_pnthu_v1")); setDock(ls("laymau_hp_dock_v1") || "trai", true);
   setBase(); render();
-  napCauHinh().then(() => { if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1]; render(); return loadManifest(); }).then(() => {
+  TT_NAP.then(() => napCauHinh()).then(() => { if (!years().includes(ST.nam)) ST.nam = years()[years().length - 1]; render(); return loadManifest(); }).then(() => {   // bản 3.16.1: chờ nạp tiến độ từ IndexedDB
     const ps = MAN && MAN.point_sets;
     if (ps && ps.length) ps.forEach(x => { if (Object.values(ST.diem).some(p => p.bo === x.id)) loadPointSet(x); });
     if (ps && ps.length && !Object.keys(ST.diem).length) loadPointSet(ps[0]);

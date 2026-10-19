@@ -211,7 +211,7 @@ with rasterio.open('/tmp/vg29.tif') as r:
   await E("v29GopMo")([fA, fB]); $("gtKieu").value = "giu"; $("gtOk").click(); await sleep(30);
   const M3 = E("ST.diem.E0001.nhan[2023]");
   ok(M2[0] === "T1" && M2[1] === "N1" && M3 === "T1", `tệp chọn sau thắng: [${M2}]; giữ nhãn đang có: ${M3}`);
-  $("gtDong").click();
+  $("gtpDong").click();
 
   // ---------- F. tiếng Nga, tiếng Anh: không sót chữ tiếng Việt ở phần 2.9
   const VI = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]|\b(xem|nghi|so theo)\b/i;
@@ -230,7 +230,7 @@ with rasterio.open('/tmp/vg29.tif') as r:
     if (VI.test(R_.replace(/Tây|Đông|Xa Bac|Xa Nam/g, ""))) sot.add("chú giải: " + R_.slice(0, 120));
     const miss = E("[...T_MISS]").filter(x => !/E0 thử|thử/.test(x));
     ok(sot.size === 0 && miss.length === 0, `${L_}: không sót chữ tiếng Việt ở phần 2.9 (sót ${sot.size}, T_MISS ${miss.length})` + (sot.size + miss.length ? "\n      " + [...sot, ...miss].slice(0, 25).join("\n      ") : ""));
-    $("xbDong").click(); $("gtDong").click();
+    $("xbDong").click(); $("gtpDong").click();
   }
   E("setLang('vi')");
   ok(!errs.length, loiJS(errs));

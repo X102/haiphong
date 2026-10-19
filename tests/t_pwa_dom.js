@@ -60,7 +60,7 @@ const WEB = ["web", "."].map(d => path.join(GOC, d)).find(d => fs.existsSync(pat
   ok(E("Object.keys(ST.diem).length") === n0 + 2, "mở một tệp CSV bằng ứng dụng: thêm 2 điểm như nút Tải tệp…");
   const goc = E("JSON.stringify(phienXuat())");
   await LQ({files: [{getFile: async () => new w.File([goc], "a.json")}, {getFile: async () => new w.File([goc], "b.json")}]}); await sleep(100);
-  ok($("dlgGopTep").open && $("gtDS").querySelectorAll("tr").length === 3, "mở nhiều tệp tiến độ bằng ứng dụng: vào hộp thoại gộp"); $("gtDong").click();
+  ok($("dlgGopTep").open && $("gtDS").querySelectorAll("tr").length === 3, "mở nhiều tệp tiến độ bằng ứng dụng: vào hộp thoại gộp"); $("gtpDong").click();
 
   // ---------- tiếng Nga, tiếng Anh
   const VI = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;

@@ -1,0 +1,21 @@
+# Bản 3.16.1: lưu tiến độ lớn trong IndexedDB, đóng được hộp gộp tệp, báo số điểm từng bộ sau khi gộp
+R3161 = [
+("Không lưu được tiến độ vào trình duyệt (bộ nhớ đầy hoặc bị chặn): hãy xuất tệp tiến độ ngay (Xuất… → tệp tiến độ JSON).",
+ "Не удалось сохранить прогресс в браузере (память заполнена или заблокирована): сразу экспортируйте файл прогресса (Экспорт… → файл прогресса JSON).",
+ "Progress could not be saved in the browser (storage full or blocked): export the progress file now (Export… → progress JSON file)."),
+("Tiến độ đã lớn hơn bộ nhớ thường của trình duyệt ({m} triệu ký tự): từ nay lưu trong IndexedDB. Vẫn nên xuất tệp tiến độ định kỳ.",
+ "Прогресс превысил обычное хранилище браузера ({m} млн символов): теперь он сохраняется в IndexedDB. Регулярно экспортируйте файл прогресса.",
+ "Progress has outgrown the browser's regular storage ({m} million characters): it is now saved in IndexedDB. Keep exporting the progress file regularly."),
+("Tiến độ được lưu trong IndexedDB nhưng không đọc được: hãy nạp lại tệp tiến độ (Tải tệp…).",
+ "Прогресс сохранён в IndexedDB, но не читается: загрузите файл прогресса заново (Загрузить файл…).",
+ "Progress is stored in IndexedDB but cannot be read: load the progress file again (Load file…)."),
+("đã nạp tiến độ lưu trong IndexedDB: {n} điểm", "загружен прогресс из IndexedDB: точек {n}", "progress loaded from IndexedDB: {n} points"),
+("{b} {n} điểm ({m} nhãn)", "{b}: {n} точек ({m} меток)", "{b} {n} points ({m} labels)"),
+("Các tệp không có điểm, nhãn nào mới so với dữ liệu đang có trong trang (đã nạp hoặc gộp trước đó): dữ liệu vẫn còn nguyên.",
+ "В файлах нет новых точек и меток по сравнению с данными на странице (они уже были загружены или объединены): данные сохранены.",
+ "The files contain no points or labels that are new compared with the data already on the page (loaded or merged earlier): the data are intact."),
+("Trang hiện có {n} điểm trong {k} bộ: {ds}.", "Сейчас на странице {n} точек в {k} наборах: {ds}.", "The page now has {n} points in {k} sets: {ds}."),
+("Bộ đang chọn ({a}) không có điểm nào: đã chuyển sang bộ {b}.", "В выбранном наборе ({a}) нет точек: выбран набор {b}.", "The selected set ({a}) has no points: switched to set {b}."),
+("trang có {n} điểm", "на странице {n} точек", "the page has {n} points"),
+("đã chuyển sang bộ {b}", "выбран набор {b}", "switched to set {b}"),
+]

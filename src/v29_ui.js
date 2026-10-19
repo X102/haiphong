@@ -172,8 +172,22 @@ function v29GopTienDo(ds, kieu, danhDau) {       // ds: [{ten, j}] theo thứ t�
     }
   });
   bc.xung.sort((a, b) => (a.bo + a.id).localeCompare(b.bo + b.id) || a.nam - b.nam);
+  bc.doiBo = boSauNap();
   save(); buildSetSelect(); render(); if (typeof vgVeVung === "function") vgVeVung();
   return bc;
+}
+function boDem() {                               // bản 3.16.1: số điểm, số nhãn của từng bộ đang có trong trang
+  const o = {}; Object.values(ST.diem).forEach(p => { const b = p.bo || ""; const q = o[b] || (o[b] = {diem: 0, nhan: 0}); q.diem++; q.nhan += Object.values(p.nhan || {}).filter(v => v != null).length; });
+  return o;
+}
+function boSauNap() {                            // sau khi nạp, gộp tệp: bộ đang chọn không còn điểm nào thì chuyển sang bộ nhiều nhãn nhất
+  const D = boDem(), cu = ST.bo; if (!cu || (D[cu] && D[cu].diem)) return null;
+  const tot = Object.entries(D).sort((a, b) => b[1].nhan - a[1].nhan || b[1].diem - a[1].diem)[0]; if (!tot) return null;
+  ST.bo = tot[0]; ST.cur = null; return {tu: cu, sang: tot[0]};
+}
+function boTomTat(D) {                           // "UV 1371 điểm (3218 nhãn); …"
+  const ten = b => (b === "tay" ? T("điểm thêm tay") : (ST.bo_cfg[b] && ST.bo_cfg[b].ten) || (typeof boTen === "function" ? boTen(b) : b));
+  return Object.entries(D).sort((a, b) => b[1].diem - a[1].diem).map(([b, q]) => T("{b} {n} điểm ({m} nhãn)", {b: ten(b), n: q.diem, m: q.nhan})).join("; ");
 }
 const V29 = {tep: [], bc: null};
 async function v29GopMo(files) {                // mở hộp thoại gộp với danh sách tệp (FileList hoặc mảng File)
@@ -195,7 +209,11 @@ function v29GopChay() {
   if (!V29.tep.length) return;
   const bc = V29.bc = v29GopTienDo(V29.tep, v29$("gtKieu").value, v29$("gtDanh").checked);
   const kieuT = {moi: T("nhãn gán sau cùng (theo thời điểm gán)"), sau: T("tệp chọn sau thắng"), giu: T("giữ nhãn đang có, chỉ điền chỗ trống")}[bc.kieu];
+  const D = boDem(), tong = Object.values(D).reduce((t, q) => t + q.diem, 0);
   v29$("gtKQ").innerHTML = `<p>${T("Đã gộp {n} tệp: {d} điểm mới, {a} nhãn mới, {b} nhãn đổi; {x} chỗ các tệp gán khác nhau (giải theo: {k}).", {n: bc.tep.length, d: bc.moiDiem, a: bc.moiNhan, b: bc.doiNhan, x: bc.xung.length, k: kieuT})}</p>` +
+    (!bc.moiDiem && !bc.moiNhan && !bc.doiNhan ? `<p class="mu sm">${T("Các tệp không có điểm, nhãn nào mới so với dữ liệu đang có trong trang (đã nạp hoặc gộp trước đó): dữ liệu vẫn còn nguyên.")}</p>` : "") +
+    `<p class="sm">${T("Trang hiện có {n} điểm trong {k} bộ: {ds}.", {n: tong, k: Object.keys(D).length, ds: boTomTat(D)})}</p>` +
+    (bc.doiBo ? `<p class="sm">${T("Bộ đang chọn ({a}) không có điểm nào: đã chuyển sang bộ {b}.", {a: bc.doiBo.tu, b: bc.doiBo.sang})}</p>` : "") +
     (bc.tep.some(t => t.he_lop_khac) ? `<div class="cb27">${T("Có tệp dùng hệ thống lớp khác với trang: kiểm tra mã lớp trước khi dùng kết quả.")}</div>` : "") +
     (bc.xung.length ? `<table><tr><th>${T("điểm")}</th><th>${T("năm")}</th><th>${T("các nhãn")}</th><th>${T("chọn")}</th></tr>` +
       bc.xung.slice(0, 60).map(x => `<tr><td>${esc(x.id)}</td><td>${x.nam}</td><td>${x.cac.map(c => `${esc(c.ma)} <span class="mu">(${esc(c.tep)})</span>`).join("; ")}</td><td><b>${esc(x.chon)}</b></td></tr>`).join("") +
@@ -211,7 +229,7 @@ function v29GopCSV() {
 (function () {
   const d = v29$("dlgGopTep");
   v29$("gtTep").onchange = e => { const fs = [...e.target.files]; e.target.value = ""; v29GopMo(fs); };
-  v29$("gtOk").onclick = v29GopChay; v29$("gtCSV").onclick = v29GopCSV; v29$("gtDong").onclick = () => d.close();
+  v29$("gtOk").onclick = v29GopChay; v29$("gtCSV").onclick = v29GopCSV; v29$("gtpDong").onclick = () => d.close();   // bản 3.16.1: id riêng (trước trùng nút Đóng của Giới thiệu nên không đóng được)
   v29$("eGopTep").onclick = () => { const e = v29$("dlgExp"); if (e && e.open) e.close(); v29GopMo([]); };
   const fi = v29$("fileIn");                     // "Tải tệp…" chọn được nhiều tệp: nhiều tệp tiến độ -> hộp thoại gộp
   if (fi) { fi.multiple = true; const cu = fi.onchange;
