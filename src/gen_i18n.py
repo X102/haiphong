@@ -631,6 +631,11 @@ for L_, (moc, them) in HELP316.items():
 from gen_i18n_v3161 import R3161
 _co = {r[0] for r in R}
 R = R + [r for r in R3161 if r[0] not in _co]           # bản 3.16.1: lưu tiến độ lớn (IndexedDB), báo số điểm sau khi gộp
+from gen_i18n_v317 import R317, HELP317
+_co = {r[0] for r in R}
+R = R + [r for r in R317 if r[0] not in _co]             # bản 3.17: diện tích theo ngưỡng
+for L_, (moc, them) in HELP317.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

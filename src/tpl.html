@@ -1098,6 +1098,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Nhiều năm, hậu xử lý (3.14)</b>: phân loại từ điểm mẫu chạy được nhiều năm một lần (ô "nhiều năm"), có bảng theo năm và lưu một phương án nhiều năm. Hậu xử lý: đồng nhất trong đối tượng (siêu điểm ảnh), lọc đa số 3 × 3 hoặc 5 × 5, bỏ mảnh nhỏ hơn một diện tích, làm mịn theo năm. Tên phương án, tiêu đề, phụ đề bản đồ theo ngôn ngữ đang chọn; địa danh Việt ở giao diện Nga, Anh viết không dấu.</li>
     <li><b>Phạm vi lớn, gộp phương án (3.15)</b>: ô Lưới có thêm chế độ "theo khối" (10, 20, 30 m hoặc tự chọn bước): huấn luyện một lần trên mọi điểm mẫu, rồi phân loại từng khối 512 × 512 điểm ảnh và ghép thành một bản đồ, nên chạy được cả tỉnh, nhiều năm. Lưới đơn báo "vùng đọc quá lớn" thì tự chuyển sang theo khối. Ở Thống kê lớp phủ, nút "Gộp các phương án đã chọn" ghép các bản đồ từng xã thành một bản đồ.</li>
     <li><b>Xuất bản đồ nhiều năm (3.16)</b>: khi bản đồ chọn có nhiều năm (phương án nhiều năm, phân loại nhiều năm, lớp dữ liệu theo năm), hộp Xuất bản đồ có mục "Nhiều năm": xuất từng năm một tệp (gói ZIP kèm bảng diện tích CSV), hoặc ghép các năm trong một ảnh: các ô cùng phạm vi, cùng tỉ lệ, nhãn năm, chung chú giải, bảng diện tích từng lớp theo năm và cột thay đổi.</li>
+    <li><b>Diện tích theo ngưỡng (3.17)</b>: ở Chọn vùng, nút 📈 cạnh thanh ngưỡng mở biểu đồ diện tích vùng chọn với mọi ngưỡng 0..0.4 (đúng quy tắc chọn của trang), kèm độ thuần theo một bản đồ lớp tham chiếu, tỉ lệ điểm đã gán cùng lớp được chọn và các điểm đã gán lớp khác bị chọn, bước nhảy diện tích; gợi ý khoảng ngưỡng từ lúc đủ phủ mẫu cùng lớp tới trước khi lấn sang lớp khác. Nhấp lên biểu đồ để đặt ngưỡng; có thể tô bản đồ theo ngưỡng vào vùng của từng điểm ảnh.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2417,7 +2418,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.16.1";
+const VERSION = "3.17";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3607,6 +3608,7 @@ function setLang(l) {
 /*__V314__*/
 /*__V315__*/
 /*__V316__*/
+/*__V317__*/
 /*__PWA__*/
 </script>
 </body>
