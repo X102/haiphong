@@ -391,6 +391,18 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 #pwaMoi{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:4000;background:#0f4c5c;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 #pwaMoi button{margin-left:6px}
 @media (max-width: 760px){ #dlgXB .vg-o{grid-template-columns:auto minmax(0,1fr)} }
+/* ---- bản 3.17.1: phần đầu bảng nổi (tiêu đề, thông báo, nút thu gọn/đóng) ghim lại khi cuộn.
+   Chrome tính sticky từ mép trong phần đệm (padding) của khung cuộn, nên top = −padding để ghim sát mép trên ---- */
+.vg-dau,.pn-dau{position:sticky;top:-8px;z-index:30;box-shadow:0 1px 0 #e4e7ec}
+.pn-dau{background:#fff;margin:-8px -8px 4px;padding:6px 8px;border-radius:8px 8px 0 0}
+#panel.thu .pn-dau{margin-bottom:-8px;box-shadow:none}
+.vg-ghim{position:sticky;top:-8px;z-index:30;margin:-8px -8px 4px;padding:0 8px 3px;background:#fff;border-radius:8px 8px 0 0;box-shadow:0 2px 4px -2px rgba(16,24,40,.18)}
+.vg-ghim .vg-dau{position:static;margin:0 -8px 4px;box-shadow:none}
+.vg-ghim #vgGoiY{margin-bottom:0}
+.dlg-dau,.dlg-nut{position:sticky;z-index:30;background:#fff}
+.dlg-dau{top:-1em;margin:-1em -1em 6px;padding:1em 1em 4px;border-bottom:1px solid #eef0f3}
+.dlg-nut{top:-1em;bottom:-1em;margin:6px -1em;padding:6px 1em;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3}
+@media (max-width: 760px){ .dlg-dau{top:-10px;margin:-10px -10px 6px;padding:10px 10px 4px} .dlg-nut{top:-10px;bottom:-10px;margin:6px -10px;padding:6px 10px} }
 </style>
 </head>
 <body>
@@ -764,6 +776,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div id="fab"><button id="fLayers" type="button" title="Ảnh nền và lớp đối chiếu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m2 12.5 10 5 10-5M2 16.5l10 5 10-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button><button id="fInfo" type="button" title="Thông tin điểm khi bấm lên bản đồ">ⓘ</button><button id="fSheet" type="button" title="Thu gọn / mở rộng bảng">☰</button></div>
   <div id="hud"></div>
   <div id="vung" hidden>
+    <div class="vg-ghim">
     <div class="vg-dau"><b title="kéo thanh này để dời bảng; nhấp đúp để về chỗ cũ">⠿ Chọn vùng</b><span class="mu" id="vgTrang"></span>
       <span style="margin-left:auto"></span><button id="vgThu" title="thu gọn / mở rộng bảng">–</button><button id="vgDong" title="đóng (o)">×</button></div>
     <div class="vg-cong">
@@ -774,6 +787,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
       <button id="vgHoan" title="hoàn tác (Z)">↶ <kbd>Z</kbd></button>
     </div>
     <div id="vgGoiY" class="mu"></div>
+    </div>
     <div id="vgGianW" class="row" hidden>giản lược ranh giới <select id="vgGian"><option value="0">0</option><option value="0.7">0.7</option>
       <option value="1" selected>1</option><option value="1.5">1.5</option><option value="2">2</option></select> điểm ảnh</div>
     <div id="vgChuanW" class="vg-khung" hidden>
@@ -908,7 +922,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <details open><summary>Chú giải gồm</summary><div id="xbCG" data-noi18n></div></details>
   <div class="row">Nguồn, ghi chú (in dưới bản đồ) <button id="xbNguonMac" type="button" title="viết lại dòng nguồn theo các lớp đang bật">↺</button></div>
   <textarea id="xbNguon" data-noi18n></textarea>
-  <div class="row"><button id="xbXemBtn" type="button">Xem trước</button><button id="xbXuatBtn" type="button" class="on">Xuất</button><button id="xbDong" type="button">Đóng</button>
+  <div class="row dlg-nut"><button id="xbXemBtn" type="button">Xem trước</button><button id="xbXuatBtn" type="button" class="on">Xuất</button><button id="xbDong" type="button">Đóng</button>
     <span class="mu sm" id="xbTT" data-noi18n></span></div>
   <div><canvas id="xbXem" width="10" height="10"></canvas></div>
   <div class="mu sm">Diện tích trong chú giải đếm trên đúng các điểm ảnh của kết quả nằm trong khung (hoặc trong ranh giới cắt); lớp dữ liệu dạng lớp đọc lại ở độ phân giải khoảng 1/1200 cạnh khung. GeoTIFF: chỉ khung bản đồ, 4 băng RGBA, EPSG:3857, cỡ điểm ảnh theo khổ và dpi. PDF có toạ độ: cả trang là ảnh, khung bản đồ khai báo theo ISO 32000 (Viewport, Measure GEO) để QGIS, Avenza Maps, Adobe đọc toạ độ. Ảnh nền phải cho phép tải chéo (Esri, Wayback, OpenStreetMap, EOX thường cho phép); lớp nào không lấy được sẽ bị bỏ và được báo lại.</div>
@@ -949,7 +963,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div id="gtDS" data-noi18n></div>
   <div class="row">Khi các tệp gán nhãn khác nhau cho cùng điểm, cùng năm: <select id="gtKieu"><option value="moi">lấy nhãn gán sau cùng</option><option value="sau">tệp chọn sau thắng</option><option value="giu">giữ nhãn đang có</option></select></div>
   <div class="row"><label><input type="checkbox" id="gtDanh" checked> đánh dấu "xem lại" các điểm có nhãn khác nhau</label></div>
-  <div class="row"><button id="gtOk" type="button" class="on" disabled>Gộp</button><button id="gtCSV" type="button" hidden>Bảng nhãn khác nhau (CSV)</button><button id="gtpDong" type="button">Đóng</button></div>
+  <div class="row dlg-nut"><button id="gtOk" type="button" class="on" disabled>Gộp</button><button id="gtCSV" type="button" hidden>Bảng nhãn khác nhau (CSV)</button><button id="gtpDong" type="button">Đóng</button></div>
   <div id="gtKQ" data-noi18n></div>
 </dialog>
 <dialog id="dlgGop">
@@ -1158,9 +1172,9 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div class="mu sm" id="loiTT" data-noi18n></div>
 </dialog>
 <dialog id="dlgAI">
-  <div class="row" style="margin:0"><h3 style="margin:0 8px 0 0">🤖 Trợ lý AI</h3><button type="button" data-atab="kn" class="on">Kết nối</button><button type="button" data-atab="diem">Hỏi về điểm</button><button type="button" data-atab="loat">Gán hàng loạt</button>
+  <div class="dlg-dau"><div class="row" style="margin:0"><h3 style="margin:0 8px 0 0">🤖 Trợ lý AI</h3><button type="button" data-atab="kn" class="on">Kết nối</button><button type="button" data-atab="diem">Hỏi về điểm</button><button type="button" data-atab="loat">Gán hàng loạt</button>
     <span style="margin-left:auto"></span><button id="aiDong" type="button" title="đóng">×</button></div>
-  <div class="mu sm" id="aiTT" data-noi18n></div>
+  <div class="mu sm" id="aiTT" data-noi18n></div></div>
   <div data-apane="kn">
     <div class="vg-o"><span>Nhà cung cấp</span><select id="aiNCC" data-noi18n></select>
       <span>Địa chỉ API</span><input id="aiURL" type="text" spellcheck="false">
@@ -2418,7 +2432,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.17";
+const VERSION = "3.17.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
