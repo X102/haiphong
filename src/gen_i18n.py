@@ -636,6 +636,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R317 if r[0] not in _co]             # bản 3.17: diện tích theo ngưỡng
 for L_, (moc, them) in HELP317.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v318 import R318, HELP318
+_co = {r[0] for r in R}
+R = R + [r for r in R318 if r[0] not in _co]             # bản 3.18: sơ đồ lớp xếp tầng
+for L_, (moc, them) in HELP318.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

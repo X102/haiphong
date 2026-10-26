@@ -112,6 +112,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.16.1: hộp gộp tệp tiến độ đóng được (nút Đóng trùng mã); tiến độ lớn hơn bộ nhớ localStorage được lưu trong IndexedDB và nạp lại khi mở trang; sau khi gộp báo số điểm từng bộ (xem docs/BAN_3_16_1.md).
 - Bản 3.17: Chọn vùng có biểu đồ diện tích theo ngưỡng (0..0.4): độ thuần theo bản đồ tham chiếu, độ phủ điểm đã gán cùng lớp, điểm lớp khác bị chọn, bước nhảy diện tích; gợi ý khoảng ngưỡng, nhấp để đặt ngưỡng, tô bản đồ theo ngưỡng vào vùng, xuất CSV (xem docs/BAN_3_17.md).
 - Bản 3.17.1: phần đầu các bảng nổi (tiêu đề, thông báo trạng thái/lỗi, nút thu gọn/đóng; ở Chọn vùng cả hàng công cụ và dòng gợi ý) và hàng nút + trạng thái của hộp Xuất bản đồ, Gộp tệp, Trợ lý AI được ghim khi cuộn (xem docs/BAN_3_17_1.md).
+- Bản 3.18: sơ đồ lớp xếp tầng (nút 🧱): các lớp chọn thành từng tấm nhìn nghiêng xếp chồng, cắt theo ranh giới vùng, xã, tỉnh hoặc hình tròn, vuông, lục giác…; mỗi năm một tầng, tầng đáy tổng hợp, kéo để xoay; xuất PNG/JPEG, ảnh động WebM (xem docs/BAN_3_18.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.
