@@ -54,8 +54,8 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   $("tgNamLop").value = "ovl:lulc_ctx"; $("tgTheoNam").click();
   ok(E("TG.tang.map(t => t.k + ':' + t.nam + ':' + t.nhan).join()") === "ovl:lulc_ctx:2023:2023,ovl:lulc_ctx:2025:2025", "mỗi năm một tầng: CTX 2023 (đáy), 2025");
   E(`TG.tang.push({k: "xa", nhan: "", nen: "", op: 1})`); $("tgTongHop").checked = true; $("tgTongHop").dispatchEvent(new w.Event("change"));
-  await sleep(200); await until(() => E("TG.P && TG.P.lat.length") === 4, 8000, "dựng lại");
-  ok(E("TG.P.lat[0].t") === null && E("TG.P.lat.map(L => L.nen).join()") === "trang,trang,trang,mo", "tầng đáy tổng hợp; nền tấm tự động: lớp ảnh nền đặc, véc tơ trắng mờ");
+  await sleep(200); await until(() => E("TG.P && TG.P.xong && TG.P.lat.length") === 4, 8000, "dựng lại");
+  ok(E("TG.P.lat[0].t") === null && E("TG.P.lat.map(L => L.nen).join()") === "trang,trang,trang,khong", "tầng đáy tổng hợp; nền tấm tự động: lớp ảnh nền đặc, véc tơ không nền");
   ok(E("TG.P.lat[1].cg && TG.P.lat[1].cg.length") >= 2, "chú giải nhỏ của tầng CTX lấy từ bản đồ lớp");
 
   // ---------- 4. bố cục nằm trong khung ở nhiều góc, cả nhãn trái/phải, khổ ngang/dọc
@@ -66,8 +66,8 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
       out.push({W, H, xoay, nghieng, nhan, okv: trai >= B.le - 1 && phai <= W - B.le + 1 && tren >= B.le + B.dau - 1 && duoi <= H - B.le + 1 && B.s > 0 && lab}); }
     return {n: out.length, sai: out.filter(q => !q.okv)}; })()`);
   ok(bc.sai.length === 0, `bố cục: ${bc.n} tổ hợp (3 khổ × 5 góc xoay × 3 góc nhìn × 3 kiểu nhãn), tầng và cột nhãn đều nằm trong lề` + (bc.sai.length ? ": " + JSON.stringify(bc.sai.slice(0, 3)) : ""));
-  const ga = E(`(() => { const o = Object.assign({}, TG.o, {gian: 0.5}), a = tgGhep(o, TG.P, 1600, 1200)._tg, b = tgGhep(Object.assign({}, o, {gian: 0.1}), TG.P, 1600, 1200)._tg; return [a.gap / a.fw, b.gap / b.fw, a.s < b.s]; })()`);
-  ok(gan(ga[0], 0.5, 1e-9) && gan(ga[1], 0.1, 1e-9) && ga[2], "khoảng cách tầng theo bề rộng tấm; tầng giãn thì thu nhỏ để vừa khung");
+  const ga = E(`(() => { const o = Object.assign({}, TG.o, {gian: 0.5}), a = tgGhep(o, TG.P, 1600, 1200)._tg, b = tgGhep(Object.assign({}, o, {gian: 0.1}), TG.P, 1600, 1200)._tg; return [a.gap / a.fh, b.gap / b.fh, a.s < b.s]; })()`);
+  ok(gan(ga[0], 0.5, 1e-9) && gan(ga[1], 0.1, 1e-9) && ga[2], "khoảng cách tầng theo chiều cao tấm đã chiếu; tầng giãn thì thu nhỏ để vừa khung");
   const dinh = E(`(() => { const s = [-60, -20, 20, 60].map(x => tgGhep(Object.assign({}, TG.o, {xoay: x}), TG.P, 1600, 1000, {coDinh: true})._tg.s); return Math.max(...s) - Math.min(...s); })()`);
   ok(dinh < 1e-9, "ảnh động: tỉ lệ không đổi khi xoay (khung cố định theo bán kính lớn nhất)");
 
@@ -83,7 +83,7 @@ const gan = (a, b, t) => Math.abs(a - b) <= t;
   ok(blobs.length > nb && blobs[blobs.length - 1].type === "image/png" && /xep_tang_.*_4tang_2000x2000_.*\.png/.test($("tgTT").textContent), "xuất PNG 2000 × 2000: " + $("tgTT").textContent.slice(0, 90));
   ok(+$("tgW").value === 2000 && +$("tgH").value === 2000 && E("JSON.parse(localStorage.getItem('laymau_hp_tang_v1')).kho") === "vuong", "khổ vuông, lưu tuỳ chọn");
   $("tgVid").click(); await until(() => /không quay được ảnh động/.test($("tgTT").textContent), 3000, "ảnh động");
-  ok(true, "ảnh động: báo rõ trình duyệt không hỗ trợ (jsdom không có MediaRecorder)");
+  ok(true, "video: báo rõ trình duyệt không hỗ trợ (jsdom không có WebCodecs, MediaRecorder)");
 
   // ---------- 7. chọn tâm trên bản đồ
   $("tgChonTam").click(); await sleep(10);

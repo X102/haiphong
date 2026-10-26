@@ -1114,6 +1114,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Xuất bản đồ nhiều năm (3.16)</b>: khi bản đồ chọn có nhiều năm (phương án nhiều năm, phân loại nhiều năm, lớp dữ liệu theo năm), hộp Xuất bản đồ có mục "Nhiều năm": xuất từng năm một tệp (gói ZIP kèm bảng diện tích CSV), hoặc ghép các năm trong một ảnh: các ô cùng phạm vi, cùng tỉ lệ, nhãn năm, chung chú giải, bảng diện tích từng lớp theo năm và cột thay đổi.</li>
     <li><b>Diện tích theo ngưỡng (3.17)</b>: ở Chọn vùng, nút 📈 cạnh thanh ngưỡng mở biểu đồ diện tích vùng chọn với mọi ngưỡng 0..0.4 (đúng quy tắc chọn của trang), kèm độ thuần theo một bản đồ lớp tham chiếu, tỉ lệ điểm đã gán cùng lớp được chọn và các điểm đã gán lớp khác bị chọn, bước nhảy diện tích; gợi ý khoảng ngưỡng từ lúc đủ phủ mẫu cùng lớp tới trước khi lấn sang lớp khác. Nhấp lên biểu đồ để đặt ngưỡng; có thể tô bản đồ theo ngưỡng vào vùng của từng điểm ảnh.</li>
     <li><b>Sơ đồ lớp xếp tầng (3.18)</b>: nút 🧱 Xếp tầng mở hộp dựng các lớp chọn (ảnh nền, lớp dữ liệu theo năm, kết quả phân loại, thay đổi, phương án, ranh giới, OSM, điểm) thành từng tấm nhìn nghiêng xếp chồng, cắt theo ranh giới vùng, xã, tỉnh, vùng gộp hoặc hình tròn, vuông, vuông bo góc, lục giác, elip, thoi quanh tâm chọn với bán kính cho trước; có độ dày tấm, bóng đổ, đường gióng, nhãn kèm chú giải nhỏ, mũi tên bắc; mỗi năm của một lớp thành một tầng; kéo chuột trên hình để xoay, đổi góc nhìn; xuất PNG, JPEG hoặc ảnh động WebM.</li>
+    <li><b>Xếp tầng 3.18.1</b>: xem trước hiện dần từng tầng, phóng to khung xem, ▶ xem chuyển động ngay trong hộp; tổ hợp kênh riêng cho từng tầng (S2 10 băng, Landsat: tổ hợp sẵn, R-G-B tuỳ chọn, chỉ số, tương phản; DEM: cách xem); mẫu trình bày; video chính xác từng khung MP4 (H.264, mở được trong PowerPoint, Word) hoặc WebM (VP9) với năm kiểu chuyển động: tách tầng, xoay vòng 360°, tách rồi xoay vòng, lần lượt từng tầng, lắc qua lại.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2433,7 +2434,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.18";
+const VERSION = "3.18.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3624,6 +3625,7 @@ function setLang(l) {
 /*__V315__*/
 /*__V316__*/
 /*__V317__*/
+/*__TGMUX__*/
 /*__V318__*/
 /*__PWA__*/
 </script>

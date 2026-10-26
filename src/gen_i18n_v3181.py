@@ -1,0 +1,42 @@
+# Bản 3.18.1: xếp tầng — tổ hợp kênh từng tầng, xem trước hiện dần, xem chuyển động, video MP4/WebM chính xác từng khung
+R3181 = [
+("cách hiển thị", "способ отображения", "display mode"),
+("tổ hợp kênh", "комбинация каналов", "band combination"),
+("đang tải…", "загрузка…", "loading…"),
+("Dừng xem", "Остановить просмотр", "Stop preview"),
+("Xem chuyển động", "Просмотр анимации", "Preview animation"),
+("kính mờ", "матовое стекло", "frosted glass"),
+("cách hiển thị riêng của tầng này (không đổi bản đồ đang xem)", "собственное отображение этого уровня (текущая карта не меняется)", "this level's own display settings (the current map is not changed)"),
+("thu khung xem", "уменьшить окно просмотра", "shrink the preview"),
+("phóng to khung xem", "увеличить окно просмотра", "enlarge the preview"),
+("Mẫu trình bày", "Шаблон оформления", "Style preset"),
+("Ảnh tĩnh", "Статичное изображение", "Still image"),
+("Video", "Видео", "Video"),
+("Chuyển động", "Движение", "Motion"),
+("Thời lượng", "Длительность", "Duration"),
+("khung/giây", "кадр/с", "fps"),
+("tự chỉnh", "вручную", "custom"),
+("PowerPoint, Word, web", "PowerPoint, Word, веб", "PowerPoint, Word, web"),
+("Dừng xuất video", "Остановить экспорт видео", "Stop video export"),
+("Xuất video", "Экспорт видео", "Export video"),
+("dựng video chính xác từng khung theo kiểu chuyển động đã chọn", "покадрово точное видео с выбранным типом движения", "frame-accurate video with the chosen motion"),
+("trình duyệt không mã hoá được video ở cỡ {w} × {h}: chọn khổ nhỏ hơn", "браузер не может кодировать видео размером {w} × {h}: выберите меньший формат", "the browser cannot encode video at {w} × {h}: choose a smaller size"),
+("đã dừng xuất video", "экспорт видео остановлен", "video export stopped"),
+("đang dựng video: khung {i}/{n}", "построение видео: кадр {i}/{n}", "building the video: frame {i}/{n}"),
+("đã xuất {f}: {w} × {h} điểm ảnh, {s} s, {fps} khung/giây ({c})", "экспортировано {f}: {w} × {h} пикселей, {s} с, {fps} кадр/с ({c})", "exported {f}: {w} × {h} pixels, {s} s, {fps} fps ({c})"),
+("kiến trúc: nền trắng, tấm mỏng", "архитектурный: белый фон, тонкие пластины", "architectural: white background, thin plates"),
+("nền tối, tấm dày", "тёмный фон, толстые пластины", "dark background, thick plates"),
+("màu giấy, nhìn cao", "цвет бумаги, высокий ракурс", "paper, high viewpoint"),
+("gần nhìn thẳng từ trên", "почти вид сверху", "almost top-down"),
+("tách tầng, xoay nhẹ", "разнесение уровней, лёгкий поворот", "separate levels, slight turn"),
+("xoay vòng 360°", "полный оборот 360°", "full 360° turn"),
+("tách tầng rồi xoay vòng", "разнесение уровней, затем оборот", "separate levels, then a full turn"),
+("lần lượt từng tầng", "уровни по очереди", "levels one by one"),
+("lắc qua lại (lặp liền mạch)", "покачивание (бесшовный повтор)", "rock back and forth (seamless loop)"),
+]
+HELP3181 = {
+  "ru": ("<li><b>Разнесённая схема слоёв (3.18)</b>", """
+    <li><b>Уровни 3.18.1</b>: предпросмотр показывает уровни по мере построения, окно просмотра можно увеличить, ▶ проигрывает анимацию прямо в окне; у каждого уровня своя комбинация каналов (S2 10 каналов, Landsat: готовые комбинации, R-G-B вручную, индексы, контраст; ЦМР: способ отображения); шаблоны оформления; покадрово точное видео MP4 (H.264, открывается в PowerPoint, Word) или WebM (VP9) с пятью типами движения: разнесение уровней, полный оборот 360°, разнесение и оборот, уровни по очереди, покачивание.</li>"""),
+  "en": ("<li><b>Exploded layer stack (3.18)</b>", """
+    <li><b>Layer stack 3.18.1</b>: the preview shows levels as they are built, the preview can be enlarged, ▶ plays the animation in the window; each level has its own band combination (S2 10 bands, Landsat: presets, custom R-G-B, indices, contrast; DEM: display mode); style presets; frame-accurate MP4 video (H.264, opens in PowerPoint, Word) or WebM (VP9) with five motions: separate levels, full 360° turn, separate then turn, levels one by one, rocking.</li>"""),
+}
