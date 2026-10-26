@@ -646,6 +646,11 @@ _co = {r[0] for r in R}
 R = R + [r for r in R3181 if r[0] not in _co]           # bản 3.18.1: tổ hợp kênh từng tầng, video chính xác từng khung
 for L_, (moc, them) in HELP3181.items():
     h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
+from gen_i18n_v319 import R319, HELP319
+_co = {r[0] for r in R}
+R = R + [r for r in R319 if r[0] not in _co]             # bản 3.19: hồi quy chỉ số theo ảnh đa thời gian, thanh công cụ theo nhóm
+for L_, (moc, them) in HELP319.items():
+    h = HTML[L_]["helpBody"]; j = h.index("</li>", h.index(moc)) + 5; HTML[L_]["helpBody"] = h[:j] + them + h[j:]
 out = {"ru": {}, "en": {}}
 for vi, ru, en in R:
     out["ru"][vi] = ru; out["en"][vi] = en

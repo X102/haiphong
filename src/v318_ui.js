@@ -505,7 +505,7 @@ function tgChu() {                                  // chữ theo ngôn ngữ
   tg$("tgXemBtn").textContent = T("Dựng lại"); tg$("tgXuat").textContent = T("Xuất ảnh"); tg$("tgDong").textContent = T("Đóng");
   tg$("tgVid").textContent = TG.ma ? "■ " + T("Dừng xuất video") : "🎬 " + T("Xuất video"); tg$("tgVid").title = T("dựng video chính xác từng khung theo kiểu chuyển động đã chọn");
   tgNutChoi();
-  const b = tg$("bTang"); if (b) { b.textContent = "🧱 " + T("Xếp tầng"); b.title = T("Sơ đồ lớp xếp tầng: tách các lớp đã chọn thành từng tầng nhìn nghiêng, cắt theo ranh giới vùng, xã, tỉnh hoặc hình tròn, vuông…; xuất ảnh, ảnh động"); }
+  const b = tg$("bTang"); if (b) { b.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#ic-tang"/></svg>${esc(T("Xếp tầng"))}`; b.title = T("Sơ đồ lớp xếp tầng: tách các lớp đã chọn thành từng tầng nhìn nghiêng, cắt theo ranh giới vùng, xã, tỉnh hoặc hình tròn, vuông…; xuất ảnh, ảnh động"); }
   tg$("tgR").placeholder = T("tự động");
 }
 function tgVeVung() {                               // ô chọn vùng: nhóm vùng và nhóm xã

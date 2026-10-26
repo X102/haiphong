@@ -403,6 +403,18 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 .dlg-dau{top:-1em;margin:-1em -1em 6px;padding:1em 1em 4px;border-bottom:1px solid #eef0f3}
 .dlg-nut{top:-1em;bottom:-1em;margin:6px -1em;padding:6px 1em;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3}
 @media (max-width: 760px){ .dlg-dau{top:-10px;margin:-10px -10px 6px;padding:10px 10px 4px} .dlg-nut{top:-10px;bottom:-10px;margin:6px -10px;padding:6px 10px} }
+/* ---- bản 3.19: thanh công cụ theo nhóm (Dữ liệu, Phân tích, Trình bày, Ứng dụng), biểu tượng nét đơn sắc ---- */
+.cc{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;align-items:start;margin:6px 0 4px;padding:7px 0 6px;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.cc-ten{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#667085;padding-top:7px;white-space:nowrap}
+.cc-nut{display:flex;flex-wrap:wrap;gap:4px}
+.cc-nut button{display:inline-flex;align-items:center;white-space:nowrap;padding:3px 8px}
+.cc-nut button:hover{background:#f5f8ff}
+.cc-nut button.on{background:var(--ac)}
+.cc-nut kbd{margin-left:5px}
+.cc-nut select{max-width:100%}
+svg.ic{width:15px;height:15px;flex:none;margin-right:5px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:#344054}
+.cc-nut button:hover svg.ic{color:var(--ac)}
+@media (max-width: 760px){ .cc{grid-template-columns:1fr;gap:3px} .cc-ten{padding-top:4px} }
 </style>
 </head>
 <body>
@@ -412,26 +424,53 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
   <div class="hdr"><h1>Geoportal lớp phủ Hải Phòng <span class="mu sm" id="ver"></span></h1>
     <select id="selLang" data-noi18n title="Ngôn ngữ / Язык / Language"><option value="vi">Tiếng Việt</option><option value="ru">Русский</option><option value="en">English</option></select>
     <button id="bSideAn" type="button" title="Ẩn bảng điều khiển này để rộng bản đồ (phím [ ); mở lại bằng nút ☰ trên bản đồ">⟨</button></div>
-  <div class="row">
-    <button id="bLoad" title="Tải tệp điểm CSV/GeoJSON hoặc tệp tiến độ JSON">Tải tệp…</button>
-    <button id="bExport">Xuất…</button>
-    <button id="bSet">Cài đặt</button>
-    <button id="bHelp">Trợ giúp <kbd>h</kbd></button>
-    <button id="bVung" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)">Chọn vùng <kbd>o</kbd></button>
-    <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang">🐞 Báo lỗi</button>
-    <button id="bGT" type="button" title="Giới thiệu geoportal, tác giả, liên hệ">ⓘ Giới thiệu</button>
-    <button id="bCai" type="button" title="Cài geoportal thành ứng dụng trên điện thoại, máy tính bảng, máy tính: có biểu tượng riêng, mở trong cửa sổ riêng, mở được khi mất mạng">⤓ Cài ứng dụng</button>
-    <button id="bCD" type="button" title="Phát hiện thay đổi giữa hai năm: bản đồ, bảng, ma trận, nhận định">Δ Thay đổi</button>
-    <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt">🤖 AI</button>
-    <button id="bPL" type="button" title="Tạo bản đồ lớp phủ từ các điểm mẫu, kèm kiểm định và cảnh báo chỗ cần thêm mẫu">🧭 Phân loại</button>
-    <button id="bTK" type="button" title="Thống kê, so sánh các bản đồ lớp phủ: bộ dữ liệu, toàn cầu, bản đồ riêng">📊 Lớp phủ</button>
-    <button id="bS2O" type="button" title="Ảnh Sentinel-2 cho vùng chưa có dữ liệu sẵn: tìm cảnh ít mây theo năm trên AWS, ghép ảnh ngay trong trình duyệt">🛰 S2 trực tuyến</button>
-    <button id="bXB" type="button" title="Xuất bản đồ in ấn (JPEG, PNG, PDF có toạ độ, GeoTIFF): chọn bản đồ phân loại, thay đổi, lớp phủ hay như màn hình, quản lý lớp, chú giải kèm diện tích">🖨 Xuất bản đồ</button>
-    <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
-      <option value="trai">▤ trong bảng này</option>
-      <option value="phai">▥ cột bên phải</option>
-      <option value="duoi">▦ dải dưới bản đồ</option>
-    </select>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="ic-mo" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></symbol>
+    <symbol id="ic-xuat" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="ic-vetinh" viewBox="0 0 24 24"><path d="m9.5 7.5 7 7-2.5 2.5-7-7z"/><path d="M6 11 2.5 7.5 5 5l3.5 3.5M18 13l3.5 3.5L19 19l-3.5-3.5"/><path d="M4 20a5 5 0 0 1 3-4.6"/></symbol>
+    <symbol id="ic-vung" viewBox="0 0 24 24"><path d="M5 8 10 4l9 3 1 8-7 5-9-4z" stroke-dasharray="3 2.2"/><circle cx="5" cy="8" r="1.7" fill="currentColor"/><circle cx="19" cy="7" r="1.7" fill="currentColor"/><circle cx="13" cy="20" r="1.7" fill="currentColor"/></symbol>
+    <symbol id="ic-phanloai" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2" fill="currentColor"/></symbol>
+    <symbol id="ic-lopphu" viewBox="0 0 24 24"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></symbol>
+    <symbol id="ic-thaydoi" viewBox="0 0 24 24"><path d="M12 4.5 3.8 19h16.4z"/></symbol>
+    <symbol id="ic-hoiquy" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="m7 16.5 12-9"/><circle cx="8.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="14" r="1.3" fill="currentColor"/><circle cx="14" cy="9" r="1.3" fill="currentColor"/><circle cx="18" cy="11" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="ic-ai" viewBox="0 0 24 24"><path d="M11 3.5 12.9 9l5.6 1.9-5.6 1.9L11 18.3l-1.9-5.5-5.6-1.9L9.1 9z"/><path d="m18.5 15 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
+    <symbol id="ic-in" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol>
+    <symbol id="ic-tang" viewBox="0 0 24 24"><path d="m12 3.5 9 4.5-9 4.5L3 8z"/><path d="m3 12 9 4.5 9-4.5M3 16l9 4.5 9-4.5"/></symbol>
+    <symbol id="ic-caidat" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></symbol>
+    <symbol id="ic-trogiup" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></symbol>
+    <symbol id="ic-gioithieu" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.8" r=".9" fill="currentColor"/></symbol>
+    <symbol id="ic-baoloi" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-6 4z"/><path d="M12 8v3.5"/><circle cx="12" cy="13.6" r=".9" fill="currentColor"/></symbol>
+    <symbol id="ic-cai" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 7v7M9 11l3 3 3-3"/></symbol>
+  </defs></svg>
+  <div class="cc" id="thanhCC">
+    <span class="cc-ten">Dữ liệu</span><div class="cc-nut">
+      <button id="bLoad" type="button" title="Tải tệp điểm CSV/GeoJSON hoặc tệp tiến độ JSON"><svg class="ic" aria-hidden="true"><use href="#ic-mo"/></svg>Tải tệp…</button>
+      <button id="bExport" type="button" title="Xuất điểm mẫu (CSV, GeoJSON), tệp tiến độ JSON, vùng mẫu; gộp nhiều tệp tiến độ"><svg class="ic" aria-hidden="true"><use href="#ic-xuat"/></svg>Xuất…</button>
+      <button id="bS2O" type="button" title="Ảnh Sentinel-2 cho vùng chưa có dữ liệu sẵn: tìm cảnh ít mây theo năm trên AWS, ghép ảnh ngay trong trình duyệt"><svg class="ic" aria-hidden="true"><use href="#ic-vetinh"/></svg>S2 trực tuyến</button>
+    </div>
+    <span class="cc-ten">Phân tích</span><div class="cc-nut">
+      <button id="bVung" type="button" title="Chọn cả vùng giống các điểm mẫu, thống kê, sửa ranh giới (phím o)"><svg class="ic" aria-hidden="true"><use href="#ic-vung"/></svg>Chọn vùng <kbd>o</kbd></button>
+      <button id="bPL" type="button" title="Tạo bản đồ lớp phủ từ các điểm mẫu, kèm kiểm định và cảnh báo chỗ cần thêm mẫu"><svg class="ic" aria-hidden="true"><use href="#ic-phanloai"/></svg>Phân loại</button>
+      <button id="bTK" type="button" title="Thống kê, so sánh các bản đồ lớp phủ: bộ dữ liệu, toàn cầu, bản đồ riêng"><svg class="ic" aria-hidden="true"><use href="#ic-lopphu"/></svg>Lớp phủ</button>
+      <button id="bCD" type="button" title="Phát hiện thay đổi giữa hai năm: bản đồ, bảng, ma trận, nhận định"><svg class="ic" aria-hidden="true"><use href="#ic-thaydoi"/></svg>Thay đổi</button>
+      <button id="bHQ" type="button"><svg class="ic" aria-hidden="true"><use href="#ic-hoiquy"/></svg>Hồi quy chỉ số</button>
+      <button id="bAI" type="button" title="Trợ lý AI: nhà cung cấp, khoá API, gợi ý nhãn, gán hàng loạt"><svg class="ic" aria-hidden="true"><use href="#ic-ai"/></svg>AI</button>
+    </div>
+    <span class="cc-ten">Trình bày</span><div class="cc-nut">
+      <button id="bXB" type="button" title="Xuất bản đồ in ấn (JPEG, PNG, PDF có toạ độ, GeoTIFF): chọn bản đồ phân loại, thay đổi, lớp phủ hay như màn hình, quản lý lớp, chú giải kèm diện tích"><svg class="ic" aria-hidden="true"><use href="#ic-in"/></svg>Xuất bản đồ</button>
+      <select id="selDock" title="Nơi đặt dải ảnh theo năm và đường mùa vụ">
+        <option value="trai">▤ trong bảng này</option>
+        <option value="phai">▥ cột bên phải</option>
+        <option value="duoi">▦ dải dưới bản đồ</option>
+      </select>
+    </div>
+    <span class="cc-ten">Ứng dụng</span><div class="cc-nut">
+      <button id="bSet" type="button" title="Bộ dữ liệu, các năm cần gán, cách sang năm, hệ thống lớp"><svg class="ic" aria-hidden="true"><use href="#ic-caidat"/></svg>Cài đặt</button>
+      <button id="bHelp" type="button"><svg class="ic" aria-hidden="true"><use href="#ic-trogiup"/></svg>Trợ giúp <kbd>h</kbd></button>
+      <button id="bGT" type="button" title="Giới thiệu geoportal, tác giả, liên hệ"><svg class="ic" aria-hidden="true"><use href="#ic-gioithieu"/></svg>Giới thiệu</button>
+      <button id="bBaoLoi" type="button" title="Báo lỗi hoặc góp ý cho người quản lý trang"><svg class="ic" aria-hidden="true"><use href="#ic-baoloi"/></svg>Báo lỗi</button>
+      <button id="bCai" type="button" title="Cài geoportal thành ứng dụng trên điện thoại, máy tính bảng, máy tính: có biểu tượng riêng, mở trong cửa sổ riêng, mở được khi mất mạng"><svg class="ic" aria-hidden="true"><use href="#ic-cai"/></svg>Cài ứng dụng</button>
+    </div>
   </div>
   <div id="msgs" data-noi18n></div>
 
@@ -1115,6 +1154,7 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
     <li><b>Diện tích theo ngưỡng (3.17)</b>: ở Chọn vùng, nút 📈 cạnh thanh ngưỡng mở biểu đồ diện tích vùng chọn với mọi ngưỡng 0..0.4 (đúng quy tắc chọn của trang), kèm độ thuần theo một bản đồ lớp tham chiếu, tỉ lệ điểm đã gán cùng lớp được chọn và các điểm đã gán lớp khác bị chọn, bước nhảy diện tích; gợi ý khoảng ngưỡng từ lúc đủ phủ mẫu cùng lớp tới trước khi lấn sang lớp khác. Nhấp lên biểu đồ để đặt ngưỡng; có thể tô bản đồ theo ngưỡng vào vùng của từng điểm ảnh.</li>
     <li><b>Sơ đồ lớp xếp tầng (3.18)</b>: nút 🧱 Xếp tầng mở hộp dựng các lớp chọn (ảnh nền, lớp dữ liệu theo năm, kết quả phân loại, thay đổi, phương án, ranh giới, OSM, điểm) thành từng tấm nhìn nghiêng xếp chồng, cắt theo ranh giới vùng, xã, tỉnh, vùng gộp hoặc hình tròn, vuông, vuông bo góc, lục giác, elip, thoi quanh tâm chọn với bán kính cho trước; có độ dày tấm, bóng đổ, đường gióng, nhãn kèm chú giải nhỏ, mũi tên bắc; mỗi năm của một lớp thành một tầng; kéo chuột trên hình để xoay, đổi góc nhìn; xuất PNG, JPEG hoặc ảnh động WebM.</li>
     <li><b>Xếp tầng 3.18.1</b>: xem trước hiện dần từng tầng, phóng to khung xem, ▶ xem chuyển động ngay trong hộp; tổ hợp kênh riêng cho từng tầng (S2 10 băng, Landsat: tổ hợp sẵn, R-G-B tuỳ chọn, chỉ số, tương phản; DEM: cách xem); mẫu trình bày; video chính xác từng khung MP4 (H.264, mở được trong PowerPoint, Word) hoặc WebM (VP9) với năm kiểu chuyển động: tách tầng, xoay vòng 360°, tách rồi xoay vòng, lần lượt từng tầng, lắc qua lại.</li>
+    <li><b>Hồi quy chỉ số (3.19)</b>: nút Hồi quy chỉ số (nhóm Phân tích) tính hệ số góc a của một chỉ số bất kỳ theo thời gian, từng điểm ảnh, bằng bình phương nhỏ nhất trên mọi lần quan sát quang đãng (mọi cảnh Sentinel-2 hoặc Landsat đọc trực tuyến, hoặc ảnh tổng hợp năm của bộ dữ liệu), theo từng cặp năm liền kề và cả khoảng; kèm R², p, số lần quan sát. 5 cấp như luận án: giảm mạnh (a &lt; −0.2), giảm vừa, ổn định (|a| ≤ 0.1), tăng vừa, tăng mạnh (a &gt; 0.2); ngưỡng cả khoảng quy đổi theo độ dài khoảng; tuỳ chọn lọc theo p. Bảng diện tích theo kỳ và cân bằng tăng − giảm, biểu đồ, theo xã, đối chiếu bản đồ lớp phủ, chuỗi quan sát và đường hồi quy tại một điểm; xuất CSV, GeoTIFF, GeoJSON, điểm kiểm tra; có trong Xuất bản đồ và Xếp tầng. Thanh công cụ xếp thành bốn nhóm: Dữ liệu, Phân tích, Trình bày, Ứng dụng.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2434,7 +2474,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.18.1";
+const VERSION = "3.19";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3627,6 +3667,8 @@ function setLang(l) {
 /*__V317__*/
 /*__TGMUX__*/
 /*__V318__*/
+/*__HQCORE__*/
+/*__V319__*/
 /*__PWA__*/
 </script>
 </body>
