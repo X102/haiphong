@@ -233,7 +233,7 @@ function shpVeBo() {
   $("eShpBo").querySelectorAll("input").forEach(i => { i.onchange = () => ls("laymau_hp_shp_bo_v1", [...$("eShpBo").querySelectorAll("input:checked")].map(x => x.value)); });
 }
 function shpChu() {
-  if (!$("eShp")) return;
+  if (!$("eShp") || !$("eShpW")) return;              // bản 3.19.1: nút SHP nằm trong hộp Xuất theo bộ điểm
   $("eShp").textContent = T("Shapefile (SHP)…"); $("eShp").title = T("xuất điểm mẫu thành Shapefile (ZIP), chọn các bộ điểm để gộp");
   $("eShpW").querySelector("[data-tieu]").textContent = T("Các bộ điểm gộp vào một Shapefile (toạ độ WGS 84, trường chữ UTF-8):");
   $("eShpW").querySelector("[data-nhan]").textContent = T("chỉ điểm đã có nhãn"); $("eShpTai").textContent = T("Tải Shapefile (ZIP)");

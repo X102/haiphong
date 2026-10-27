@@ -415,6 +415,14 @@ i.ramp28{display:inline-block;width:90px;height:10px;border-radius:2px;vertical-
 svg.ic{width:15px;height:15px;flex:none;margin-right:5px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:#344054}
 .cc-nut button:hover svg.ic{color:var(--ac)}
 @media (max-width: 760px){ .cc{grid-template-columns:1fr;gap:3px} .cc-ten{padding-top:4px} }
+/* ---- bản 3.19.1: hộp Xuất theo bộ điểm ---- */
+.xm-h{margin:8px 0 3px;font-size:13px}
+.xm-ds{max-height:190px;overflow:auto;margin:3px 0}
+.xm-ds label{display:flex;gap:6px;align-items:center;font-size:12px;padding:1px 0}
+#dlgExp input[type=checkbox],#dlgExp input[type=radio]{min-height:0;margin:0 4px 0 0;vertical-align:middle}
+#dlgExp .row label{display:inline-flex;align-items:center}
+.xm-ds label .mu{margin-left:auto;white-space:nowrap;font-size:11px}
+.xm-ds label.dang{font-weight:600}
 </style>
 </head>
 <body>
@@ -1047,19 +1055,36 @@ svg.ic{width:15px;height:15px;flex:none;margin-right:5px;fill:none;stroke:curren
   <div class="row"><button id="cOk" class="on">Lưu và nạp lại</button><button id="cCancel">Đóng</button></div>
 </dialog>
 
-<dialog id="dlgExp">
-  <h3>Xuất và lưu</h3>
+<dialog id="dlgExp" style="max-width:660px">
+  <div class="dlg-dau"><h3 style="margin:0">Xuất và lưu</h3></div>
+  <h4 class="xm-h">Điểm mẫu theo bộ</h4>
+  <div class="xahop">
+    <div class="xahop-dau"><button id="xmBoDang" type="button" title="chỉ chọn bộ điểm đang làm">Bộ đang làm</button><button id="xmTatCa" type="button">Chọn tất cả</button><button id="xmBoChon" type="button">Bỏ chọn</button>
+      <span class="mu sm" id="xmDem" data-noi18n></span></div>
+    <div class="xm-ds" id="xmBo" data-noi18n></div>
+  </div>
+  <div class="row"><b class="sm">Cách xuất</b>
+    <label title="mỗi bộ điểm thành một tệp riêng; chọn nhiều bộ thì các tệp được gói trong một ZIP"><input type="radio" name="xmCach" value="rieng" checked> mỗi bộ một tệp</label>
+    <label title="mọi điểm của các bộ đã chọn vào chung một tệp (cột bo_diem, ten_bo cho biết điểm thuộc bộ nào)"><input type="radio" name="xmCach" value="gop"> gộp các bộ đã chọn vào một tệp</label></div>
+  <div class="row"><label><input type="checkbox" id="xmNhan"> chỉ điểm đã có nhãn</label>
+    <label title="cột năm theo các năm cần gán của từng bộ (cộng năm đã có nhãn); bỏ chọn thì dùng mọi năm của mọi bộ"><input type="checkbox" id="xmNamBo" checked> cột năm theo năm của bộ</label></div>
   <div class="row">
-    <button id="eLong">CSV dạng dài (điểm × năm)</button>
-    <button id="eWide">CSV dạng rộng (mỗi điểm một dòng)</button>
-    <button id="eGeo">GeoJSON</button>
-    <button id="eJson">Tệp tiến độ JSON (đầy đủ, nhập lại được)</button>
+    <button id="eLong" type="button">CSV dạng dài (điểm × năm)</button>
+    <button id="eWide" type="button">CSV dạng rộng (mỗi điểm một dòng)</button>
+    <button id="eGeo" type="button">GeoJSON</button>
+    <button id="eShp" type="button" title="Shapefile điểm (toạ độ WGS 84, trường chữ UTF-8), nén ZIP">Shapefile (SHP)</button>
+    <button id="eBoJson" type="button" title="tệp tiến độ chỉ gồm các bộ đã chọn (điểm, nhãn, các năm cần gán): gửi cho người khác hoặc nhập lại bằng Tải tệp…">Tệp tiến độ của bộ (JSON)</button>
+  </div>
+  <div class="mu sm" id="xmTT" data-noi18n></div>
+  <h4 class="xm-h">Cả phiên làm việc</h4>
+  <div class="row">
+    <button id="eJson" type="button">Tệp tiến độ JSON (đầy đủ, nhập lại được)</button>
     <button id="eGopTep" type="button" title="chọn cùng lúc nhiều tệp tiến độ của nhiều người hoặc nhiều lần làm, gộp tự động">Gộp nhiều tệp tiến độ…</button>
-    <button id="eVung">Vùng mẫu (GeoJSON)</button>
-    <button id="eVungCSV">Thống kê vùng mẫu (CSV)</button>
+    <button id="eVung" type="button">Vùng mẫu (GeoJSON)</button>
+    <button id="eVungCSV" type="button">Thống kê vùng mẫu (CSV)</button>
   </div>
   <p class="mu sm" data-i18n-html="expNote">Trang tự lưu vào trình duyệt sau mỗi thao tác, nhưng bộ nhớ trình duyệt có thể bị xoá. <b>Xuất tệp tiến độ JSON thường xuyên.</b> Tải tệp đó lại bằng nút "Tải tệp…" để tiếp tục hoặc gộp tiến độ của nhiều người (nhãn mới hơn thắng).</p>
-  <div class="row"><button id="eClose">Đóng</button></div>
+  <div class="row dlg-nut"><button id="eClose" type="button">Đóng</button></div>
 </dialog>
 
 <dialog id="dlgGE" style="max-width:640px">
@@ -1155,6 +1180,7 @@ svg.ic{width:15px;height:15px;flex:none;margin-right:5px;fill:none;stroke:curren
     <li><b>Sơ đồ lớp xếp tầng (3.18)</b>: nút 🧱 Xếp tầng mở hộp dựng các lớp chọn (ảnh nền, lớp dữ liệu theo năm, kết quả phân loại, thay đổi, phương án, ranh giới, OSM, điểm) thành từng tấm nhìn nghiêng xếp chồng, cắt theo ranh giới vùng, xã, tỉnh, vùng gộp hoặc hình tròn, vuông, vuông bo góc, lục giác, elip, thoi quanh tâm chọn với bán kính cho trước; có độ dày tấm, bóng đổ, đường gióng, nhãn kèm chú giải nhỏ, mũi tên bắc; mỗi năm của một lớp thành một tầng; kéo chuột trên hình để xoay, đổi góc nhìn; xuất PNG, JPEG hoặc ảnh động WebM.</li>
     <li><b>Xếp tầng 3.18.1</b>: xem trước hiện dần từng tầng, phóng to khung xem, ▶ xem chuyển động ngay trong hộp; tổ hợp kênh riêng cho từng tầng (S2 10 băng, Landsat: tổ hợp sẵn, R-G-B tuỳ chọn, chỉ số, tương phản; DEM: cách xem); mẫu trình bày; video chính xác từng khung MP4 (H.264, mở được trong PowerPoint, Word) hoặc WebM (VP9) với năm kiểu chuyển động: tách tầng, xoay vòng 360°, tách rồi xoay vòng, lần lượt từng tầng, lắc qua lại.</li>
     <li><b>Hồi quy chỉ số (3.19)</b>: nút Hồi quy chỉ số (nhóm Phân tích) tính hệ số góc a của một chỉ số bất kỳ theo thời gian, từng điểm ảnh, bằng bình phương nhỏ nhất trên mọi lần quan sát quang đãng (mọi cảnh Sentinel-2 hoặc Landsat đọc trực tuyến, hoặc ảnh tổng hợp năm của bộ dữ liệu), theo từng cặp năm liền kề và cả khoảng; kèm R², p, số lần quan sát. 5 cấp như luận án: giảm mạnh (a &lt; −0.2), giảm vừa, ổn định (|a| ≤ 0.1), tăng vừa, tăng mạnh (a &gt; 0.2); ngưỡng cả khoảng quy đổi theo độ dài khoảng; tuỳ chọn lọc theo p. Bảng diện tích theo kỳ và cân bằng tăng − giảm, biểu đồ, theo xã, đối chiếu bản đồ lớp phủ, chuỗi quan sát và đường hồi quy tại một điểm; xuất CSV, GeoTIFF, GeoJSON, điểm kiểm tra; có trong Xuất bản đồ và Xếp tầng. Thanh công cụ xếp thành bốn nhóm: Dữ liệu, Phân tích, Trình bày, Ứng dụng.</li>
+    <li><b>Xuất theo bộ (3.19.1)</b>: hộp Xuất… cho chọn các bộ điểm cần xuất (mặc định bộ đang làm); mỗi bộ thành một tệp riêng (nhiều bộ thì gói trong một ZIP) hoặc gộp các bộ đã chọn vào một tệp; định dạng CSV dạng dài, dạng rộng, GeoJSON, Shapefile và tệp tiến độ của bộ (nhập lại được); cột năm theo các năm của bộ; tuỳ chọn chỉ điểm đã có nhãn. Nút ⤓ cạnh ô chọn bộ xuất nhanh bộ đang làm.</li>
     <li><b>GeoTIFF</b>: 255 là không có dữ liệu (khai báo nodata), 254 là không quy đổi được sang chú giải đã chọn; kèm tệp .qml cùng tên để QGIS hiện đúng màu và tên lớp.</li>
     <li><b>Độ trong suốt, kích thước</b>: bảng ảnh nền có mục độ trong suốt cho mọi lớp đang hiện; kéo mép bảng điều khiển, cột phải, dải dưới bản đồ để đổi cỡ (nhấp đúp để về mặc định); kéo góc dưới phải của các bảng nổi.</li>
     <li><b>Điện thoại</b>: bảng điều khiển là ngăn kéo dưới màn hình; chạm thanh trên cùng để thu gọn, mở vừa, mở hết, hoặc kéo lên xuống. Nút 🗂 mở ảnh nền và lớp đối chiếu, ⓘ bật thông tin điểm, ☰ đổi cỡ ngăn kéo. Trong chọn vùng, nút "− Loại trừ" thay cho Shift+nhấp; giữ lâu lên một mảng để xoá nhanh.</li>
@@ -2474,7 +2500,7 @@ const NOW = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
 const ATTR = "Esri World Imagery, Wayback; Copernicus Sentinel-2";
 /*__WAYBACK__*/
 
-const VERSION = "3.19";
+const VERSION = "3.19.1";
 const KEY_STATE = "laymau_hp_state_v1", KEY_CFG = "laymau_hp_cfg_v1";
 const $ = id => document.getElementById(id);
 function ls(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
@@ -3669,6 +3695,7 @@ function setLang(l) {
 /*__V318__*/
 /*__HQCORE__*/
 /*__V319__*/
+/*__V3191__*/
 /*__PWA__*/
 </script>
 </body>

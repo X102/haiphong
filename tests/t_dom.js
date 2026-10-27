@@ -28,8 +28,10 @@ const {ok, xong} = require("./kiemtra"), {moTrang, loiJS} = require("./trang");
   $("panel").dispatchEvent(new w.MouseEvent("click", {bubbles: true})); await sleep(30); key("m");
   ok(E("Object.keys(ST.diem).length") === n0 && E("ST.cur") === tid, "nhấp trên bảng lớp đối chiếu không lọt xuống bản đồ");
   key("a"); await sleep(20);
+  E("xmMo()"); $("xmTatCa").click(); w.document.querySelector('#dlgExp input[name="xmCach"][value="gop"]').click(); await sleep(10);   // bản 3.19.1: chọn mọi bộ, gộp vào một tệp
   blobs.length = 0; $("eLong").click(); $("eWide").click(); $("eJson").click(); $("eGeo").click();
   const [lg, wd, js, gj] = await Promise.all(blobs.map(docBlob));
+  $("eClose").click();
   const L = lg.replace(/^﻿/, "").split("\r\n");
   ok(L[0].startsWith("id,bo_diem,lon,lat,x_utm,y_utm,tang,nam,ma_lop,id_lop,nhom,lop3") && L.length === 5, `CSV dài: ${L.length - 1} dòng`);
   ok(L.some(r => /^E0000,E0,.*,2023,X1,31,X,3,/.test(r)), "CSV dài: mã lớp, id, nhóm, lop3");

@@ -115,6 +115,7 @@ bash tests/chay_het.sh                        # bài thử; cần node và các 
 - Bản 3.18: sơ đồ lớp xếp tầng (nút 🧱): các lớp chọn thành từng tấm nhìn nghiêng xếp chồng, cắt theo ranh giới vùng, xã, tỉnh hoặc hình tròn, vuông, lục giác…; mỗi năm một tầng, tầng đáy tổng hợp, kéo để xoay; xuất PNG/JPEG, ảnh động WebM (xem docs/BAN_3_18.md).
 - Bản 3.18.1: xếp tầng — xem trước hiện dần, ▶ xem chuyển động, tổ hợp kênh riêng từng tầng (S2 10 băng, Landsat, DEM), mẫu trình bày; video chính xác từng khung MP4 (H.264) hoặc WebM (VP9) với 5 kiểu chuyển động, có xoay vòng 360° (xem docs/BAN_3_18_1.md).
 - Bản 3.19: hồi quy chỉ số theo ảnh đa thời gian theo luận án (mọi cảnh Sentinel-2 hoặc Landsat quang đãng, hệ số góc, R², p từng điểm ảnh theo từng cặp năm và cả khoảng, 5 cấp biến động, bảng kiểu bảng 25, theo xã, đối chiếu lớp phủ, chuỗi tại điểm); thanh công cụ theo 4 nhóm có biểu tượng (xem docs/BAN_3_19.md).
+- Bản 3.19.1: xuất điểm mẫu theo từng bộ: chọn bộ trong hộp Xuất…, mỗi bộ một tệp (nhiều bộ gói ZIP) hoặc gộp; CSV, GeoJSON, Shapefile, tệp tiến độ riêng của bộ; cột năm theo bộ; CSV dạng dài ghi đủ cột (xem docs/BAN_3_19_1.md).
 - Ảnh Landsat: USGS Landsat Collection 2 Level-2 (TM, ETM+, OLI, OLI-2), courtesy of the U.S. Geological Survey; tổng hợp mùa khô trên Google Earth Engine.
 - Ảnh nền: Esri World Imagery, Esri Wayback.
 - OpenStreetMap: © OpenStreetMap contributors, giấy phép ODbL 1.0.

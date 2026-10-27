@@ -95,11 +95,12 @@ const VI = /[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếề�
   // ---------- 7. Shapefile điểm mẫu, gộp nhiều bộ
   E(`ST.diem[Object.keys(ST.diem).find(k => ST.diem[k].bo === "${bo}")].ghi_chu = "Ghi chú có dấu: Đông, Тест"`);
   $("bExp") && $("bExp").click(); await sleep(50);
-  $("eShp").click(); await sleep(30);
-  ok(!$("eShpW").hidden && $("eShpBo").querySelectorAll("input").length >= 2, "nút Shapefile: chọn các bộ điểm cần gộp");
-  $("eShpBo").querySelectorAll("input").forEach(i => { i.checked = i.value === bo || i.value === "E0"; });
-  const nb = blobs.length; $("eShpNhan").checked = false; $("eShpTai").click(); await sleep(200);
-  ok(blobs.length === nb + 1 && /đã xuất diem_mau_2_bo_\d{4}-\d{2}-\d{2}_\d{4}\.zip: 14 điểm/.test($("eShpTT").textContent), "xuất ZIP: " + $("eShpTT").textContent);
+  E("xmMo()"); await sleep(30);                      // bản 3.19.1: Shapefile nằm trong hộp Xuất theo bộ điểm
+  ok($("xmBo").querySelectorAll("input").length >= 2, "hộp Xuất: chọn các bộ điểm");
+  $("xmBo").querySelectorAll("input").forEach(i => { i.checked = i.value === bo || i.value === "E0"; }); $("xmBo").dispatchEvent(new w.Event("change"));
+  w.document.querySelector('#dlgExp input[name="xmCach"][value="gop"]').click(); $("xmNhan").checked = false; $("xmNhan").onchange();
+  const nb = blobs.length; $("eShp").click(); await sleep(200);
+  ok(blobs.length === nb + 1 && /đã xuất diem_mau_2_bo_\d{4}-\d{2}-\d{2}_\d{4}\.zip: 2 bộ, 14 điểm/.test($("xmTT").textContent), "xuất ZIP gộp 2 bộ: " + $("xmTT").textContent);
   const ab = await new Promise(res => { const fr = new w.FileReader(); fr.onload = () => res(fr.result); fr.readAsArrayBuffer(blobs[nb]); });
   fs.writeFileSync("/tmp/fx/diem_thu.zip", Buffer.from(ab));
   const py = execSync(`python3 -c "
